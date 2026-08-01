@@ -9,9 +9,9 @@ The learner wants practical technique, reading, rhythm, coordination, harmony, a
 ### Current Scope
 
 - The four-track curriculum remains a documented domain model and metadata vocabulary rather than a complete planner or adaptive recommendation engine. A first deterministic advisory recommender is implemented over the canonical exercise library and local completion evidence.
-- The twelve canonical beginner exercises, six per hand, cover C-position ascents and descents, untimed C-E-D-F-G step-and-skip patterns, straight C-D-E-F-G steady-quarter studies, timed C-E-D-F-G step-and-skip studies, and C-D-E-F-G even-eighth onset studies.
-- Ascents and descents support keyboard geography and five-finger-pattern work; step-and-skip variants add interval recognition and focused coordination-pattern practice. Every exercise also presents its supported natural pitches on a pitch-only treble or bass staff guide, giving visual exposure to the current clef positions. Four steady-quarter variants add bounded evidence for a 4/4 quarter-note pulse from 40–100 BPM. The timed step-and-skip pair combines that pulse with previously completed interval-pattern evidence when reached through recommendation, while the recommendation graph positions each even-eighth study after its matching straight steady-quarter completion. Every variant remains hands-separate work and freely selectable.
-- The six pitch-pattern exercises are untimed and provide evidence only for pitch order. The four steady-quarter completions add MIDI onset-interval evidence after the first correct note anchors timing, using a ±0.2-beat tolerance. The even-eighth pair uses offsets 0, 0.5, 1, 1.5, and 2 with a ±0.1-beat tolerance while the learner subdivides a quarter-note click. Hand assignment remains instructional and is not verified by MIDI; seeing the staff guide does not prove that the learner read it, and no result establishes note duration, rests, velocity quality, dynamics, staff-reading mastery, fingering quality, or physical technique.
+- The fourteen canonical beginner exercises, seven per hand, cover C-position ascents and descents, untimed C-E-D-F-G step-and-skip patterns, untimed C-E-G-E-C ordered chord-tone patterns, straight C-D-E-F-G steady-quarter studies, timed C-E-D-F-G step-and-skip studies, and C-D-E-F-G even-eighth onset studies.
+- Ascents and descents support keyboard geography and five-finger-pattern work; step-and-skip variants add interval recognition and focused coordination-pattern practice. The ordered chord-tone pair adds a small C-major pitch-membership pattern while preserving individual-note order. Every exercise also presents its supported natural pitches on a pitch-only treble or bass staff guide, giving visual exposure to the current clef positions. Four steady-quarter variants add bounded evidence for a 4/4 quarter-note pulse from 40–100 BPM. The timed step-and-skip pair combines that pulse with previously completed interval-pattern evidence when reached through recommendation, while the recommendation graph positions each even-eighth study after its matching straight steady-quarter completion. Every variant remains hands-separate work and freely selectable.
+- The eight pitch-pattern exercises are untimed and provide evidence only for pitch order. The ordered chord-tone pair may support `patterns-and-technique.chord-tone-patterns` and interval-recognition exposure, but completion does not prove simultaneous chord playing, harmony recognition, voicing, fingering, or hand use. The four steady-quarter completions add MIDI onset-interval evidence after the first correct note anchors timing, using a ±0.2-beat tolerance. The even-eighth pair uses offsets 0, 0.5, 1, 1.5, and 2 with a ±0.1-beat tolerance while the learner subdivides a quarter-note click. Hand assignment remains instructional and is not verified by MIDI; seeing the staff guide does not prove that the learner read it, and no result establishes note duration, rests, velocity quality, dynamics, staff-reading mastery, fingering quality, or physical technique.
 - Named artists, protected pieces, and game themes are represented only as future repertoire-goal metadata and competency pathways.
 - No copyrighted score, MIDI transcription, recording, lyrics, or substantial melodic reproduction is bundled by this slice.
 - After a completed practice attempt, the application suggests one next study or review from declared exercise prerequisites, exact-current-revision retained history, and the current in-memory completion. The recommendation is explained and never limits learner choice.
@@ -19,7 +19,7 @@ The learner wants practical technique, reading, rhythm, coordination, harmony, a
 ### Future Scope
 
 - Later recommendation versions may use learner-selected goals, recent difficulty, repeated attempts, tempo progression, or track balance only after those evidence and explanation contracts are explicit.
-- Later slices may add original or lawfully sourced content for duration, velocity, rests, tuplets, chords, arpeggios, syncopation, odd meters, hands-together independence, adaptive tempo, phrasing, and pedal coordination.
+- Later slices may add original or lawfully sourced content for duration, velocity, rests, tuplets, simultaneous chord playing, broader arpeggios, syncopation, odd meters, hands-together independence, adaptive tempo, phrasing, and pedal coordination.
 - Public-domain, licensed, and user-imported material may be added only with explicit source and rights metadata. MusicXML, full notation frameworks, cloud sync, and AI coaching require separate decisions.
 
 ### Architecture
@@ -42,7 +42,7 @@ This track develops keyboard and notation fluency through:
 - short sight-reading patterns
 - interval recognition
 
-The current treble C4-G4 and bass C3-G3 pitch guides introduce the staff positions used by all twelve current exercises. They connect visible staff position, note name, and keyboard geography, but the persistent note-name and keyboard cues mean completion is not a sight-reading test. The guide has no duration semantics and does not establish general clef fluency, interval reading, rhythmic-notation reading, or staff-reading mastery.
+The current treble C4-G4 and bass C3-G3 pitch guides introduce the staff positions used by all fourteen current exercises. They connect visible staff position, note name, and keyboard geography, but the persistent note-name and keyboard cues mean completion is not a sight-reading test. Repeated C and E markers in the ordered chord-tone pair remain occurrence-based and do not become chord notation. The guide has no duration semantics and does not establish general clef fluency, interval reading, rhythmic-notation reading, or staff-reading mastery.
 
 ### Track 2: Rhythm and Coordination
 
@@ -69,7 +69,7 @@ This broader technique track develops:
 - arpeggios
 - evenness and controlled dynamics
 
-The current library contributes short right- and left-hand five-finger ascents, descents, untimed step-and-skip patterns, straight steady-quarter studies, timed step-and-skip variants, and even-eighth onset studies. These establish small pattern choices and bounded pulse or subdivision evidence without claiming the duration, velocity, movement, or sustained consistency required for broader technique assessment.
+The current library contributes short right- and left-hand five-finger ascents, descents, untimed step-and-skip and C-E-G-E-C chord-tone patterns, straight steady-quarter studies, timed step-and-skip variants, and even-eighth onset studies. These establish small pattern choices and bounded pulse or subdivision evidence without claiming simultaneous chord execution or the duration, velocity, movement, and sustained consistency required for broader technique assessment.
 
 Hanon-style patterns are optional tools for coordination, even timing, hand synchronization, controlled velocity, relaxed movement, and gradual tempo development. They do not define the whole curriculum. Progressions should favor short, focused variants such as right hand untimed, left hand untimed, hands separately with pulse, hands together slowly, even-velocity mode, quiet controlled mode, transposition, and evidence of consistent hand-leading or volume imbalance.
 
@@ -132,9 +132,10 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 ### Definition of Done
 
 - [ ] Four parallel tracks and their initial competencies are documented.
-- [ ] The twelve current exercises are mapped only to keyboard-geography, interval, hands-separate guidance, pattern, steady-quarter, and even-eighth onset competencies they actually exercise, without claiming the evaluator verifies hand use.
+- [ ] The fourteen current exercises are mapped only to keyboard-geography, interval, hands-separate guidance, pattern, ordered chord-tone, steady-quarter, and even-eighth onset competencies they actually exercise, without claiming the evaluator verifies hand use.
 - [ ] The current treble and bass pitch guides are documented as staff-position exposure only, with no duration meaning or staff-reading evidence inferred from completion.
 - [ ] The two straight steady-quarter studies require their matching untimed ascents, while each timed step-and-skip study requires its matching untimed step-and-skip and straight steady-quarter studies; all four contribute bounded 4/4 quarter-pulse evidence at the selected 40–100 BPM tempo. Each even-eighth study requires only its matching straight steady-quarter study and contributes bounded half-beat onset-subdivision evidence with a ±0.1-beat window.
+- [ ] Each ordered chord-tone study requires only its matching untimed step-and-skip study and carries `patterns-and-technique.chord-tone-patterns`, `notes-and-reading.interval-recognition`, and `rhythm-and-coordination.hands-separately` without creating simultaneous chord or harmony-assessment evidence.
 - [ ] Hanon-style work remains a selective part of Patterns and Technique with explicit health and scope limitations.
 - [ ] Long-term repertoire interests are represented as competency pathways and metadata only.
 - [ ] Curriculum and exercise references use stable canonical IDs.
@@ -147,7 +148,7 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 ### Regression Guardrails
 
 - Notes and Reading, Rhythm and Coordination, Patterns and Technique, and Repertoire Pathways must remain parallel available tracks.
-- The six untimed exercises must not confer verified hand use, timing, dynamics, staff-reading mastery, pedal, fingering, or physical-technique mastery, even though their staff pitch guides are visible.
+- The eight untimed exercises must not confer verified hand use, timing, dynamics, staff-reading mastery, pedal, fingering, or physical-technique mastery, even though their staff pitch guides are visible. The ordered chord-tone pair also must not confer simultaneous chord, voicing, or harmony-recognition mastery.
 - The six timed studies must not confer verified hand use, note duration, velocity, rests, written-notation reading, syncopation, hands-together coordination, adaptive-tempo, or broad rhythm mastery. Only the even-eighth pair may support its declared half-beat onset-subdivision competency.
 - Neither timed completion nor untimed completion may satisfy a staff-reading competency without a future reading-focused evidence contract.
 - Hanon-style exercises must never become a compulsory whole-curriculum routine.
@@ -160,7 +161,7 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 
 ### Verification
 
-- **Current documentation checks:** Review the track vocabulary, twelve-exercise mappings, pitch-guide exposure boundary, steady-quarter and even-eighth onset evidence boundaries, Hanon position, repertoire competency pathways, and explicit current exclusions.
+- **Current documentation checks:** Review the track vocabulary, fourteen-exercise mappings, ordered chord-tone and pitch-guide exposure boundaries, steady-quarter and even-eighth onset evidence boundaries, Hanon position, repertoire competency pathways, and explicit current exclusions.
 - **Model tests:** Validate IDs, exercise references, prerequisites, cycles, multi-track membership, rights eligibility, exact-revision evidence, and deterministic recommendation tie-breaking.
 - **Behavior tests:** Prove that untimed completion updates only supported pitch/pattern competencies, timed completion adds only its bounded steady-quarter or even-eighth onset evidence, timed step-and-skip eligibility requires both declared prerequisites, even-eighth eligibility requires the matching straight steady-quarter completion, recommendation ignores performance-quality fields, and missing or evicted history and invalid graphs have a neutral fallback.
 - **Coverage target:** When curriculum code exists, all validation failures and recommendation branches remain exercised directly rather than through UI snapshots.
@@ -172,6 +173,18 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 - Given: the learner completes the pitch order for an untimed ascent, descent, or step-and-skip exercise
 - When: curriculum evidence is derived from the attempt
 - Then: it may support the exercise's keyboard-geography, interval, or pattern competency, but the evaluator does not verify the instructed hand and the result proves no rhythm, dynamics, assessed staff-reading competency, pedaling, fingering, or physical-technique mastery
+
+**Scenario: Record ordered chord-tone preparation honestly**
+
+- Given: the learner completes `ordered-chord-tones-c-major-right-hand` as C4-E4-G4-E4-C4
+- When: curriculum evidence is derived from the attempt
+- Then: it may support ordered chord-tone-pattern and interval-recognition exposure, but it proves no simultaneous chord, harmony-recognition, voicing, fingering, or hand-use competency
+
+**Scenario: Suggest chord tones after step-and-skip preparation**
+
+- Given: `step-skip-c-major-right-hand` has exact-current-revision completion evidence
+- When: recommendation considers `ordered-chord-tones-c-major-right-hand`
+- Then: the ordered chord-tone study is eligible from that sole prerequisite while remaining freely selectable without it
 
 **Scenario: Use the staff as a pitch-reading bridge**
 

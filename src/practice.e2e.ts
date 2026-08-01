@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { defaultExercise, exerciseLibrary } from "./exercises/library/index.js";
 import { formatMidiNote } from "./exercises/evaluator.js";
 import { evenEighthsRightHandExercise } from "./exercises/library/even-eighth-exercises.js";
+import { orderedChordTonesRightHandExercise } from "./exercises/library/ordered-chord-tone-exercises.js";
 import { ATTEMPT_STORAGE_KEY } from "./client/persistence/attempt-repository.js";
 import { exercisePracticeHref } from "./views/exercise-presentation.js";
 
@@ -75,37 +76,67 @@ test("keeps the staff pitch guide inside the practice stage on desktop, iPad, an
   }
 });
 
-test("completes a selected exercise and reloads its persisted history through mock input", async ({ page }) => {
-  const selectedExercise = exerciseLibrary[1]!;
+test("reuses physical keys for returning chord tones and reloads persisted history", async ({ page }) => {
+  const selectedExercise = orderedChordTonesRightHandExercise;
   await page.goto(exercisePracticeHref(selectedExercise));
 
   await expect(page.getByRole("heading", { level: 1, name: selectedExercise.title })).toBeVisible();
 
-  const firstStaffNote = page.locator(`#staff-note-${selectedExercise.expectedEvents[0]!.id}`);
-  const secondStaffNote = page.locator(`#staff-note-${selectedExercise.expectedEvents[1]!.id}`);
-  await expect(firstStaffNote).toHaveAttribute("data-note-state", "expected");
-  await expect(secondStaffNote).toHaveAttribute("data-note-state", "remaining");
+  const staffNotes = selectedExercise.expectedEvents.map((event) => page.locator(`#staff-note-${event.id}`));
+  const cKey = page.locator('[data-practice-key][data-note-number="60"]');
+  const dKey = page.locator('[data-practice-key][data-note-number="62"]');
+  const eKey = page.locator('[data-practice-key][data-note-number="64"]');
+  const fKey = page.locator('[data-practice-key][data-note-number="65"]');
+  const gKey = page.locator('[data-practice-key][data-note-number="67"]');
+
+  await expect(page.locator("[data-practice-key]")).toHaveCount(5);
+  for (const key of [cKey, dKey, eKey, fKey, gKey]) {
+    await expect(key).toHaveCount(1);
+  }
+  await expect(staffNotes[0]!).toHaveAttribute("data-note-state", "expected");
+  await expect(staffNotes[1]!).toHaveAttribute("data-note-state", "remaining");
+  await expect(dKey).toHaveAttribute("data-note-state", "idle");
+  await expect(fKey).toHaveAttribute("data-note-state", "idle");
 
   await expect(page.getByLabel("Input method")).toHaveValue("mock");
   await expect(page.getByLabel("Device")).toHaveValue("mock-midi-input");
   await page.getByRole("button", { name: "Connect", exact: true }).click();
   await expect(page.getByText("Connected to Deterministic mock keyboard.")).toBeVisible();
 
-  for (const [index, event] of selectedExercise.expectedEvents.entries()) {
-    const noteNumber = event.noteNumber;
-    await playNote(page, noteNumber);
-    if (index === 0) {
-      const nextNote = selectedExercise.expectedEvents[1]?.noteNumber;
-      if (nextNote === undefined) {
-        throw new Error("The selected canonical exercise requires a second note");
-      }
-      await expect(page.getByText(`Correct: ${formatMidiNote(noteNumber)}. ${formatMidiNote(nextNote)} is next.`)).toBeVisible();
-      await expect(firstStaffNote).toHaveAttribute("data-note-state", "accepted");
-      await expect(secondStaffNote).toHaveAttribute("data-note-state", "expected");
-    }
-  }
+  await playNote(page, 62);
+  await expect(page.getByText("You played D4. C4 is next.")).toBeVisible();
+  await expect(staffNotes[0]!).toHaveAttribute("data-note-state", "expected");
 
-  await expect(page.getByText("The sequence was correct.")).toBeVisible();
+  await playNote(page, 60);
+  await expect(page.getByText("Correct: C4. E4 is next.")).toBeVisible();
+  await expect(staffNotes[0]!).toHaveAttribute("data-note-state", "accepted");
+  await expect(staffNotes[1]!).toHaveAttribute("data-note-state", "expected");
+  await expect(cKey).toHaveAttribute("data-note-state", "remaining");
+  await expect(eKey).toHaveAttribute("data-note-state", "expected");
+
+  await playNote(page, 64);
+  await expect(staffNotes[1]!).toHaveAttribute("data-note-state", "accepted");
+  await expect(staffNotes[2]!).toHaveAttribute("data-note-state", "expected");
+  await expect(eKey).toHaveAttribute("data-note-state", "remaining");
+  await expect(gKey).toHaveAttribute("data-note-state", "expected");
+
+  await playNote(page, 67);
+  await expect(staffNotes[2]!).toHaveAttribute("data-note-state", "accepted");
+  await expect(staffNotes[3]!).toHaveAttribute("data-note-state", "expected");
+  await expect(gKey).toHaveAttribute("data-note-state", "accepted");
+  await expect(eKey).toHaveAttribute("data-note-state", "expected");
+
+  await playNote(page, 64);
+  await expect(staffNotes[3]!).toHaveAttribute("data-note-state", "accepted");
+  await expect(staffNotes[4]!).toHaveAttribute("data-note-state", "expected");
+  await expect(eKey).toHaveAttribute("data-note-state", "accepted");
+  await expect(cKey).toHaveAttribute("data-note-state", "expected");
+
+  await playNote(page, 60);
+
+  await expect(page.locator("#feedback-message")).toHaveText("Sequence complete. One note did not match the sequence.");
+  await expect(page.getByText("5 of 5 notes")).toBeVisible();
+  await expect(cKey).toHaveAttribute("data-note-state", "accepted");
   await expect(page.getByText("1 attempt completed today")).toBeVisible();
 
   await page.reload();

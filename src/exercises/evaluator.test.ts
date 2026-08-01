@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { NormalizedMidiEvent } from "../midi/types.js";
 import { createEvaluationState, evaluateMidiEvent, formatMidiNote, type EvaluationState } from "./evaluator.js";
 import { fiveNoteAscentExercise } from "./library/five-note-ascent.js";
+import { orderedChordTonesRightHandExercise } from "./library/ordered-chord-tone-exercises.js";
 import { parseExercise } from "./schema.js";
 
 function noteOn(noteNumber: number, timestamp = 100): NormalizedMidiEvent {
@@ -216,6 +217,68 @@ describe("evaluateMidiEvent", () => {
     expect(secondC.feedback?.classification).toBe("correct");
     expect(secondC.state.acceptedEventIds).toEqual(["c4-first", "c4-second"]);
     expect(secondC.state.completed).toBe(true);
+  });
+
+  it("completes the returning C-E-G-E-C chord-tone sequence by event occurrence", () => {
+    let state = createEvaluationState(orderedChordTonesRightHandExercise);
+
+    for (const [index, event] of orderedChordTonesRightHandExercise.expectedEvents.entries()) {
+      const transition = evaluateMidiEvent(orderedChordTonesRightHandExercise, state, noteOn(event.noteNumber, index * 100));
+      expect(transition.feedback?.classification).toBe("correct");
+      state = transition.state;
+    }
+
+    expect(state).toMatchObject({
+      nextExpectedIndex: 5,
+      counts: { correct: 5, repeated: 0, outOfOrder: 0, wrong: 0 },
+      completed: true,
+      completionSummary: {
+        errorFree: true,
+        message: "The sequence was correct.",
+        observations: [],
+      },
+    });
+    expect(state.acceptedEventIds).toEqual([
+      "right-hand-chord-tone-c4-start",
+      "right-hand-chord-tone-e4-up",
+      "right-hand-chord-tone-g4-apex",
+      "right-hand-chord-tone-e4-down",
+      "right-hand-chord-tone-c4-return",
+    ]);
+  });
+
+  it("prioritizes an immediate repeat over a future duplicate and otherwise identifies the pending return pitch", () => {
+    let state = createEvaluationState(orderedChordTonesRightHandExercise);
+    state = evaluateMidiEvent(orderedChordTonesRightHandExercise, state, noteOn(60)).state;
+    state = evaluateMidiEvent(orderedChordTonesRightHandExercise, state, noteOn(64)).state;
+
+    const immediateRepeat = evaluateMidiEvent(orderedChordTonesRightHandExercise, state, noteOn(64));
+    expect(immediateRepeat.feedback).toMatchObject({
+      classification: "repeated",
+      actualNoteNumber: 64,
+      expectedNoteNumber: 67,
+      expectedEventId: "right-hand-chord-tone-g4-apex",
+    });
+    expect(immediateRepeat.state.nextExpectedIndex).toBe(2);
+
+    const futureReturn = evaluateMidiEvent(orderedChordTonesRightHandExercise, immediateRepeat.state, noteOn(60));
+    expect(futureReturn.feedback).toMatchObject({
+      classification: "out-of-order",
+      actualNoteNumber: 60,
+      expectedNoteNumber: 67,
+      expectedEventId: "right-hand-chord-tone-g4-apex",
+    });
+    expect(futureReturn.state).toMatchObject({
+      nextExpectedIndex: 2,
+      counts: { correct: 2, repeated: 1, outOfOrder: 1, wrong: 0 },
+    });
+
+    state = futureReturn.state;
+    for (const noteNumber of [67, 64, 60]) {
+      state = evaluateMidiEvent(orderedChordTonesRightHandExercise, state, noteOn(noteNumber)).state;
+    }
+    expect(state.completed).toBe(true);
+    expect(state.counts).toEqual({ correct: 5, repeated: 1, outOfOrder: 1, wrong: 0 });
   });
 
   it("processes equal timestamps in delivery order", () => {

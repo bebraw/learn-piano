@@ -10,14 +10,15 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 
 - Evaluation supports canonical `untimed-ordered-notes` and `timed-ordered-notes` modes for individual notes.
 - It classifies each relevant note-on as correct, repeated, out of order, or wrong.
-- It advances only on the next expected pitch and completes after all five expected notes have been accepted.
+- It advances only on the next expected pitch and completes after all five expected-event occurrences have been accepted.
+- The paired untimed ordered chord-tone studies evaluate C-E-G-E-C one individual note at a time. Later E and C occurrences are correct when they become next despite sharing pitches with earlier accepted events; this adds no simultaneous chord evaluation.
 - For the four steady-quarter studies—straight and step-and-skip for each hand—the first accepted correct note anchors timing and each later accepted correct note is additionally classified against its canonical beat gap with an inclusive ±0.2-beat tolerance. The even-eighth pair uses fractional offsets and a proportional ±0.1-beat window. The domain classifications remain `on-pulse`, `early`, and `late`; learner-facing copy says “on time,” “early,” or “late.”
 - Pitch and order are evaluated for every exercise. Timing is evaluated only for `timed-ordered-notes`; duration, velocity quality, fingering, articulation, dynamics, and physical technique are not evaluated.
 - Feedback is deterministic, brief, calm, specific about actual and expected notes, and limited to the next useful correction.
 
 ### Future Scope
 
-- Note duration, velocity targets, rests, tuplets, syncopation, chords, hands-together coordination, adaptive tempo, hand balance, phrasing evidence, and recommendation inputs may be added only through explicit evaluation modes and updated specs.
+- Note duration, velocity targets, rests, tuplets, syncopation, simultaneous chord events, hands-together coordination, adaptive tempo, hand balance, phrasing evidence, and recommendation inputs may be added only through explicit evaluation modes and updated specs.
 - AI-generated coaching is outside the live evaluation loop. Any later advisory use requires a separate decision and must not replace deterministic facts.
 
 ### Architecture
@@ -63,6 +64,7 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - Vague praise, punishment, percentage grades, ranks, lives, streaks, and ambiguous “almost” results are not part of this mode.
 - Velocity may be shown as captured data but must not be described as proof of strength, tension, relaxation, or technical quality.
 - MIDI-only evaluation must not diagnose posture, fingering, pedaling, injury risk, or whether the learner used the declared hand.
+- Completing an ordered chord-tone study must not be described as evidence of simultaneous chord playing, voicing, harmony recognition, or harmonic understanding.
 
 ### Anti-Patterns
 
@@ -73,7 +75,7 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - Do not add hidden timing or velocity thresholds to an untimed exercise.
 - Do not compare normalized MIDI timestamps with Web Audio, `Date.now()`, animation-frame, or DOM-event times.
 - Do not move the fixed timing anchor after a pitch error or each newly accepted note.
-- Do not promote onset subdivision into duration, velocity, rest, notation, syncopation, chord, hands-together, or adaptive-tempo evidence.
+- Do not promote onset subdivision into duration, velocity, rest, notation, syncopation, simultaneous-chord, hands-together, or adaptive-tempo evidence.
 - Do not collapse all error categories into one score that loses the next useful correction.
 - Do not call a remote or generative service in the live evaluation loop.
 - Do not infer physical technique from MIDI evidence.
@@ -83,6 +85,7 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 ### Definition of Done
 
 - [ ] C4-D4-E4-F4-G4 in order advances one event at a time and completes exactly once.
+- [ ] C4-E4-G4-E4-C4 accepts all five occurrence IDs in order, while an extra immediate C4 or G4 remains a non-advancing repeated input when a different pitch is next.
 - [ ] Wrong, repeated, and out-of-order classifications are mutually exclusive and follow the documented precedence.
 - [ ] Errors preserve the next expectation and accepted progress.
 - [ ] Note-off events and post-completion events do not mutate evaluation.
@@ -150,6 +153,18 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - Given: D4 remains expected after an out-of-order E4
 - When: the learner plays D4 followed by E4, F4, and G4
 - Then: the attempt completes without erasing the earlier out-of-order observation
+
+**Scenario: Accept repeated pitches when they become expected**
+
+- Given: `ordered-chord-tones-c-major-right-hand` expects C4-E4-G4-E4-C4 as five occurrence IDs
+- When: the learner plays those pitches in order
+- Then: both E4 events and both C4 events are accepted when next, progress advances five times, and completion reports only ordered pitch evidence rather than a simultaneous chord
+
+**Scenario: Classify an extra repeat inside the chord-tone pattern**
+
+- Given: C4 was accepted and E4 is next in the right-hand ordered chord-tone study
+- When: the learner plays C4 again before correcting with E4
+- Then: the extra C4 is `repeated`, it does not consume the final pending C4 occurrence, and the following E4 advances exactly once
 
 **Scenario: Ignore note-off**
 

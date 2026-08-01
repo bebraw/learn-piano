@@ -4,7 +4,7 @@
 
 ### Context
 
-The current practice stage names every expected pitch and shows its piano key, but the learner also wants gradual exposure to staff reading. All twelve current exercises use a small, single-hand, natural-note range, so they can share a useful pitch-position guide without adopting a general score engine or pretending that the application can assess whether the learner actually read it.
+The current practice stage names every expected pitch and shows its piano key, but the learner also wants gradual exposure to staff reading. All fourteen current exercises use a small, single-hand, natural-note range, so they can share a useful pitch-position guide without adopting a general score engine or pretending that the application can assess whether the learner actually read it.
 
 The first notation surface must preserve the server-rendered, progressively enhanced application model and the canonical exercise boundary. It must not invent note duration, rhythmic value, or a second exercise identity merely to draw the current pitches.
 
@@ -17,11 +17,12 @@ The first notation surface must preserve the server-rendered, progressively enha
 - Timed staff metadata may name the separate onset contract. The even-eighth pair uses `Pitch order · Even eighth-note onsets`; that text does not turn the pitch markers or their horizontal spacing into written rhythmic notation.
 - The selected exercise's existing semantic note sequence remains adjacent to the SVG as the accessible and unsupported-content fallback.
 - Progressive enhancement marks accepted, next, and remaining canonical events in the guide from the same evaluator progress that drives the textual next-note cue and keyboard.
+- The ordered C-major chord-tone pair renders five markers for C-E-G-E-C. Repeated C and E occurrences retain separate expected-event IDs and horizontal positions even though they share staff pitch positions and physical keyboard controls.
 - This presentation addition does not change exercise schema version, exercise revision, evaluator behavior, attempt persistence, prerequisites, curriculum evidence, or exercise identity.
 
 ### Future Scope
 
-- Accidentals, key signatures, written durations, rests, beams, ties, articulation, dynamics, multiple voices, both-hand grand staff, chords, scrolling, pagination, editing, MusicXML, and score import or export require later domain and rendering decisions.
+- Accidentals, key signatures, written durations, rests, beams, ties, articulation, dynamics, multiple voices, both-hand grand staff, simultaneous chord notation, scrolling, pagination, editing, MusicXML, and score import or export require later domain and rendering decisions.
 - A full notation adapter or third-party notation library may replace the initial renderer when canonical exercise data contains the musical semantics needed to use it truthfully.
 - A later reading-focused practice mode may reduce note-name or keyboard cues, but it must retain an accessible equivalent and define its own learner-control and evidence boundaries.
 
@@ -31,7 +32,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 - **Rendering boundary:** The Worker view invokes a small presentation adapter that returns inline SVG markup for supported exercises. The adapter owns staff geometry and pitch-to-position mapping but no evaluation, session, MIDI, audio, persistence, or curriculum logic.
 - **Supported-subset rule:** The adapter renders only the documented single-hand natural-note subset. A mixed-hand, `both`-hand, chromatic, or out-of-range exercise is unsupported until a later contract broadens the adapter.
 - **Fallback rule:** Unsupported notation never blocks the practice page. The semantic exercise title, instructions, ordered note text, keyboard guidance, and evaluator remain available; the renderer must not transpose, clamp, respell, or silently omit events to force a drawing.
-- **Progress projection:** Each rendered pitch marker retains its canonical event ID. Client enhancement projects accepted, next, and remaining state onto those existing markers from evaluator state; the SVG never decides progress itself.
+- **Progress projection:** Each rendered pitch marker retains its canonical event ID. Client enhancement projects accepted, next, and remaining state onto those existing markers from evaluator state; the SVG never decides progress itself. Staff occurrence state remains lossless when the physical keyboard aggregates repeated occurrences by MIDI pitch.
 - **Clef rule:** Current right-hand C4-G4 material uses treble clef and current left-hand C3-G3 material uses bass clef. This is a supported-subset mapping, not a global claim that hand assignment always determines clef.
 - **Pitch convention:** Staff position is derived from the canonical MIDI note number using C4/MIDI 60 as middle C. Natural pitch spelling is valid only for the current supported notes.
 - **Reversibility:** Callers depend on the pitch-guide presentation boundary rather than a notation library's internal document model. Replacing the inline SVG implementation must not require new canonical IDs, changed exercise revisions, or rewritten attempt history.
@@ -48,7 +49,8 @@ The first notation surface must preserve the server-rendered, progressively enha
 
 - A descending or step-and-skip exercise retains canonical event order horizontally even though vertical pitch position moves independently.
 - Middle C in the supported right-hand range receives its ledger line; no other ledger line is fabricated.
-- A repeated pitch in a future supported exercise would retain separate markers because canonical event IDs, not MIDI note number alone, identify positions in the sequence.
+- A repeated pitch in the current ordered chord-tone pair retains separate markers because canonical event IDs, not MIDI note number alone, identify positions in the sequence.
+- C-E-G-E-C remains five equally presentation-spaced, individual pitch markers. Shared pitch positions do not stack markers into chords or add simultaneity, duration, voicing, or harmony-assessment meaning.
 - If exercise data falls outside the supported subset, the renderer returns the explicit unsupported result and the page continues with semantic text rather than partial or misleading notation.
 - Timed exercise progress may update the same pitch markers, but beat offsets and timing feedback do not change their pitch-only meaning.
 - Fractional beat offsets in an even-eighth exercise do not alter marker spacing, create beams, imply held duration, or introduce rests between markers.
@@ -60,7 +62,8 @@ The first notation surface must preserve the server-rendered, progressively enha
 - Do not treat the inline SVG as a canonical score document or persist rendered coordinates with an attempt.
 - Do not infer staff-reading mastery, sight-reading ability, clef fluency, or use of the instructed hand from MIDI completion.
 - Do not make the SVG the only source of pitch order or the only accessible explanation of the exercise.
-- Do not silently approximate accidentals, unsupported ranges, mixed hands, chords, or multiple voices.
+- Do not silently approximate accidentals, unsupported ranges, mixed hands, simultaneous chords, or multiple voices.
+- Do not merge repeated-pitch markers merely because the physical keyboard reuses one pitch control.
 - Do not add a notation dependency, font download, MusicXML pipeline, or exercise-schema field merely to extend this first supported subset.
 
 ## Contract
@@ -68,6 +71,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 ### Definition of Done
 
 - [ ] Every current exercise renders the complete ordered pitch guide in the server response from its canonical expected events.
+- [ ] Each ordered chord-tone study renders five occurrence-based markers for C-E-G-E-C while the keyboard separately reuses one C control and one E control from the same canonical data.
 - [ ] Right-hand C4-G4 material renders on treble staff and left-hand C3-G3 material renders on bass staff, with the supported middle-C ledger line.
 - [ ] The guide distinguishes accepted, next, and remaining events from evaluator progress without advancing evaluation itself.
 - [ ] Ordered note text remains present and meaningful without JavaScript and when notation is unsupported.
@@ -89,7 +93,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 
 ### Verification
 
-- **Unit tests:** Natural-note pitch-to-staff mapping, treble and bass selection for the supported subset, middle-C ledger-line placement, canonical horizontal order, unique event identity, and explicit unsupported results.
+- **Unit tests:** Natural-note pitch-to-staff mapping, treble and bass selection for the supported subset, middle-C ledger-line placement, canonical horizontal order, repeated-pitch occurrence identity, and explicit unsupported results.
 - **View tests:** Server HTML contains the complete SVG guide and semantic note sequence for right-hand, left-hand, descending, step-and-skip, and timed exercises.
 - **Client tests:** Accepted, next, remaining, restart, interrupted, and completed projections update the matching canonical marker without changing evaluator state.
 - **Browser tests:** With and without JavaScript, the guide and text fallback remain visible; desktop, iPad, and narrow layouts do not overflow; a mock-input completion advances marker state consistently with keyboard and text.
@@ -114,6 +118,12 @@ The first notation surface must preserve the server-rendered, progressively enha
 - Given: the enhanced guide shows C4 as next and the shared evaluator accepts C4
 - When: the practice view projects its new state
 - Then: C4 becomes accepted and the marker for the evaluator's next canonical event becomes next, matching the text and keyboard cues
+
+**Scenario: Preserve ordered chord-tone occurrences**
+
+- Given: `ordered-chord-tones-c-major-right-hand` contains C4-E4-G4-E4-C4 as five expected-event IDs
+- When: its treble guide is rendered and progress advances
+- Then: five separate markers retain occurrence-specific accepted, next, and remaining state at their canonical horizontal positions, while repeated vertical pitch positions add no simultaneity or chord notation
 
 **Scenario: Keep timed meaning separate**
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
+import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered-chord-tone-exercises.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import type { Exercise } from "../exercises/types.js";
 import {
@@ -10,7 +11,9 @@ import {
   formatExerciseHand,
   formatExerciseNoteOrder,
   formatExerciseTimingLabel,
+  formatPracticeKeyboardNoteLabel,
   getExerciseRhythmPresentation,
+  projectPracticeKeyboardNotes,
 } from "./exercise-presentation.js";
 
 describe("exercise presentation", () => {
@@ -64,6 +67,7 @@ describe("exercise presentation", () => {
     expect(getExerciseRhythmPresentation(fiveNoteAscentExercise)).toMatchObject({
       kind: "untimed",
       label: "Untimed",
+      practiceTask: "Play the notes in order. The next expected key stays lit.",
       staffLabel: "Pitch order · No fixed rhythm",
     });
     expect(getExerciseRhythmPresentation(steadyQuarterRightHandExercise)).toMatchObject({
@@ -105,5 +109,26 @@ describe("exercise presentation", () => {
     expect(formatExerciseTimingLabel(fiveNoteAscentExercise)).toBe("Untimed");
     expect(formatExerciseTimingLabel(steadyQuarterRightHandExercise)).toBe("Steady pulse · 60 BPM");
     expect(formatExerciseTimingLabel(evenEighthsRightHandExercise, true)).toBe("Eighth-note grid · 60 BPM · 4/4");
+  });
+
+  it("projects one physical natural-note span while retaining canonical accidentals", () => {
+    const chromaticFixture: Exercise = {
+      ...orderedChordTonesRightHandExercise,
+      expectedEvents: [
+        { ...orderedChordTonesRightHandExercise.expectedEvents[0]!, id: "c-sharp", noteNumber: 61 },
+        { ...orderedChordTonesRightHandExercise.expectedEvents[2]!, id: "g", noteNumber: 67 },
+      ],
+    };
+
+    expect(projectPracticeKeyboardNotes(orderedChordTonesRightHandExercise)).toEqual([60, 62, 64, 65, 67]);
+    expect(projectPracticeKeyboardNotes(chromaticFixture)).toEqual([61, 62, 64, 65, 67]);
+    expect(projectPracticeKeyboardNotes({ ...fiveNoteAscentExercise, expectedEvents: [] })).toEqual([]);
+  });
+
+  it("names every physical-key state for assistive technology", () => {
+    expect(formatPracticeKeyboardNoteLabel(60, "expected")).toBe("C4, next note");
+    expect(formatPracticeKeyboardNoteLabel(62, "idle")).toBe("D4, not in phrase");
+    expect(formatPracticeKeyboardNoteLabel(64, "remaining")).toBe("E4, later in phrase");
+    expect(formatPracticeKeyboardNoteLabel(67, "accepted")).toBe("G4, completed");
   });
 });

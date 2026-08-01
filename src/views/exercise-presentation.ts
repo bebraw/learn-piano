@@ -8,7 +8,10 @@ const CATEGORY_LABELS: Readonly<Record<string, string>> = {
   repertoire: "Repertoire",
 };
 
+const NATURAL_PITCH_CLASSES = new Set([0, 2, 4, 5, 7, 9, 11]);
+
 export type ExerciseRhythmKind = "untimed" | "steady-quarter" | "even-eighth" | "timed";
+export type PracticeKeyboardNoteState = "accepted" | "expected" | "idle" | "remaining";
 
 export interface ExerciseRhythmPresentation {
   readonly kind: ExerciseRhythmKind;
@@ -21,7 +24,7 @@ const RHYTHM_PRESENTATIONS: Readonly<Record<ExerciseRhythmKind, ExerciseRhythmPr
   untimed: {
     kind: "untimed",
     label: "Untimed",
-    practiceTask: "Play each note once in order. The next expected key stays lit.",
+    practiceTask: "Play the notes in order. The next expected key stays lit.",
     staffLabel: "Pitch order · No fixed rhythm",
   },
   "steady-quarter": {
@@ -68,6 +71,35 @@ export function formatExerciseCategory(exercise: Exercise): string {
 
 export function formatExerciseDifficulty(exercise: Exercise): string {
   return sentenceCaseWords(exercise.difficulty);
+}
+
+export function projectPracticeKeyboardNotes(exercise: Exercise): readonly number[] {
+  const expectedPitches = new Set(exercise.expectedEvents.map(({ noteNumber }) => noteNumber));
+  if (expectedPitches.size === 0) {
+    return [];
+  }
+
+  const minimum = Math.min(...expectedPitches);
+  const maximum = Math.max(...expectedPitches);
+  const projectedPitches: number[] = [];
+
+  for (let noteNumber = minimum; noteNumber <= maximum; noteNumber += 1) {
+    if (expectedPitches.has(noteNumber) || NATURAL_PITCH_CLASSES.has(noteNumber % 12)) {
+      projectedPitches.push(noteNumber);
+    }
+  }
+
+  return projectedPitches;
+}
+
+export function formatPracticeKeyboardNoteLabel(noteNumber: number, state: PracticeKeyboardNoteState): string {
+  const stateLabel: Readonly<Record<PracticeKeyboardNoteState, string>> = {
+    accepted: "completed",
+    expected: "next note",
+    idle: "not in phrase",
+    remaining: "later in phrase",
+  };
+  return `${formatMidiNote(noteNumber)}, ${stateLabel[state]}`;
 }
 
 export function getExerciseRhythmPresentation(exercise: Exercise): ExerciseRhythmPresentation {

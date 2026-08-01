@@ -4,6 +4,7 @@ import { exerciseLibrary } from "../exercises/library/index.js";
 import { MockMidiInputPort } from "../midi/mock-midi-input-port.js";
 import { createNativeMidiBridgeFromHost, NativeMidiInputPort } from "../midi/native-midi-input-port.js";
 import { WebMidiInputPort } from "../midi/web-midi-input-port.js";
+import { projectPracticeKeyboardNotes } from "../views/exercise-presentation.js";
 import type { AttemptInputKind, AttemptRepository } from "./persistence/attempt-repository.js";
 import { LocalStorageAttemptRepository } from "./persistence/local-storage-attempt-repository.js";
 import { PracticeController } from "./practice-controller.js";
@@ -120,10 +121,9 @@ function collectPageElements(
   readonly keys: readonly (PracticeKeyElement & { readonly element: HTMLButtonElement })[];
   readonly staffNotes: readonly PracticeStaffNoteElement[];
 } {
-  const keys = exercise.expectedEvents.map((event) => ({
-    eventId: event.id,
-    noteNumber: event.noteNumber,
-    element: requireElement(pageDocument, `practice-key-${event.id}`, HTMLButtonElement),
+  const keys = projectPracticeKeyboardNotes(exercise).map((noteNumber) => ({
+    noteNumber,
+    element: requireElement(pageDocument, `practice-key-${noteNumber}`, HTMLButtonElement),
   }));
 
   return {

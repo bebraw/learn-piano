@@ -7,7 +7,9 @@ import {
   formatExerciseHand,
   formatExerciseNoteOrder,
   formatExerciseTimingLabel,
+  formatPracticeKeyboardNoteLabel,
   getExerciseRhythmPresentation,
+  projectPracticeKeyboardNotes,
 } from "./exercise-presentation.js";
 import { escapeHtml, renderAppHeader } from "./shared.js";
 import { renderStaffPitchGuide } from "./staff-pitch-guide.js";
@@ -29,23 +31,24 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
     timing === null
       ? "This study does not use a pulse guide."
       : `${timing.defaultBpm} BPM · ${timing.beatsPerMeasure}/${timing.beatUnit} · Four-beat count-in before your first note.`;
-  const orderedEvents = [...exercise.expectedEvents].sort((left, right) => left.noteNumber - right.noteNumber);
-  const pianoKeys = orderedEvents
-    .map((event, index) => {
-      const noteLabel = formatMidiNote(event.noteNumber);
-      const isExpected = event.id === firstEvent.id;
-      const nextKey = orderedEvents[index + 1];
-      const hasBlackKeyAfter = nextKey !== undefined && hasSharpBetween(event.noteNumber, nextKey.noteNumber);
+  const expectedPitches = new Set(exercise.expectedEvents.map(({ noteNumber }) => noteNumber));
+  const keyboardNotes = projectPracticeKeyboardNotes(exercise);
+  const pianoKeys = keyboardNotes
+    .map((noteNumber, index) => {
+      const noteLabel = formatMidiNote(noteNumber);
+      const isExpected = noteNumber === firstEvent.noteNumber;
+      const noteState = isExpected ? "expected" : expectedPitches.has(noteNumber) ? "remaining" : "idle";
+      const nextNoteNumber = keyboardNotes[index + 1];
+      const hasBlackKeyAfter = nextNoteNumber !== undefined && hasSharpBetween(noteNumber, nextNoteNumber);
       return `<button
         class="piano-key"
-        id="practice-key-${escapeHtml(event.id)}"
+        id="practice-key-${noteNumber}"
         type="button"
         data-practice-key
-        data-event-id="${escapeHtml(event.id)}"
-        data-note-number="${event.noteNumber}"
-        data-note-state="${isExpected ? "expected" : "remaining"}"
+        data-note-number="${noteNumber}"
+        data-note-state="${noteState}"
         ${hasBlackKeyAfter ? 'data-black-key-after="true"' : ""}
-        aria-label="${escapeHtml(noteLabel)}${isExpected ? ", next note" : ""}"
+        aria-label="${escapeHtml(formatPracticeKeyboardNoteLabel(noteNumber, noteState))}"
         aria-current="${isExpected ? "true" : "false"}"
         aria-pressed="false"
         disabled
@@ -154,7 +157,7 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
                 <span>${escapeHtml(handLabel)} · C position</span>
                 <span>Follow the amber cue</span>
               </div>
-              <div class="practice-keyboard" aria-label="${escapeHtml(exercise.title)} ${orderedEvents.length}-note guide">
+              <div class="practice-keyboard" aria-label="${escapeHtml(exercise.title)} ${keyboardNotes.length}-key guide">
                 ${pianoKeys}
               </div>
               <p class="keyboard-help" id="keyboard-help">Connect the on-screen input to make these keys playable, or use a connected MIDI keyboard.</p>

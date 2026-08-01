@@ -1,6 +1,7 @@
 import { formatMidiNote } from "../exercises/evaluator.js";
 import type { MidiInputDevice } from "../midi/types.js";
 import type { AttemptTimingSummary } from "./persistence/attempt-repository.js";
+import { formatPracticeKeyboardNoteLabel, type PracticeKeyboardNoteState } from "../views/exercise-presentation.js";
 import type { PracticeSnapshot, PracticeView } from "./practice-controller.js";
 
 interface AttributeElementLike {
@@ -30,7 +31,6 @@ interface KeyLike extends ControlLike {
 }
 
 export interface PracticeKeyElement {
-  readonly eventId: string;
   readonly noteNumber: number;
   readonly element: KeyLike;
 }
@@ -206,6 +206,8 @@ function renderSession(elements: PracticePageElements, snapshot: PracticeSnapsho
   const pulseRunning = snapshot.pulse?.status === "running";
   const mockKeysEnabled = snapshot.inputKind === "mock" && snapshot.connection.status === "connected" && (!timed || pulseRunning);
   const activeNotes = new Set(snapshot.activeNoteNumbers);
+  const activeStaffEventId =
+    snapshot.feedback !== null && activeNotes.has(snapshot.feedback.expectedNoteNumber) ? snapshot.feedback.expectedEventId : null;
 
   elements.practiceStage.setAttribute("data-session-status", snapshot.sessionStatus);
   elements.feedbackMessage.setAttribute("data-session-status", snapshot.sessionStatus);
@@ -216,19 +218,14 @@ function renderSession(elements: PracticePageElements, snapshot: PracticeSnapsho
     const state = practiceNoteState(snapshot, index);
     const staffNote = elements.staffNotes.find((candidate) => candidate.eventId === event.id);
     staffNote?.element.setAttribute("data-note-state", state);
-    staffNote?.element.setAttribute("data-note-active", activeNotes.has(event.noteNumber) ? "true" : "false");
+    staffNote?.element.setAttribute("data-note-active", activeStaffEventId === event.id ? "true" : "false");
+  }
 
-    const key = elements.keys.find((candidate) => candidate.eventId === event.id);
-    if (key === undefined) {
-      continue;
-    }
-
+  for (const key of elements.keys) {
+    const state = practiceKeyState(snapshot, key.noteNumber);
     key.element.dataset.noteState = state;
     key.element.disabled = !mockKeysEnabled;
-    key.element.setAttribute(
-      "aria-label",
-      `${formatMidiNote(key.noteNumber)}${state === "expected" ? ", next note" : state === "accepted" ? ", completed" : ""}`,
-    );
+    key.element.setAttribute("aria-label", formatPracticeKeyboardNoteLabel(key.noteNumber, state));
     key.element.setAttribute("aria-current", state === "expected" ? "true" : "false");
     key.element.setAttribute("aria-pressed", activeNotes.has(key.noteNumber) ? "true" : "false");
   }
@@ -290,6 +287,22 @@ function practiceNoteState(snapshot: PracticeSnapshot, index: number): "accepted
     return "accepted";
   }
   return index === snapshot.evaluation.nextExpectedIndex ? "expected" : "remaining";
+}
+
+function practiceKeyState(snapshot: PracticeSnapshot, noteNumber: number): PracticeKeyboardNoteState {
+  const nextExpectedIndex = snapshot.evaluation.nextExpectedIndex;
+  const nextEvent = snapshot.exercise.expectedEvents[nextExpectedIndex];
+  if (nextEvent?.noteNumber === noteNumber) {
+    return "expected";
+  }
+
+  const occurrenceIndexes = snapshot.exercise.expectedEvents
+    .map((event, index) => (event.noteNumber === noteNumber ? index : -1))
+    .filter((index) => index >= 0);
+  if (occurrenceIndexes.some((index) => index >= nextExpectedIndex)) {
+    return "remaining";
+  }
+  return occurrenceIndexes.length > 0 ? "accepted" : "idle";
 }
 
 function feedbackMessage(snapshot: PracticeSnapshot, nextNoteNumber: number | undefined): string {

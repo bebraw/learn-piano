@@ -8,21 +8,22 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 
 ### Current Scope
 
-- The validated library contains twelve canonical, original beginner exercises, six per hand: C-position ascents and descents, untimed C-E-D-F-G step-and-skip patterns, straight C-D-E-F-G steady-quarter studies, timed C-E-D-F-G step-and-skip studies, and C-D-E-F-G even-eighth studies.
+- The validated library contains fourteen canonical, original beginner exercises, seven per hand: C-position ascents and descents, untimed C-E-D-F-G step-and-skip patterns, untimed C-E-G-E-C ordered chord-tone patterns, straight C-D-E-F-G steady-quarter studies, timed C-E-D-F-G step-and-skip studies, and C-D-E-F-G even-eighth studies. Eight are untimed and six are timed.
 - `GET /practice` returns the default right-hand ascent. `GET /practice?exercise=<id>` returns the selected canonical exercise, while an unknown, empty, or duplicated exercise parameter returns `404` instead of silently changing the learner's task.
 - The home and practice pages render the complete exercise chooser on the server. The selected title, instructions, expected notes, pitch-only staff guide, chooser, and basic limitation text remain meaningful without JavaScript; connecting input, live highlighting, evaluation, completion, and local history are progressive enhancements.
 - Every current exercise receives a supported inline-SVG pitch guide derived from its canonical expected events: treble for the single-hand right-hand C4-G4 natural-note range and bass for the single-hand left-hand C3-G3 natural-note range. Adjacent ordered note text remains the semantic fallback, and the guide adds no duration, rhythm, or staff-reading evidence.
-- Enhanced mode provides input selection and connection state, accepted/next/remaining pitch-guide state, a clear five-key note display, the next expected note, brief event feedback, restart, completion feedback, a local history summary, and one explained advisory study suggestion after completion. Timed studies also expose a 40–100 BPM control with 60 BPM default, a four-beat 4/4 count-in, quarter-note click guidance, and deterministic “on time,” “early,” or “late” learner feedback. Exercise cards and setup copy distinguish the `Eighth-note grid` from `Steady pulse`, while the staff label says `Pitch order · Even eighth-note onsets`. The pitch guide, next-note cue, keyboard, and feedback read as one primary practice stage; input setup, exercise selection, history, and scope guidance sit in a secondary rail that follows the stage when the layout stacks.
+- Enhanced mode provides input selection and connection state, accepted/next/remaining pitch-guide state, a clear natural-note-span keyboard, the next expected note, brief event feedback, restart, completion feedback, a local history summary, and one explained advisory study suggestion after completion. Timed studies also expose a 40–100 BPM control with 60 BPM default, a four-beat 4/4 count-in, quarter-note click guidance, and deterministic “on time,” “early,” or “late” learner feedback. Exercise cards and setup copy distinguish the `Eighth-note grid` from `Steady pulse`, while the staff label says `Pitch order · Even eighth-note onsets`. The pitch guide, next-note cue, keyboard, and feedback read as one primary practice stage; input setup, exercise selection, history, and scope guidance sit in a secondary rail that follows the stage when the layout stacks.
 - The mock adapter supports the complete browser flow without physical hardware. Supported desktop browsers may use Web MIDI and the iPadOS 17-or-later wrapper may use CoreMIDI through `NativeMidiInputPort`, all through the same session boundary.
 - Only completed attempts are persisted in this slice. History is filtered by exercise ID and revision; an incomplete, restarted, disconnected, or abandoned attempt does not appear as a completed history item. A timed completion may include its fixed tempo, four interval classifications, and mean absolute error while existing untimed records omit timing.
 - Native MIDI completions use the `native-midi` adapter kind; they do not have a separate evaluator, completion rule, or history model.
 - The completion UI suggests an eligible uncompleted direct dependent first, then an eligible uncompleted exercise in canonical library order. When every current exercise has exact-revision completion evidence, it suggests the least recently practiced review. The learner can always ignore it and use the complete exercise chooser.
 - Each timed step-and-skip study declares both its matching untimed step-and-skip and straight steady-quarter studies as prerequisites. Those declarations affect advisory eligibility only and never block a direct selection.
 - Each even-eighth study declares only its matching straight steady-quarter study as a prerequisite. It uses onset offsets 0, 0.5, 1, 1.5, and 2 with a ±0.1-beat window; this affects advisory eligibility and timing evaluation without blocking direct selection or adding duration semantics.
+- Each ordered chord-tone study declares only its matching untimed step-and-skip study as a prerequisite. It asks for five individual note occurrences in C-E-G-E-C order and remains freely selectable; its chord-tone name does not imply simultaneous or blocked-chord evaluation.
 
 ### Future Scope
 
-- Full score notation, note-duration and velocity evaluation, rests, tuplets, syncopation, chords, hands-together coordination, adaptive tempo, pause/resume, richer history, and quality-sensitive or goal-sensitive recommendations belong to later slices.
+- Full score notation, note-duration and velocity evaluation, rests, tuplets, syncopation, simultaneous chord events, hands-together coordination, adaptive tempo, pause/resume, richer history, and quality-sensitive or goal-sensitive recommendations belong to later slices.
 - Cloud synchronization, authentication, social comparison, streaks, and remote analytics are not implied by local history.
 - Native release distribution, signing automation, device provisioning, and native-only practice features are not implied by the thin MIDI wrapper.
 
@@ -37,11 +38,13 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - **Start rule:** The first evaluable note-on starts an attempt. In timed mode, the first accepted correct note also establishes the evaluator's fixed MIDI timestamp anchor. Note-off, unsupported MIDI, pitch errors before the first accepted note, audio clicks, device enumeration, and connection changes do not establish that anchor.
 - **Progress rule:** The performance evaluator owns note classification and expected-event advancement. The session projects evaluator state into the display and feedback region.
 - **Pitch-guide projection:** A presentation adapter derives ordered staff positions from canonical event IDs, MIDI note numbers, and the current single-hand natural-note subset. Server rendering provides the initial inline SVG; client enhancement projects accepted, next, and remaining evaluator state onto the matching canonical markers. Neither renderer nor SVG decides progress.
+- **Physical-key projection:** The on-screen keyboard derives the sorted inclusive natural-note span from the lowest through highest expected pitch and renders one control per MIDI note in that span. Repeated occurrences reuse one pitch-keyed control and intermediate non-phrase notes remain idle but playable through the normal evaluator. For C-E-G-E-C, semantic text and staff progress retain five event IDs while the keyboard shows C-D-E-F-G once each.
+- **Physical-key state:** Aggregate occurrence progress onto each key as `expected` when that pitch is next, otherwise `remaining` while any occurrence of the pitch is pending, otherwise `accepted` when all occurrences are accepted. A span pitch absent from the phrase is `idle`. Pressed state is independent, and tapping a key emits its MIDI pitch instead of advancing an event ID directly.
 - **Notation fallback:** The semantic ordered note sequence remains present beside the guide and is the fallback for assistive technology or unsupported future notation. The renderer must not transpose, clamp, respell, omit, or partially draw an unsupported exercise to make it fit.
 - **Clock boundary:** A small Web Audio guidance service owns count-in and quarter-note click scheduling. The session never converts its scheduled or actual audio times into MIDI time and never supplies them to the evaluator; timing feedback comes only from normalized MIDI timestamp deltas and canonical beat gaps, including fractional offsets for subdivision.
 - **Presentation hierarchy:** The canonical exercise and live session state are projected into a responsive practice-desk surface. Desktop and iPad layouts may place supporting panels beside the stage, but narrow layouts preserve the stage-first document and focus order instead of visually promoting configuration over playing.
 - **Evaluation boundary:** The evaluator observes normalized note pitch and order and, for timed mode only, MIDI timestamp intervals. Hand labels are practice instructions; MIDI input cannot verify which hand, fingering, touch, movement, or posture produced a note.
-- **Identity boundary:** Adding or replacing the staff presentation does not change the current exercise schema, canonical ID, revision, evaluator, or attempt-history identity. Rendered coordinates and glyphs never enter canonical exercise or persistence data.
+- **Identity boundary:** Adding or replacing staff or physical-key presentation does not change the current exercise schema, canonical ID, revision, evaluator, or attempt-history identity. Canonical event occurrences remain distinct even when they share one physical key; rendered coordinates, glyphs, and control identity never enter canonical exercise or persistence data.
 - **Restart rule:** Restart stops active click guidance, creates a clean evaluator and timing anchor for the same exercise revision and selected tempo, clears transient feedback and progress, and keeps already completed history. Restarting an incomplete attempt does not persist it as completed.
 - **Disconnect rule:** Losing the active input during an in-progress attempt marks it interrupted. The learner is told to reconnect and restart; events after the disconnect cannot complete that attempt.
 - **Completion rule:** The attempt completes once the evaluator accepts every expected event in order. Additional input does not mutate the completed result.
@@ -57,7 +60,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 
 - The initial HTML contains the exercise chooser, selected exercise heading, instructions, pitch guide, and ordered notes rather than placeholder content that only JavaScript fills.
 - The adjacent semantic note sequence names every pitch in canonical order. The inline SVG does not create a conflicting second spoken sequence, and next-note meaning remains available in text rather than colour alone.
-- The expected-note state is conveyed by text in addition to colour. The five-key display remains understandable with keyboard navigation and common assistive technology.
+- The expected-note state is conveyed by text in addition to colour. Every physical key exposes its pitch and aggregate expected, remaining, accepted, or idle meaning to keyboard navigation and common assistive technology; pressed state does not replace that progress description.
 - Connection, feedback, completion, persistence failure, and history regions use appropriate status semantics without repeatedly interrupting the learner.
 - The suggested exercise and its reason are expressed as text in the completion region. Unavailable recommendation state falls back to a plainly labelled exercise-library action, and no exercise link is disabled by recommendation state.
 - Tempo, count-in, and click state are conveyed in text as well as sound. Starting audio remains an explicit learner action compatible with browser audio-permission rules.
@@ -83,14 +86,17 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - Multiple completion callbacks for one attempt are idempotent and create one stored record.
 - An empty history is displayed as an empty state, never as an error or fabricated zero-streak judgement.
 - Local-day counting handles midnight by deriving the summary from stored timestamps and the current local calendar day at render time.
-- If a future exercise uses accidentals, an unsupported range, mixed hands, `both` hand, chords, or multiple voices, the pitch-guide adapter reports the unsupported subset and the complete semantic text and normal practice flow remain available.
+- If a future exercise uses accidentals, an unsupported range, mixed hands, `both` hand, simultaneous chord events, or multiple voices, the pitch-guide adapter reports the unsupported subset and the complete semantic text and normal practice flow remain available.
 - A descending or step-and-skip exercise keeps canonical event order horizontally while its pitch markers move vertically by note number; presentation order never sorts or rewrites evaluator order.
+- In C-E-G-E-C, accepting the first C leaves the physical C key `remaining` because the final C is still pending. When the final C becomes next it is `expected`; the first C staff marker remains accepted throughout.
+- D and F remain `idle` in the ordered chord-tone studies. Playing either follows the ordinary wrong-note path and does not change event progress or promote the key into the phrase.
 
 ### Anti-Patterns
 
 - Do not require JavaScript merely to read the exercise instructions.
 - Do not require JavaScript to choose or link directly to an exercise.
 - Do not derive exercise notes or identity by scraping the rendered keyboard.
+- Do not equate physical-key identity with expected-event identity, duplicate a piano key for a repeated occurrence, or deduplicate canonical event progress to match the keyboard.
 - Do not derive exercise notes or identity by scraping the staff guide, or treat rendered coordinates as canonical notation data.
 - Do not silently fall back to the default when a supplied exercise ID is invalid.
 - Do not allow views to classify MIDI events or advance evaluation independently.
@@ -105,6 +111,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - Do not imply that the app replaces a teacher or diagnoses posture, tension, fingering, or strength.
 - Do not infer written duration, beat placement, articulation, dynamics, or staff-reading mastery from the pitch-only guide or its marker spacing.
 - Do not infer held duration, rests, notation, or simultaneity from fractional onset offsets or the `Eighth-note grid` label.
+- Do not describe ordered C-E-G-E-C completion as simultaneous chord playing, voicing, harmony recognition, or blocked-chord evidence.
 - Do not branch practice-session or evaluator behavior on CoreMIDI packet details, native source identity, or WKWebView messages.
 - Do not store native attempts under a web or mock adapter kind.
 - Do not let input configuration, exercise browsing, history, or decorative progress treatment compete with the current note and keyboard as the primary practice task.
@@ -113,11 +120,12 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 
 ### Definition of Done
 
-- [ ] `/practice` returns the canonical default, and `?exercise=<id>` selects each of the twelve validated exercises without requiring client JavaScript.
+- [ ] `/practice` returns the canonical default, and `?exercise=<id>` selects each of the fourteen validated exercises without requiring client JavaScript.
 - [ ] Unknown, empty, and duplicated supplied exercise parameters return `404`.
 - [ ] The server-rendered chooser identifies the selected exercise and links to every library entry.
 - [ ] Every current exercise server-renders the supported treble or bass pitch guide and adjacent semantic note text from its canonical expected events.
-- [ ] Enhancement exposes input choice and state, accepted/next/remaining pitch-guide state, five-key guidance, next expected note, calm feedback, restart, and completion.
+- [ ] Enhancement exposes input choice and state, accepted/next/remaining pitch-guide state, a natural-note-span keyboard with pitch-based aggregate state, next expected note, calm feedback, restart, and completion.
+- [ ] The ordered chord-tone pair retains five event and staff occurrences while reusing C and E keyboard controls, keeping D and F idle, and preserving the evaluator's normal wrong-note path.
 - [ ] The active practice stage remains the dominant surface at desktop and iPad sizes, with secondary panels following it in semantic and narrow-screen order.
 - [ ] The complete session works through deterministic mock input, through Web MIDI on supported desktop browsers, and through `NativeMidiInputPort` in the trusted iPad wrapper.
 - [ ] Each of the six timed studies offers 40–100 BPM with 60 BPM default, a four-beat 4/4 count-in, quarter-note click guidance, and four MIDI-interval timing assessments after the first accepted correct note anchors the attempt. The even-eighth pair uses fractional half-beat offsets and ±0.1-beat tolerance.
@@ -143,6 +151,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - Only accepted correct notes may establish or contribute to timed interval evaluation; pitch errors must not move the timing anchor.
 - The highlighted next note must always correspond to evaluator state from the canonical exercise.
 - Pitch-guide marker order and live state must use canonical event order and IDs; a renderer must not create its own exercise identity or progress logic.
+- Physical keys must be sorted by MIDI pitch across the inclusive natural-note span, use one control per pitch, preserve `expected` over `remaining` over `accepted`, leave non-phrase span pitches `idle`, and keep pressed state independent.
 - The selected exercise ID in the URL, server-rendered content, client evaluator, and persisted attempt must agree.
 - No completion may claim that the declared hand or fingering was verified.
 - No completion may claim staff-reading or sight-reading evidence merely because the pitch guide was visible.
@@ -163,10 +172,10 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 
 ### Verification
 
-- **Unit tests:** Session state transitions, note-off filtering, restart invalidation, disconnect interruption, completion idempotence, tempo boundaries, four-beat count-in scheduling, quarter-click subdivision guidance, audio cleanup, fixed MIDI timing anchor, optional timing-summary validation, rhythm-aware presentation labels, local-day summary, empty history, corrupt-record isolation, persistence failure, pitch-guide state projection, optimistic post-completion recommendation, retained-history refresh, and unavailable recommendation fallback.
+- **Unit tests:** Session state transitions, note-off filtering, restart invalidation, disconnect interruption, completion idempotence, tempo boundaries, four-beat count-in scheduling, quarter-click subdivision guidance, audio cleanup, fixed MIDI timing anchor, optional timing-summary validation, rhythm-aware presentation labels, local-day summary, empty history, corrupt-record isolation, persistence failure, pitch-guide state projection, repeated-occurrence physical-key aggregation, optimistic post-completion recommendation, retained-history refresh, and unavailable recommendation fallback.
 - **Integration tests:** Exercise-library selection, supported staff rendering, canonical timed and untimed exercises, evaluator, audio guidance, mock port, and attempt repository cooperate without DOM-derived data, notation-derived identity, or cross-clock comparison; unknown IDs fail closed.
 - **Native adapter tests:** Validated native replies, state changes, and normalized events drive the same controller; malformed payloads, stale callbacks, disconnect, and disposal cannot advance or complete an attempt.
-- **Browser tests:** Playwright opens the default, a left-hand untimed exercise, a timed step-and-skip exercise, and an even-eighth exercise; verifies server-rendered pitch guides, rhythm-aware labels, ordered text, instructions, and chooser behavior; selects mock input; observes matching staff and keyboard progress; changes tempo; starts the count-in; plays canonical timestamped fixtures; observes pitch and onset-timing feedback; completes; sees the explained direct-dependent suggestion while the full chooser remains available; reloads; and sees only successfully retained exact-revision history.
+- **Browser tests:** Playwright opens the default, a left-hand untimed exercise, an ordered chord-tone exercise, a timed step-and-skip exercise, and an even-eighth exercise; verifies server-rendered pitch guides, rhythm-aware labels, ordered text, physical-key projection, instructions, and chooser behavior; selects mock input; observes matching occurrence-based staff and aggregate keyboard progress; changes tempo; starts the count-in; plays canonical timestamped fixtures; observes pitch and onset-timing feedback; completes; sees the explained direct-dependent suggestion while the full chooser remains available; reloads; and sees only successfully retained exact-revision history.
 - **Coverage target:** Every session transition and persistence failure branch remains exercised; snapshots alone are insufficient evidence.
 
 ### Scenarios
@@ -175,13 +184,13 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 
 - Given: client scripting is disabled or fails to load
 - When: the learner opens `/practice`
-- Then: the default C-D-E-F-G right-hand instructions, expected notes, and twelve-exercise chooser remain visible, and history says JavaScript is required instead of claiming the history is empty
+- Then: the default C-D-E-F-G right-hand instructions, expected notes, and fourteen-exercise chooser remain visible, and history says JavaScript is required instead of claiming the history is empty
 
 **Scenario: Select another exercise without JavaScript**
 
 - Given: client scripting is disabled
 - When: the learner opens `/practice?exercise=five-note-ascent-c-major-left-hand`
-- Then: the left-hand C3-D3-E3-F3-G3 exercise is selected and fully readable with a bass pitch guide, ordered note text, and links to the other eleven exercises
+- Then: the left-hand C3-D3-E3-F3-G3 exercise is selected and fully readable with a bass pitch guide, ordered note text, and links to the other thirteen exercises
 
 **Scenario: Read right-hand staff positions without JavaScript**
 
@@ -194,6 +203,12 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - Given: C4 is next in an enhanced right-hand exercise
 - When: the shared evaluator accepts C4
 - Then: the C4 marker becomes accepted and the marker matching the evaluator's next canonical event becomes next, consistently with the textual and keyboard cues
+
+**Scenario: Reuse physical keys for ordered chord tones**
+
+- Given: `ordered-chord-tones-c-major-right-hand` expects C4-E4-G4-E4-C4 and its keyboard shows C4-D4-E4-F4-G4 once each
+- When: the first C4 is accepted and E4 becomes next
+- Then: the first C4 staff marker remains accepted, the physical C4 key is `remaining` for its final occurrence, E4 is `expected`, D4 and F4 stay `idle`, and pressing either idle key follows the normal wrong-note path
 
 **Scenario: Requested exercise does not exist**
 

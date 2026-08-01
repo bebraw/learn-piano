@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import type { PracticePulseState, PracticePulseStatus } from "../audio/practice-pulse-port.js";
 import { fiveNoteDescentRightHandExercise } from "../exercises/library/beginner-five-note-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
+import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered-chord-tone-exercises.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import { createEvaluationState, evaluateMidiEvent } from "../exercises/evaluator.js";
 import type { Exercise } from "../exercises/types.js";
 import type { MidiConnectionState } from "../midi/types.js";
+import { projectPracticeKeyboardNotes } from "../views/exercise-presentation.js";
 import { createPracticePageView, type PracticePageElements } from "./practice-page-view.js";
 import type { PracticeSnapshot } from "./practice-controller.js";
 
@@ -110,6 +112,79 @@ describe("createPracticePageView", () => {
 
     expect(staffNotes[0]?.getAttribute("data-note-state")).toBe("expected");
     expect(staffNotes.slice(1).every((note) => note.getAttribute("data-note-state") === "remaining")).toBe(true);
+  });
+
+  it("re-cues one physical key while advancing repeated staff occurrences independently", () => {
+    const exercise = orderedChordTonesRightHandExercise;
+    const { elements, keys, staffNotes } = createElements(exercise);
+    const view = createPracticePageView(elements);
+    const connected = connection("connected", "mock-midi-input");
+    let evaluation = createEvaluationState(exercise);
+
+    const render = (feedback: PracticeSnapshot["feedback"] = null, activeNoteNumbers: readonly number[] = []): void => {
+      view.render(
+        snapshot({
+          exercise,
+          connection: connected,
+          sessionStatus: evaluation.completed ? "completed" : evaluation.nextExpectedIndex === 0 ? "ready" : "in-progress",
+          evaluation,
+          feedback,
+          activeNoteNumbers,
+        }),
+      );
+    };
+    const play = (noteNumber: number, timestamp: number): void => {
+      const transition = evaluateMidiEvent(exercise, evaluation, {
+        type: "note-on",
+        channel: 1,
+        noteNumber,
+        velocity: 72,
+        timestamp,
+      });
+      evaluation = transition.state;
+      render(transition.feedback, [noteNumber]);
+    };
+
+    render();
+    expect(keys).toHaveLength(5);
+    expect(keys.map(({ dataset }) => dataset.noteState)).toEqual(["expected", "idle", "remaining", "idle", "remaining"]);
+    expect(keys.map((key) => key.getAttribute("aria-label"))).toEqual([
+      "C4, next note",
+      "D4, not in phrase",
+      "E4, later in phrase",
+      "F4, not in phrase",
+      "G4, later in phrase",
+    ]);
+    expect(keys.every(({ disabled }) => !disabled)).toBe(true);
+
+    play(60, 100);
+    expect(keys.map(({ dataset }) => dataset.noteState)).toEqual(["remaining", "idle", "expected", "idle", "remaining"]);
+    expect(keys[0]?.getAttribute("aria-pressed")).toBe("true");
+    expect(staffNotes[0]?.getAttribute("data-note-state")).toBe("accepted");
+    expect(staffNotes[0]?.getAttribute("data-note-active")).toBe("true");
+    expect(staffNotes[4]?.getAttribute("data-note-state")).toBe("remaining");
+    expect(staffNotes[4]?.getAttribute("data-note-active")).toBe("false");
+
+    play(64, 200);
+    play(67, 300);
+    expect(keys.map(({ dataset }) => dataset.noteState)).toEqual(["remaining", "idle", "expected", "idle", "accepted"]);
+    expect(staffNotes[1]?.getAttribute("data-note-state")).toBe("accepted");
+    expect(staffNotes[3]?.getAttribute("data-note-state")).toBe("expected");
+
+    play(64, 400);
+    expect(keys.map(({ dataset }) => dataset.noteState)).toEqual(["expected", "idle", "accepted", "idle", "accepted"]);
+    expect(staffNotes[1]?.getAttribute("data-note-active")).toBe("false");
+    expect(staffNotes[3]?.getAttribute("data-note-active")).toBe("true");
+    expect(staffNotes[4]?.getAttribute("data-note-state")).toBe("expected");
+
+    play(60, 500);
+    expect(keys.map(({ dataset }) => dataset.noteState)).toEqual(["accepted", "idle", "accepted", "idle", "accepted"]);
+    expect(staffNotes.every((note) => note.getAttribute("data-note-state") === "accepted")).toBe(true);
+    expect(staffNotes[0]?.getAttribute("data-note-active")).toBe("false");
+    expect(staffNotes[4]?.getAttribute("data-note-active")).toBe("true");
+
+    render(null, []);
+    expect(staffNotes.every((note) => note.getAttribute("data-note-active") === "false")).toBe(true);
   });
 
   it("keeps a stopped timed study gated until an input is connected and the pulse starts", () => {
@@ -594,7 +669,8 @@ function createElements(exercise: Exercise = fiveNoteAscentExercise): {
   readonly staffNotes: FakeElement[];
 } {
   const enhancements = [new FakeElement(), new FakeElement()];
-  const keys = exercise.expectedEvents.map(() => new FakeKey());
+  const keyboardNotes = projectPracticeKeyboardNotes(exercise);
+  const keys = keyboardNotes.map(() => new FakeKey());
   const staffNotes = exercise.expectedEvents.map(() => new FakeElement());
   return {
     keys,
@@ -629,9 +705,8 @@ function createElements(exercise: Exercise = fiveNoteAscentExercise): {
       nextStudyReason: new FakeElement(),
       nextExerciseLink: new FakeElement(),
       nextExerciseLabel: new FakeElement(),
-      keys: exercise.expectedEvents.map((event, index) => ({
-        eventId: event.id,
-        noteNumber: event.noteNumber,
+      keys: keyboardNotes.map((noteNumber, index) => ({
+        noteNumber,
         element: keys[index]!,
       })),
       staffNotes: exercise.expectedEvents.map((event, index) => ({

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defaultExercise, exerciseLibrary } from "./exercises/library";
 import { steadyQuarterStepSkipRightHandExercise } from "./exercises/library/steady-quarter-exercises";
+import { orderedChordTonesRightHandExercise } from "./exercises/library/ordered-chord-tone-exercises";
 import { exercisePracticeHref } from "./views/exercise-presentation";
 import worker, { handleRequest } from "./worker";
 import { ensureGeneratedStylesheet } from "./test-support";
@@ -21,7 +22,7 @@ describe("worker", () => {
     expect(body).toContain("Piano Practice");
     expect(body).toContain(exercisePracticeHref(defaultExercise));
     expect(body).toContain("Choose your next study");
-    expect(exerciseLibrary).toHaveLength(12);
+    expect(exerciseLibrary).toHaveLength(14);
     expect(body.match(/class="folio-card group"/g)).toHaveLength(exerciseLibrary.length);
     expect(body.match(/data-mode="timed"/g)).toHaveLength(6);
     expect(body).toContain("/api/health");
@@ -52,6 +53,19 @@ describe("worker", () => {
     expect(body).toContain(selectedExercise.instructions);
     expect(body).toContain(`data-exercise-id="${selectedExercise.id}"`);
     expect(body).toContain('aria-current="page"');
+  });
+
+  it("renders repeated chord tones as event occurrences over one physical C position", async () => {
+    const response = await handleRequest(new Request(`http://example.com${exercisePracticeHref(orderedChordTonesRightHandExercise)}`));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain('aria-label="Pitch order: C4 · E4 · G4 · E4 · C4"');
+    expect(body.match(/data-staff-note/g)).toHaveLength(5);
+    expect(body.match(/data-practice-key/g)).toHaveLength(5);
+    expect(body.match(/data-note-number="60"/g)).toHaveLength(1);
+    expect(body).toContain('data-note-number="62"\n        data-note-state="idle"');
+    expect(body).toContain('data-note-number="65"\n        data-note-state="idle"');
   });
 
   it("renders steady-pulse controls and timing facts for a timed exercise", async () => {

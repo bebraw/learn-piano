@@ -1,6 +1,6 @@
 # Piano Practice
 
-Piano Practice is a personal, local-first browser application for focused piano exercises, with a thin native wrapper for dependable MIDI input on iPad. The current vertical slice offers twelve original beginner studies, six per hand: six untimed C-position patterns plus straight steady-quarter, timed step-and-skip, and even-eighth pairs. Every study includes a server-rendered treble or bass pitch guide and immediate deterministic pitch and order feedback; the six timed studies add bounded onset-timing feedback. Completed-attempt history stays in the current browser or web view, and completion can show one explainable next-study suggestion.
+Piano Practice is a personal, local-first browser application for focused piano exercises, with a thin native wrapper for dependable MIDI input on iPad. The current vertical slice offers fourteen original beginner studies, seven per hand: eight untimed C-position patterns plus straight steady-quarter, timed step-and-skip, and even-eighth pairs. Every study includes a server-rendered treble or bass pitch guide and immediate deterministic pitch and order feedback; the six timed studies add bounded onset-timing feedback. Completed-attempt history stays in the current browser or web view, and completion can show one explainable next-study suggestion.
 
 The application runs as a Cloudflare Worker through Wrangler. It renders useful HTML on the server, then progressively enhances the practice page with small typed browser modules. There is no client framework, account, cloud database, generative feedback loop, percentage grade, or streak mechanic.
 
@@ -8,19 +8,20 @@ The application runs as a Cloudflare Worker through Wrangler. It renders useful 
 
 ## Current Practice Slice
 
-- Choose from twelve canonical exercises on the home or practice page, even when JavaScript or MIDI is unavailable.
+- Choose from fourteen canonical exercises on the home or practice page, even when JavaScript or MIDI is unavailable.
 - Open `/practice` for the default right-hand ascent, or use `?exercise=<id>` to link directly to another exercise.
 - Read the current natural-note sequence on a pitch-only staff guide: treble for the right-hand C4-G4 studies and bass for the left-hand C3-G3 studies. Ordered note text remains alongside it as the accessible fallback.
-- Use the five on-screen practice keys for a deterministic hardware-free flow.
+- Use the on-screen natural-note span for a deterministic hardware-free flow. Every current C-position study shows C through G once each; repeated C or E occurrences reuse the same physical key.
 - On a supported desktop browser, select and connect a Web MIDI input.
 - On iPadOS 17 or later, use the native wrapper to select one USB or paired Bluetooth CoreMIDI source.
 - See the next expected note, accepted notes, active notes, and calm feedback for correct, repeated, out-of-order, and wrong input.
+- Practice the paired untimed C-major chord-tone studies as the ordered sequence C-E-G-E-C. Their five event occurrences retain separate progress and staff markers while the on-screen keyboard reuses its C and E controls; the sequence does not ask for simultaneous notes.
 - For any of the six timed studies, choose 40–100 BPM (60 by default), hear a four-beat 4/4 count-in and quarter-note click, and receive “on time,” “early,” or “late” feedback after the first correct note anchors the attempt. Four studies place C-D-E-F-G or C-E-D-F-G on quarter-note beats with a ±0.2-beat window. The `Eighth-note grid` pair places C-D-E-F-G at beat offsets 0, 0.5, 1, 1.5, and 2 with a ±0.1-beat window while the learner subdivides between quarter-note clicks; its staff label says `Pitch order · Even eighth-note onsets` without drawing rhythmic notation.
 - Restart cleanly after a disconnect or whenever you want to begin again.
 - After completion, receive one advisory next-study or review suggestion based on declared prerequisites and retained exact-revision history. The suggestion explains its reason, while the complete exercise library remains available as the override.
 - Keep compact completed-attempt history scoped to each exercise ID and revision in a versioned, bounded `localStorage` record. Timed completions may include their tempo, interval classifications, and mean absolute error; incomplete and interrupted attempts are not saved, and evicted history no longer contributes to recommendations.
 
-The staff guide supports gradual pitch-position reading, but its markers do not encode note duration or a complete score, and MIDI completion cannot establish that the learner read it. MIDI can confirm note pitch and order for every exercise and assess onset intervals for the six timed studies. Fractional beat offsets locate expected onsets; they do not establish how long a note was held, encode rests or written notation, or imply simultaneity. MIDI cannot verify which hand played, assess posture, tension, fingering, velocity quality, or touch, or replace a qualified piano teacher. A recommendation likewise does not mean an exercise was mastered or unlocked; this first version deliberately ignores error totals, timing quality, tempo, and velocity when choosing what to suggest.
+The staff guide supports gradual pitch-position reading, but its markers do not encode note duration or a complete score, and MIDI completion cannot establish that the learner read it. MIDI can confirm note pitch and order for every exercise and assess onset intervals for the six timed studies. Fractional beat offsets locate expected onsets; they do not establish how long a note was held, encode rests or written notation, or imply simultaneity. Likewise, completing C-E-G-E-C confirms only an ordered pitch pattern; it does not establish blocked-chord playing, harmony recognition, voicing, or simultaneous performance. MIDI cannot verify which hand played, assess posture, tension, fingering, velocity quality, or touch, or replace a qualified piano teacher. A recommendation likewise does not mean an exercise was mastered or unlocked; this first version deliberately ignores error totals, timing quality, tempo, and velocity when choosing what to suggest.
 
 ## Run Locally
 
@@ -65,13 +66,13 @@ The wrapper restricts main-frame navigation and native bridge messages to the co
 - `src/api/` contains the JSON health endpoint used by tooling and smoke tests.
 - Colocated `*.test.ts` files cover domain and integration behavior; colocated `*.e2e.ts` files cover browser-visible flows.
 
-Each canonical exercise definition is the shared source for rendering, evaluation, fixtures, persisted identity, and prerequisite relationships. The reversible inline-SVG pitch-guide adapter derives its supported treble and bass positions from the same expected events without adding notation fields, schema versions, or exercise revisions. Live evaluation is local and replayable: an identical exercise, selected tempo, and normalized MIDI sequence always yield the same result. Timed studies compare accepted-note MIDI timestamp deltas with canonical beat gaps, including fractional offsets for subdivisions, and apply their own declared timing windows. Their Web Audio count-in and quarter-note metronome guide the learner but are never used as evaluation timestamps. Persisted `onPulse` and internal `on-pulse` names remain compatible with existing attempts; learner-facing feedback calls that result “on time.”
+Each canonical exercise definition is the shared source for rendering, evaluation, fixtures, persisted identity, and prerequisite relationships. Event identity remains occurrence-based for evaluation, semantic note order, and staff progress, while the physical keyboard projects one pitch-keyed control across the exercise's natural-note span. The reversible inline-SVG pitch-guide adapter derives its supported treble and bass positions from the same expected events without adding notation fields, schema versions, or exercise revisions. Live evaluation is local and replayable: an identical exercise, selected tempo, and normalized MIDI sequence always yield the same result. Timed studies compare accepted-note MIDI timestamp deltas with canonical beat gaps, including fractional offsets for subdivisions, and apply their own declared timing windows. Their Web Audio count-in and quarter-note metronome guide the learner but are never used as evaluation timestamps. Persisted `onPulse` and internal `on-pulse` names remain compatible with existing attempts; learner-facing feedback calls that result “on time.”
 
 The local recommender uses only canonical library order, prerequisites, retained completions for current exercise revisions, and the just-completed in-memory attempt. It can update the completion UI before persistence finishes, then refresh from retained history after a successful save. A failed save can leave that transient suggestion on the current page without making it durable; an initial history-read failure or invalid prerequisite graph leaves completion valid and uses the unrestricted exercise library as the neutral fallback.
 
 ## Routes
 
-- `GET /` — application overview and twelve-exercise beginner library
+- `GET /` — application overview and fourteen-exercise beginner library
 - `GET /practice` — the default right-hand C4-to-G4 ascent
 - `GET /practice?exercise=<id>` — a selected canonical exercise; unknown IDs return `404`
 - `GET /styles.css` and `GET /client/*.js` — generated same-origin browser assets
@@ -107,4 +108,4 @@ The application screenshot is committed at `docs/screenshots/home.png` and refre
 
 ## Next Slice
 
-Possible next slices include a truthful chord-tone preparation study that keeps pitches ordered rather than implying simultaneous chord evaluation, or a focused repeated-note control study. Full score notation, note duration, velocity, rests, syncopation, blocked chords, hands-together work, adaptive tempo, quality-sensitive recommendations, protected repertoire content, cloud sync, and iPad release distribution remain separate decisions.
+Possible next slices include a focused repeated-note control study or a reading-focused mode that deliberately reduces note-name and keyboard cues. Full score notation, note duration, velocity, rests, syncopation, simultaneous chord events, hands-together work, adaptive tempo, quality-sensitive recommendations, protected repertoire content, cloud sync, and iPad release distribution remain separate decisions.

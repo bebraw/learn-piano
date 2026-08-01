@@ -4,11 +4,11 @@
 
 ### Context
 
-Exercises need one canonical representation so instructions, visual guidance, evaluation, persistence, fixtures, curriculum, the current pitch guide, and any future full-notation layer cannot drift into separate interpretations of the same musical task. The representation starts with a compact beginner library but must evolve deliberately toward chords, rhythm, technique, and lawfully sourced repertoire.
+Exercises need one canonical representation so instructions, visual guidance, evaluation, persistence, fixtures, curriculum, the current pitch guide, and any future full-notation layer cannot drift into separate interpretations of the same musical task. The representation starts with a compact beginner library but must evolve deliberately toward simultaneous chords, rhythm, technique, and lawfully sourced repertoire.
 
 ### Current Library Scope
 
-- The validated library contains twelve schema-version-1, revision-1 exercises:
+- The validated library contains fourteen schema-version-1, revision-1 exercises:
   - `five-note-ascent-c-major-right-hand`: C4-D4-E4-F4-G4
   - `five-note-descent-c-major-right-hand`: G4-F4-E4-D4-C4
   - `five-note-ascent-c-major-left-hand`: C3-D3-E3-F3-G3
@@ -21,20 +21,24 @@ Exercises need one canonical representation so instructions, visual guidance, ev
   - `steady-quarter-step-skip-c-major-left-hand`: C3-E3-D3-F3-G3 at quarter-note beat offsets 0–4
   - `even-eighths-c-major-right-hand`: C4-D4-E4-F4-G4 at beat offsets 0, 0.5, 1, 1.5, and 2
   - `even-eighths-c-major-left-hand`: C3-D3-E3-F3-G3 at beat offsets 0, 0.5, 1, 1.5, and 2
-- Every current exercise contains exactly five distinct pitches and remains compatible with the five-key practice view. The six pitch-pattern studies use `untimed-ordered-notes`; the four steady-quarter and two even-eighth studies use `timed-ordered-notes`.
+  - `ordered-chord-tones-c-major-right-hand` (`C major chord tones · right hand`): C4-E4-G4-E4-C4
+  - `ordered-chord-tones-c-major-left-hand` (`C major chord tones · left hand`): C3-E3-G3-E3-C3
+- Every current exercise contains exactly five expected-event occurrences. The first twelve exercises contain five distinct pitches; each ordered chord-tone study contains three distinct pitches across five event IDs. Eight studies use `untimed-ordered-notes`; the four steady-quarter and two even-eighth studies use `timed-ordered-notes`.
 - The original right-hand ascent remains the default so existing links and attempt identity stay stable. The library API exposes `exerciseLibrary`, `defaultExercise`, `DEFAULT_EXERCISE_ID`, and nullable lookup by stable ID.
 - Canonical library order is deterministic recommendation policy: it resolves candidate and equal-recency ties, but it is not exercise identity and must not be inferred from rendered card or storage order.
 - Each exercise has learner-facing title and instructions, beginner difficulty, explicit hand and prerequisite metadata, curriculum tags, and source metadata identifying it as original project material.
 - Titles name the assigned hand consistently. Instructions offer concise conventional C-position fingering as optional learner guidance; MIDI evaluation checks only the canonical pitch order and cannot verify which fingers were used.
 - Each straight steady-quarter exercise requires the matching untimed ascent. Each timed step-and-skip exercise requires, in canonical prerequisite order, its matching untimed step-and-skip exercise and matching straight steady-quarter exercise. Those four belong to the `rhythm-and-coordination.steady-quarter-notes` curriculum competency and define beat offsets 0–4 with a ±0.2-beat timing window. The timed step-and-skip pair additionally carries the existing interval-recognition and step-skip-coordination tags.
 - Each even-eighth exercise requires only the matching straight steady-quarter exercise. The pair carries `rhythm-and-coordination.even-eighth-note-onsets`, `rhythm-and-coordination.subdivision`, and hands-separate tags, defines beat offsets 0, 0.5, 1, 1.5, and 2, and uses a ±0.1-beat timing window. All six timed studies share a 40–100 BPM range with 60 BPM default, 4/4 meter, quarter-note beat unit, four-beat count-in, and quarter-note click guidance.
+- Each ordered chord-tone exercise requires only the matching untimed step-and-skip exercise and carries `patterns-and-technique.chord-tone-patterns`, `notes-and-reading.interval-recognition`, and `rhythm-and-coordination.hands-separately`. C-E-G-E-C remains five ordered individual-note events; the exercise name and tags add no simultaneity, blocked-chord, voicing, or harmony-assessment semantics.
 - A presentation adapter derives a pitch-only staff guide for all current exercises from their existing event IDs, MIDI note numbers, order, and single-hand assignments. Right-hand C4-G4 natural notes use the supported treble view; left-hand C3-G3 natural notes use the supported bass view.
+- A physical-key presentation adapter derives the inclusive natural-note span from the exercise's lowest through highest expected pitch and emits one sorted control per MIDI note in that span. Repeated occurrences reuse a control; intermediate notes absent from the phrase remain idle and playable through the normal evaluator. C-E-G-E-C therefore retains five canonical events and staff markers while the keyboard shows C-D-E-F-G once each.
 - A separate rhythm presentation helper derives learner labels from evaluation mode and canonical beat-offset spacing. The even-eighth pair is labelled `Eighth-note grid` in the catalog and setup surface and `Pitch order · Even eighth-note onsets` beside the staff. These presentation labels are not canonical exercise identity or added notation semantics.
-- The staff guide adds no notation payload, schema version, exercise revision, evaluator behavior, or attempt identity. Fractional beat offsets describe onset subdivision only. The current library still has no written-duration or note-duration target, velocity target, fingering assessment, audio asset, rests, syncopation, chords, hands-together material, adaptive tempo, or bundled repertoire content.
+- The staff guide and physical-key projection add no notation payload, schema version, exercise revision, evaluator behavior, or attempt identity. Fractional beat offsets describe onset subdivision only. The current library still has no written-duration or note-duration target, velocity target, fingering assessment, audio asset, rests, syncopation, simultaneous chord events, hands-together material, adaptive tempo, or bundled repertoire content.
 
 ### Future Scope
 
-- Later schema versions or backward-compatible optional fields may represent chords, both-hand material, note duration, rests, additional subdivision models, syncopation, fingering suggestions, dynamic targets, adaptive tempo, repertoire-goal tags, and difficulty variants.
+- Later schema versions or backward-compatible optional fields may represent simultaneous chords, both-hand material, note duration, rests, additional subdivision models, syncopation, fingering suggestions, dynamic targets, adaptive tempo, repertoire-goal tags, and difficulty variants.
 - A later full notation system, imported score format, or licensed content source must adapt to this canonical domain model rather than become a parallel exercise identity system.
 - Accidentals, written durations, key signatures, rests, multiple voices, both-hand grand staff, MusicXML parsing, a general notation framework, and copyrighted repertoire content are not part of the current library and require separate decisions or lawful input.
 
@@ -51,6 +55,7 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - **Source and rights metadata:** Each exercise declares whether it is original, public domain, licensed, or user-provided, plus attribution or license information when applicable. A repertoire-goal tag is motivational metadata and never grants permission to embed the referenced composition.
 - **Validation boundary:** Exercise data is validated at document construction and as a complete library before use. Renderer, evaluator, fixtures, persistence, and curriculum consume the resulting typed exercise and the same canonical ID/revision.
 - **Pitch-guide consumer:** The current notation adapter is a presentation consumer of the typed exercise. It maps the supported single-hand natural MIDI pitches to treble or bass staff geometry and preserves canonical event order and identity; SVG coordinates, glyph choices, and live marker state are not canonical exercise fields.
+- **Physical-key consumer:** The current keyboard adapter maps the inclusive natural-note span to one pitch-keyed control per MIDI note. It never deduplicates canonical events or treats a control as an expected-event ID. Evaluator state projects onto each control with `expected` precedence, then `remaining` while any occurrence of that pitch is pending, then `accepted` when all occurrences are accepted; notes absent from the phrase are `idle`, and pressed state is independent.
 - **Unsupported notation:** The adapter must report exercises outside its supported subset instead of transposing, clamping, respelling, omitting events, or deriving missing notation semantics. The semantic ordered-note presentation remains the fallback and practice evaluation remains available.
 - **Dependencies:** Exercise documents contain domain data and no browser, MIDI-device, view, persistence, or framework objects.
 
@@ -70,8 +75,8 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - Missing IDs, duplicate expected-event IDs, duplicate exercise IDs within one library, empty expected-event lists, out-of-range MIDI notes, invalid hand values, and non-positive revisions are invalid.
 - Repeated pitches are valid when represented as separate expected events with distinct event IDs.
 - A notation consumer preserves separate event markers for repeated pitches and canonical horizontal order for descending or step-and-skip patterns; it does not sort or deduplicate the expected-event sequence.
-- The general schema continues to allow repeated pitches, while every exercise in the current five-key library deliberately uses exactly five distinct pitches.
-- Chords are not encoded as adjacent individual notes whose shared timing is merely implied. A future chord event must make simultaneity explicit.
+- The ordered chord-tone pair uses three distinct pitches across five event IDs. Its physical keyboard reuses C and E controls while event progress, semantic note order, and staff markers remain occurrence-based.
+- Chords are not encoded as adjacent individual notes whose shared timing is merely implied. A future simultaneous chord event must make simultaneity explicit; the current chord-tone label describes pitch membership, not simultaneous performance.
 - Timing metadata or beat offsets on an untimed exercise are invalid rather than silently turning it into a timed exercise.
 - A fractional beat offset is valid onset placement for a timed exercise but cannot be interpreted as note duration, an implicit rest, notation spacing, or a chord relationship.
 - Timed exercises reject missing or non-increasing beat offsets, a non-zero first offset, invalid or inverted tempo bounds, a default tempo outside the declared range, invalid meter/count-in values, and a negative or non-finite timing window.
@@ -82,10 +87,11 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 ### Anti-Patterns
 
 - Do not hard-code any canonical sequence in a view, controller, fixture runner, or evaluator.
+- Do not use a physical key control as canonical event identity, render duplicate physical keys for repeated events, or deduplicate repeated canonical events to match the keyboard.
 - Do not use visible labels, DOM element IDs, titles, or curriculum positions as canonical exercise identity.
 - Do not derive recommendation priority from rendered exercise order, persisted record order, or object-key iteration; use the validated canonical library order explicitly.
 - Do not let persisted attempts refer only to "the current exercise" without its ID and revision.
-- Do not encode future chords or rhythms through undocumented array conventions.
+- Do not encode future simultaneous chords or rhythms through undocumented array conventions.
 - Do not encode audible click times, MIDI timestamps, or a selected attempt tempo in the canonical exercise; it defines beat-relative intent and allowed tempo only.
 - Do not infer written eighth-note duration merely because two expected onsets are 0.5 beat apart.
 - Do not add platform event objects, callbacks, rendered markup, or persistence handles to exercise documents.
@@ -99,8 +105,9 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 ### Definition of Done
 
 - [ ] One validated canonical library defines the available exercises and is consumed by view, evaluator, persistence, fixtures, and curriculum references.
-- [ ] Twelve stable exercises cover six studies per hand, ascending and descending motion, untimed and timed step-skip coordination, straight steady quarter notes, and even-eighth onset subdivision while preserving the original right-hand ascent as default.
-- [ ] Every current exercise contains five distinct pitches and remains compatible with the five-key view; exactly six use the timed evaluator.
+- [ ] Fourteen stable exercises cover seven studies per hand, ascending and descending motion, untimed and timed step-skip coordination, ordered C-major chord tones, straight steady quarter notes, and even-eighth onset subdivision while preserving the original right-hand ascent as default.
+- [ ] Every current exercise contains five expected-event occurrences; the ordered chord-tone pair contains three distinct pitches and the other twelve contain five. Eight exercises are untimed and exactly six use the timed evaluator.
+- [ ] The physical keyboard renders one control for every natural MIDI note in the expected range, keeps unused span notes idle, reuses controls for repeated pitches, and never changes canonical event or staff-marker identity.
 - [ ] The four steady-quarter studies define beat offsets 0–4 and ±0.2-beat tolerance; the two even-eighth studies define offsets 0, 0.5, 1, 1.5, and 2 and ±0.1-beat tolerance. All six use 40–100 BPM with 60 BPM default, 4/4 quarter-note pulse, and a four-beat count-in.
 - [ ] The current pitch-guide consumer renders every current canonical sequence from existing event fields while leaving schema version 1 and all exercise revisions unchanged.
 - [ ] Rhythm-aware presentation derives `Untimed`, `Steady pulse`, `Eighth-note grid`, or the neutral timed fallback from canonical evaluation mode and offset spacing without inspecting titles or IDs.
@@ -118,6 +125,7 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - All consumers must continue to use the canonical `(id, revision)` pair.
 - C4 must remain MIDI note 60 and C3 MIDI note 48 throughout domain, display, fixture, and evaluation boundaries.
 - Reordering rendered keys must not change the canonical expected sequence.
+- Physical-key state must preserve `expected` over `remaining` over `accepted`, leave non-phrase span notes `idle`, and keep pressed state independent.
 - Reordering rendered exercise cards or stored attempt records must not change recommendation priority; changing canonical library order is an explicit policy change.
 - Untimed exercises must remain independent of tempo, duration, inter-event spacing, and velocity.
 - Timed exercises must derive interval targets from canonical beat offsets and a selected tempo inside the declared range; they must not contain runtime audio or MIDI timestamps.
@@ -132,7 +140,7 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 ### Verification
 
 - **Schema tests:** Accept every canonical exercise; reject unknown versions, invalid modes, empty sequences, duplicate IDs, invalid hands, invalid revisions, out-of-range MIDI notes, mode/timing mismatches, invalid tempo ranges, and missing or non-increasing timed beat offsets.
-- **Library tests:** Protect stable identities, default selection, canonical order, valid prerequisite references, and acyclic prerequisites; validate all source metadata, require five distinct pitches per exercise, and prove left-hand, descending, untimed step-skip, straight steady-quarter, timed step-and-skip, and even-eighth coverage.
+- **Library tests:** Protect stable identities, default selection, canonical order, valid prerequisite references, and acyclic prerequisites; validate all source metadata, require five event occurrences per exercise, and prove left-hand, descending, untimed step-skip, ordered chord-tone, straight steady-quarter, timed step-and-skip, and even-eighth coverage.
 - **Consumer contract tests:** Rendered guidance and evaluator expectations are derived from the same fixture and identity.
 - **Rhythm presentation tests:** Unit-beat offsets, half-beat offsets, and an otherwise valid timed pattern receive their documented steady-quarter, even-eighth, and neutral fallback labels.
 - **Notation consumer tests:** Protect natural-note pitch mapping, current treble and bass ranges, canonical event order and identity, and explicit unsupported results without schema mutation.
@@ -143,9 +151,9 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 
 **Scenario: Load the current library**
 
-- Given: twelve schema-version-1 documents for the current exercises
+- Given: fourteen schema-version-1 documents for the current exercises
 - When: the exercise library validates them
-- Then: it exposes twelve unique stable IDs, five distinct pitches per exercise, lawful original-source metadata, six timed studies, and the original right-hand ascent as default
+- Then: it exposes fourteen unique stable IDs, five event occurrences per exercise, eight untimed and six timed studies, lawful original-source metadata, and the original right-hand ascent as default
 
 **Scenario: Choose left-hand descending work**
 
@@ -177,6 +185,12 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - When: the canonical exercise is resolved
 - Then: it exposes C4-D4-E4-F4-G4 at offsets 0, 0.5, 1, 1.5, and 2 with a 0.1-beat timing window and requires only `steady-quarter-c-major-right-hand`
 
+**Scenario: Load ordered C-major chord tones**
+
+- Given: the learner selects `ordered-chord-tones-c-major-right-hand`
+- When: the canonical exercise is resolved
+- Then: its title is `C major chord tones · right hand`, it exposes five distinct event IDs for C4-E4-G4-E4-C4 in untimed order, requires only `step-skip-c-major-right-hand`, and carries `patterns-and-technique.chord-tone-patterns`, `notes-and-reading.interval-recognition`, and `rhythm-and-coordination.hands-separately` without implying simultaneity
+
 **Scenario: Reject an invalid timed exercise**
 
 - Given: a `timed-ordered-notes` exercise omits a beat offset or declares beat offsets that do not increase
@@ -207,11 +221,11 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - When: the exercise is loaded
 - Then: practice does not start and the application reports that the format is unsupported
 
-**Scenario: Preserve a repeated pitch**
+**Scenario: Project repeated events onto physical keys**
 
-- Given: a future valid exercise contains the same pitch twice in succession with different expected-event IDs
-- When: it is validated
-- Then: both events remain distinct expectations rather than being deduplicated
+- Given: `ordered-chord-tones-c-major-right-hand` contains C4-E4-G4-E4-C4 as five expected-event IDs
+- When: canonical guidance and the current physical keyboard are derived
+- Then: evaluation, semantic text, and staff notation retain five occurrences while the keyboard renders C4-D4-E4-F4-G4 once each, reuses C4 and E4 for their later occurrences, and leaves D4 and F4 idle but playable as wrong-note inputs
 
 **Scenario: Repertoire goal has no embedded content**
 

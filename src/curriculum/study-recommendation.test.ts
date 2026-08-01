@@ -4,6 +4,10 @@ import { STEP_SKIP_LEFT_HAND_EXERCISE_ID, STEP_SKIP_RIGHT_HAND_EXERCISE_ID } fro
 import { EVEN_EIGHTHS_LEFT_HAND_EXERCISE_ID, EVEN_EIGHTHS_RIGHT_HAND_EXERCISE_ID } from "../exercises/library/even-eighth-exercises.js";
 import { exerciseLibrary } from "../exercises/library/index.js";
 import {
+  ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
+  ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
+} from "../exercises/library/ordered-chord-tone-exercises.js";
+import {
   STEADY_QUARTER_LEFT_HAND_EXERCISE_ID,
   STEADY_QUARTER_RIGHT_HAND_EXERCISE_ID,
   STEADY_QUARTER_STEP_SKIP_LEFT_HAND_EXERCISE_ID,
@@ -248,6 +252,29 @@ describe("recommendNextStudy", () => {
       reason: {
         kind: "direct-dependent",
         prerequisiteExerciseIds: [straightPulse.id],
+      },
+    });
+  });
+
+  it.each([
+    {
+      patternId: STEP_SKIP_RIGHT_HAND_EXERCISE_ID,
+      chordTonesId: ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
+    },
+    {
+      patternId: STEP_SKIP_LEFT_HAND_EXERCISE_ID,
+      chordTonesId: ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
+    },
+  ])("recommends $chordTonesId directly after its untimed step-skip prerequisite", ({ patternId, chordTonesId }) => {
+    const pattern = requireLibraryExercise(patternId);
+    const chordTones = requireLibraryExercise(chordTonesId);
+
+    expect(recommendNextStudy(exerciseLibrary, [attempt(pattern, "2026-08-01T08:00:00.000Z")], pattern.id)).toEqual({
+      kind: "new-study",
+      exercise: chordTones,
+      reason: {
+        kind: "direct-dependent",
+        prerequisiteExerciseIds: [pattern.id],
       },
     });
   });
