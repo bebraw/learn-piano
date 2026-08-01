@@ -27,8 +27,13 @@ describe("worker", () => {
     expect(body).toContain("Piano Practice");
     expect(body).toContain(exercisePracticeHref(defaultExercise));
     expect(body).toContain("Choose your next study");
+    expect(body).toContain("Your local practice");
+    expect(body).toContain("Enable JavaScript to read completions saved in this browser.");
+    expect(body).toContain("data-home-root");
+    expect(body).toContain('type="module" src="/client/main.js"');
     expect(exerciseLibrary).toHaveLength(24);
     expect(body.match(/class="folio-card group"/g)).toHaveLength(exerciseLibrary.length);
+    expect(body.match(/data-completion-badge hidden/g)).toHaveLength(exerciseLibrary.length);
     expect(body.match(/data-mode="timed"/g)).toHaveLength(16);
     expect(body.match(/Steady pulse · 60 BPM/g)).toHaveLength(8);
     expect(body).toContain("/api/health");

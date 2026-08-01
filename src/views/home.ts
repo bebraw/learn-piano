@@ -36,6 +36,8 @@ export function renderHomePage(
       return `<li>
         <a
           class="folio-card group"
+          data-exercise-id="${escapeHtml(exercise.id)}"
+          data-exercise-revision="${exercise.revision}"
           data-hand="${handLabel === "Left hand" ? "left" : "right"}"
           data-mode="${exercise.evaluationMode === "timed-ordered-notes" ? "timed" : "untimed"}"
           href="${escapeHtml(exercisePracticeHref(exercise))}"
@@ -47,6 +49,7 @@ export function renderHomePage(
             <span class="folio-card-copy">${escapeHtml(exercise.instructions)}</span>
             <span class="folio-card-sequence" aria-label="Note order: ${escapeHtml(formatExerciseNoteOrder(exercise))}">${escapeHtml(formatExerciseNoteOrder(exercise))}</span>
             <span class="folio-card-timing">${escapeHtml(timingLabel)}</span>
+            <span class="folio-card-completion" data-completion-badge hidden><span aria-hidden="true">✓</span> Completion saved</span>
           </span>
           <span class="folio-card-action">${selected ? "Start here" : `${exercise.expectedEvents.length} notes`}<span aria-hidden="true">↗</span></span>
         </a>
@@ -71,7 +74,7 @@ export function renderHomePage(
   <body class="app-body">
     <a class="skip-link" href="#main">Skip to main content</a>
     ${renderAppHeader({ actionHref: exercisePracticeHref(defaultExercise), actionLabel: "Begin practice" })}
-    <main id="main" class="app-shell pb-10 pt-5 sm:pb-14 sm:pt-8">
+    <main id="main" class="app-shell pb-10 pt-5 sm:pb-14 sm:pt-8" data-home-root>
       <section class="home-hero app-rise" aria-labelledby="home-heading">
         <div class="home-hero-copy">
           <p class="app-eyebrow app-eyebrow-inverse">Personal practice studio</p>
@@ -97,6 +100,54 @@ export function renderHomePage(
             <span>${defaultExercise.expectedEvents.length} notes</span>
             <span>Beginner</span>
             <span>${escapeHtml(formatExerciseTimingLabel(defaultExercise, true))}</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="home-overview app-rise" aria-labelledby="home-overview-heading">
+        <div class="home-overview-intro">
+          <p class="app-eyebrow app-eyebrow-inverse">On this device</p>
+          <h2 id="home-overview-heading">Your local practice</h2>
+          <p>Completed attempts are retained in this browser. They stay private, local, and available only while this browser keeps them.</p>
+          <p id="home-overview-status" class="home-overview-status" aria-live="polite">Enable JavaScript to read completions saved in this browser.</p>
+        </div>
+        <div id="home-overview-details" class="home-overview-details" hidden>
+          <dl class="home-overview-ledger" aria-label="Saved practice summary">
+            <div>
+              <dt>Saved studies</dt>
+              <dd id="home-overview-study-count">0 of ${exercises.length}</dd>
+              <span>Current revisions</span>
+            </div>
+            <div>
+              <dt>Right hand</dt>
+              <dd id="home-overview-right-count">0 of 0</dd>
+              <span>Studies with a saved completion</span>
+            </div>
+            <div>
+              <dt>Left hand</dt>
+              <dd id="home-overview-left-count">0 of 0</dd>
+              <span>Studies with a saved completion</span>
+            </div>
+            <div>
+              <dt>Today</dt>
+              <dd id="home-overview-today-count">0</dd>
+              <span>Completions recorded</span>
+            </div>
+          </dl>
+          <div class="home-overview-context">
+            <div id="home-overview-recent" class="home-overview-recent" hidden>
+              <p class="app-eyebrow">Most recent</p>
+              <p id="home-overview-recent-title" class="home-overview-recent-title"></p>
+              <p id="home-overview-recent-time" class="home-overview-recent-time"></p>
+            </div>
+            <div id="home-overview-recommendation" class="home-overview-recommendation" hidden>
+              <div>
+                <p id="home-overview-recommendation-kicker" class="app-eyebrow"></p>
+                <h3 id="home-overview-recommendation-title"></h3>
+                <p id="home-overview-recommendation-reason"></p>
+              </div>
+              <a id="home-overview-recommendation-link" class="app-button app-button-dark" href="/">Open study <span aria-hidden="true">→</span></a>
+            </div>
           </div>
         </div>
       </section>
@@ -135,6 +186,7 @@ export function renderHomePage(
         <ul class="footer-utilities">${routeList}</ul>
       </div>
     </footer>
+    <script type="module" src="/client/main.js"></script>
   </body>
 </html>`;
 }

@@ -1,4 +1,10 @@
-import { ATTEMPT_STORAGE_KEY, type AttemptInputKind, type AttemptRepository, type CompletedAttemptRecord } from "./attempt-repository.js";
+import {
+  ATTEMPT_STORAGE_KEY,
+  isCanonicalIsoTimestamp,
+  type AttemptInputKind,
+  type AttemptRepository,
+  type CompletedAttemptRecord,
+} from "./attempt-repository.js";
 
 interface StorageLike {
   getItem(key: string): string | null;
@@ -80,8 +86,8 @@ function isCompletedAttemptRecord(value: unknown): value is CompletedAttemptReco
     typeof value.exerciseId === "string" &&
     value.exerciseId.length > 0 &&
     isPositiveInteger(value.exerciseRevision) &&
-    isIsoDate(value.startedAt) &&
-    isIsoDate(value.completedAt) &&
+    isCanonicalIsoTimestamp(value.startedAt) &&
+    isCanonicalIsoTimestamp(value.completedAt) &&
     isAttemptInputKind(value.inputKind) &&
     value.status === "completed" &&
     isErrorCounts(value.errorCounts) &&
@@ -99,10 +105,6 @@ function isPositiveInteger(value: unknown): value is number {
 
 function isNonNegativeInteger(value: unknown): value is number {
   return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
-function isIsoDate(value: unknown): value is string {
-  return typeof value === "string" && value.length > 0 && Number.isFinite(Date.parse(value));
 }
 
 function isAttemptInputKind(value: unknown): value is AttemptInputKind {

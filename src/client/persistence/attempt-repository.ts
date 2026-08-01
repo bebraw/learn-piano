@@ -34,3 +34,12 @@ export interface AttemptRepository {
   list(exerciseId: string, exerciseRevision: number): Promise<readonly CompletedAttemptRecord[]>;
   save(attempt: CompletedAttemptRecord): Promise<void>;
 }
+
+export function isCanonicalIsoTimestamp(value: unknown): value is string {
+  if (typeof value !== "string" || value.length === 0) {
+    return false;
+  }
+
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString() === value;
+}

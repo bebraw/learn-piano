@@ -4,13 +4,14 @@
 
 ### Context
 
-The learner has twenty-four short exercises—twelve per hand, eight untimed, and sixteen timed—across pitch, pattern, ordered chord-tone, steady broken-chord, 3/4 broken-chord loop, repeated-note, mixed-pattern, offbeat-onset, hand, steady-pulse, and onset-subdivision work. The exercise library already declares prerequisites, and completed attempts already carry stable exercise IDs and revisions in local history. The practice flow should use that evidence to suggest one understandable next study instead of advancing by a circular UI position, while preserving the learner's freedom to choose any exercise.
+The learner has twenty-four short exercises—twelve per hand, eight untimed, and sixteen timed—across pitch, pattern, ordered chord-tone, steady broken-chord, 3/4 broken-chord loop, repeated-note, mixed-pattern, offbeat-onset, hand, steady-pulse, and onset-subdivision work. The exercise library already declares prerequisites, and completed attempts already carry stable exercise IDs and revisions in local history. The practice completion flow and home overview should use that evidence to suggest one understandable next study instead of advancing by a circular UI position, while preserving the learner's freedom to choose any exercise.
 
 A recommendation is practice guidance, not an evaluator result, unlock, grade, or mastery claim. The first implementation therefore uses only completion identity and recency. Pitch-error counts, timing classifications, tempo, velocity, and inferred physical technique do not affect this version.
 
 ### Current Scope
 
 - The browser computes one deterministic, explainable recommendation from the validated canonical exercise library, retained local completed attempts, and the just-completed exercise identity and in-memory attempt when completion has occurred.
+- The home overview uses the same policy with `justCompletedExerciseId` set to `null`, so it reflects retained browser evidence only and never treats an unsaved completion from another page as durable.
 - Completion evidence matches the current canonical `(exerciseId, exerciseRevision)` pair exactly. A completion for an older or unknown revision does not satisfy a current prerequisite.
 - The recommendation graph uses each canonical exercise's declared prerequisite IDs. Missing prerequisite references and prerequisite cycles make recommendation unavailable without blocking practice.
 - After completion, the service prefers an eligible, uncompleted direct dependent of the just-completed exercise, then the first eligible, uncompleted exercise in canonical library order.
@@ -26,7 +27,7 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - A 3/4 broken-chord completion contributes recommendation identity and recency only. The evaluator may retain its seven ordered pitches and six MIDI-relative whole-beat gaps, but recommendation does not infer audible phase, downbeat, click or measure alignment, 3/4 counting or grouping, learner accent or dynamics, duration, fingering, declared-hand use, harmony recognition, staff reading, consistency, or mastery from them.
 - When every current exercise has exact-revision completion evidence, the service recommends the least recently practiced exercise. Equal recency is resolved by canonical library order.
 - When readable history contains no current-revision completions, the service recommends the first prerequisite-free exercise in canonical library order.
-- The practice page explains why the study was suggested and always keeps the complete exercise library available as the fallback and override.
+- The practice completion view and enhanced home overview explain why the study was suggested and always keep the complete exercise library available as the fallback and override.
 - The service uses no network, remote model, account, cloud state, randomness, percentage score, streak, or hidden learner profile.
 
 ### Future Scope
@@ -53,7 +54,7 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 ### Accessibility and Progressive Enhancement
 
 - Server-rendered instructions, exercise links, note text, and the selected study remain usable without recommendation enhancement.
-- Before local history loads, the recommendation region remains absent rather than showing a fabricated choice.
+- Before local history loads, recommendation detail remains absent rather than showing a fabricated choice; the server-rendered home overview keeps only its no-JavaScript explanation visible.
 - The suggested exercise name, reason, and action are available as text, not colour or card position alone.
 - Recommendation updates after completion use calm status semantics and do not repeatedly interrupt the learner.
 - Every exercise link remains keyboard-accessible regardless of eligibility or recommendation state.

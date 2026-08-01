@@ -5,8 +5,10 @@ import { MockMidiInputPort } from "../midi/mock-midi-input-port.js";
 import { createNativeMidiBridgeFromHost, NativeMidiInputPort } from "../midi/native-midi-input-port.js";
 import { WebMidiInputPort } from "../midi/web-midi-input-port.js";
 import { projectPracticeKeyboardNotes } from "../views/exercise-presentation.js";
+import { collectHomePageElements, createHomePageView } from "./home-page-view.js";
 import type { AttemptInputKind, AttemptRepository } from "./persistence/attempt-repository.js";
 import { LocalStorageAttemptRepository } from "./persistence/local-storage-attempt-repository.js";
+import { loadPracticeOverview } from "./persistence/practice-overview.js";
 import { PracticeController } from "./practice-controller.js";
 import { initializePracticeCueMode } from "./practice-cue-mode.js";
 import { resolveRenderedExercise } from "./practice-exercise-resolver.js";
@@ -17,6 +19,18 @@ import {
   type PracticePageElements,
   type PracticeStaffNoteElement,
 } from "./practice-page-view.js";
+
+export async function bootstrapHomePage(pageDocument: Document, browserWindow: Window): Promise<void> {
+  const view = createHomePageView(collectHomePageElements(pageDocument));
+  view.renderLoading();
+
+  try {
+    const overview = await loadPracticeOverview(createBrowserAttemptRepository(browserWindow), exerciseLibrary);
+    view.renderReady(overview);
+  } catch {
+    view.renderUnavailable();
+  }
+}
 
 export async function bootstrapPracticePage(pageDocument: Document, browserWindow: Window): Promise<PracticeController> {
   const root = requireElement(pageDocument, "practice-main", HTMLElement);
@@ -248,7 +262,22 @@ function runAction(action: Promise<unknown>, feedbackElement: HTMLElement): void
   });
 }
 
-void bootstrapPracticePage(document, window).catch(() => {
+async function bootstrapRenderedPage(pageDocument: Document, browserWindow: Window): Promise<void> {
+  if (pageDocument.querySelector("[data-home-root]") !== null) {
+    await bootstrapHomePage(pageDocument, browserWindow);
+    return;
+  }
+
+  if (pageDocument.querySelector("[data-practice-root]") !== null) {
+    await bootstrapPracticePage(pageDocument, browserWindow);
+  }
+}
+
+void bootstrapRenderedPage(document, window).catch(() => {
+  const homeStatus = document.getElementById("home-overview-status");
+  if (homeStatus !== null) {
+    homeStatus.textContent = "Local practice record unavailable. The exercise library still works.";
+  }
   const feedback = document.getElementById("feedback-message");
   if (feedback !== null) {
     feedback.textContent = "Live practice could not start. The exercise instructions are still available.";

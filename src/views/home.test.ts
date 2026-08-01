@@ -33,12 +33,20 @@ describe("renderHomePage", () => {
     expect(html).toContain("24 short patterns for both hands, including pulse and subdivision studies.");
     expect(html).toContain("Begin today’s study");
     expect(html).toContain("A calm, local-first practice companion");
+    expect(html).toContain("Your local practice");
+    expect(html).toContain("Enable JavaScript to read completions saved in this browser.");
+    expect(html).toContain('id="home-overview-status"');
+    expect(html).toContain('id="home-overview-details" class="home-overview-details" hidden');
+    expect(html).toContain('id="home-overview-recent" class="home-overview-recent" hidden');
+    expect(html).toContain('id="home-overview-recommendation" class="home-overview-recommendation" hidden');
     expect(html).not.toContain("Piano practice companion overview");
     expect(html).not.toContain("Untimed exercises for both hands and varied note order");
     expect(html).toContain("JSON health endpoint for tooling and smoke tests");
     for (const exercise of exerciseLibrary) {
       expect(html).toContain(exercise.title);
       expect(html).toContain(`href="${exercisePracticeHref(exercise)}"`);
+      expect(html).toContain(`data-exercise-id="${exercise.id}"`);
+      expect(html).toContain(`data-exercise-revision="${exercise.revision}"`);
     }
     expect(html).toContain("cannot assess posture, tension, fingering, or replace a qualified teacher");
     expect(html).toContain('class="home-hero');
@@ -100,7 +108,9 @@ describe("renderHomePage", () => {
     expect(html).toContain(`<meta name="description" content="A calm, local-first practice companion`);
     expect(html).toContain('<meta name="color-scheme" content="light">');
     expect(html).toContain('href="#main">Skip to main content</a>');
-    expect(html).toContain('<main id="main"');
+    expect(html).toContain('<main id="main" class="app-shell pb-10 pt-5 sm:pb-14 sm:pt-8" data-home-root>');
+    expect(html.match(/data-completion-badge hidden/g)).toHaveLength(exerciseLibrary.length);
+    expect(html).toContain('<script type="module" src="/client/main.js"></script>');
     expect(html).not.toContain("Stryker was here!");
     expect(html.match(/<li>/g)).toHaveLength(exerciseLibrary.length + 1);
   });

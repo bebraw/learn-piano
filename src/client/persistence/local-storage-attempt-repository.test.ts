@@ -89,7 +89,14 @@ describe("LocalStorageAttemptRepository", () => {
 
     storage.setItem(
       "attempts",
-      JSON.stringify({ schemaVersion: 1, attempts: [firstAttempt, { ...firstAttempt, id: "", status: "failed" }] }),
+      JSON.stringify({
+        schemaVersion: 1,
+        attempts: [
+          firstAttempt,
+          { ...firstAttempt, id: "", status: "failed" },
+          { ...firstAttempt, id: "normalized-invalid-date", completedAt: "2026-02-30T10:00:00.000Z" },
+        ],
+      }),
     );
     await expect(repository.list(firstAttempt.exerciseId, 1)).resolves.toEqual([firstAttempt]);
   });

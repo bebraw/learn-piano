@@ -1,9 +1,10 @@
 import { formatMidiNote } from "../exercises/evaluator.js";
 import type { MidiInputDevice } from "../midi/types.js";
 import type { AttemptTimingSummary } from "./persistence/attempt-repository.js";
-import { formatPracticeKeyboardNoteLabel, type PracticeKeyboardNoteState } from "../views/exercise-presentation.js";
+import { exercisePracticeHref, formatPracticeKeyboardNoteLabel, type PracticeKeyboardNoteState } from "../views/exercise-presentation.js";
 import type { PracticeSnapshot, PracticeView } from "./practice-controller.js";
 import type { PracticeCueMode } from "./practice-cue-mode.js";
+import { studyRecommendationCopy } from "./study-recommendation-copy.js";
 
 interface AttributeElementLike {
   getAttribute(name: string): string | null;
@@ -321,26 +322,12 @@ function renderRecommendation(elements: PracticePageElements, snapshot: Practice
     return;
   }
 
-  elements.nextExerciseLink.setAttribute("href", `/practice?exercise=${encodeURIComponent(recommendation.exercise.id)}`);
-  setTextContent(elements.nextExerciseLabel, recommendation.kind === "review" ? "Review study" : "Open next study");
-  setTextContent(elements.nextStudyKicker, recommendation.kind === "review" ? "Suggested review" : "Suggested next");
+  const copy = studyRecommendationCopy(recommendation);
+  elements.nextExerciseLink.setAttribute("href", exercisePracticeHref(recommendation.exercise));
+  setTextContent(elements.nextExerciseLabel, copy.actionLabel);
+  setTextContent(elements.nextStudyKicker, copy.kicker);
   setTextContent(elements.nextStudyTitle, recommendation.exercise.title);
-  setTextContent(elements.nextStudyReason, recommendationReason(recommendation));
-}
-
-function recommendationReason(recommendation: NonNullable<PracticeSnapshot["recommendation"]>): string {
-  switch (recommendation.reason.kind) {
-    case "direct-dependent":
-      return "Builds directly on the study you just completed.";
-    case "prerequisites-practiced": {
-      const count = recommendation.reason.prerequisiteExerciseIds.length;
-      return `You've completed ${count === 1 ? "its prerequisite study" : "its prerequisite studies"} in this browser.`;
-    }
-    case "prerequisite-free":
-      return "A new foundation study with no prerequisites.";
-    case "least-recently-practiced":
-      return "You've completed every current study; this one was practiced least recently.";
-  }
+  setTextContent(elements.nextStudyReason, copy.reason);
 }
 
 function practiceNoteState(snapshot: PracticeSnapshot, index: number): "accepted" | "expected" | "remaining" {
