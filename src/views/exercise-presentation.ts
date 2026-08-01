@@ -119,6 +119,16 @@ export function getExerciseRhythmPresentation(exercise: Exercise): ExerciseRhyth
   const timing = exercise.timing;
   const usesQuarterNoteBeat = timing?.beatUnit === 4;
   if (usesQuarterNoteBeat && exercise.expectedEvents.every((event, index) => event.beatOffset === index)) {
+    if (timing.beatsPerMeasure !== 4 || timing.countInBeats !== 4) {
+      return {
+        ...RHYTHM_PRESENTATIONS["steady-quarter"],
+        practiceTask: `${formatCountInLead(timing.countInBeats)}, place one note on each beat. Count ${formatQuarterGridCount(
+          exercise.expectedEvents.length,
+          timing.beatsPerMeasure,
+        )}.`,
+      };
+    }
+
     return RHYTHM_PRESENTATIONS["steady-quarter"];
   }
 
@@ -147,6 +157,23 @@ function formatEighthGridCount(positionCount: number, beatsPerMeasure: number): 
   return Array.from({ length: positionCount }, (_, index) => (index % 2 === 0 ? String(((index / 2) % beatsPerMeasure) + 1) : "&")).join(
     " ",
   );
+}
+
+function formatCountInLead(countInBeats: number): string {
+  if (countInBeats === 0) {
+    return "When the pulse starts";
+  }
+
+  const smallNumberNames = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight"] as const;
+  const count = smallNumberNames[countInBeats] ?? String(countInBeats);
+  return `After the ${count}-beat count-in`;
+}
+
+function formatQuarterGridCount(positionCount: number, beatsPerMeasure: number): string {
+  return Array.from({ length: positionCount }, (_, index) => {
+    const beat = String((index % beatsPerMeasure) + 1);
+    return index > 0 && index % beatsPerMeasure === 0 ? `, ${beat}` : index === 0 ? beat : ` ${beat}`;
+  }).join("");
 }
 
 export function formatExerciseTimingLabel(exercise: Exercise, includeMeter = false): string {

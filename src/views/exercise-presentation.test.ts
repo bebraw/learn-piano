@@ -7,6 +7,7 @@ import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered
 import { repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises.js";
 import { steadyBrokenChordRightHandExercise } from "../exercises/library/steady-broken-chord-exercises.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
+import { threeFourBrokenChordRightHandExercise } from "../exercises/library/three-four-broken-chord-exercises.js";
 import type { Exercise } from "../exercises/types.js";
 import {
   exercisePracticeHref,
@@ -67,6 +68,14 @@ describe("exercise presentation", () => {
         beatOffset: genericBeatOffsets[index]!,
       })),
     };
+    const threeFourWithTwoBeatCountIn: Exercise = {
+      ...threeFourBrokenChordRightHandExercise,
+      id: "three-four-with-two-beat-count-in",
+      timing: {
+        ...threeFourBrokenChordRightHandExercise.timing!,
+        countInBeats: 2,
+      },
+    };
 
     expect(getExerciseRhythmPresentation(fiveNoteAscentExercise)).toMatchObject({
       kind: "untimed",
@@ -84,6 +93,18 @@ describe("exercise presentation", () => {
       kind: "steady-quarter",
       label: "Steady pulse",
       practiceTask: "After the count-in, place one note on each beat.",
+      staffLabel: "Pitch order · One note per beat",
+    });
+    expect(getExerciseRhythmPresentation(threeFourBrokenChordRightHandExercise)).toMatchObject({
+      kind: "steady-quarter",
+      label: "Steady pulse",
+      practiceTask: "After the three-beat count-in, place one note on each beat. Count 1 2 3, 1 2 3, 1.",
+      staffLabel: "Pitch order · One note per beat",
+    });
+    expect(getExerciseRhythmPresentation(threeFourWithTwoBeatCountIn)).toMatchObject({
+      kind: "steady-quarter",
+      label: "Steady pulse",
+      practiceTask: "After the two-beat count-in, place one note on each beat. Count 1 2 3, 1 2 3, 1.",
       staffLabel: "Pitch order · One note per beat",
     });
     expect(getExerciseRhythmPresentation(evenEighthsRightHandExercise)).toMatchObject({
@@ -112,6 +133,7 @@ describe("exercise presentation", () => {
         fiveNoteAscentExercise,
         steadyQuarterRightHandExercise,
         steadyBrokenChordRightHandExercise,
+        threeFourBrokenChordRightHandExercise,
         evenEighthsRightHandExercise,
         offbeatStepSkipRightHandExercise,
         genericTimed,
@@ -219,6 +241,7 @@ describe("exercise presentation", () => {
     expect(formatExerciseTimingLabel(fiveNoteAscentExercise)).toBe("Untimed");
     expect(formatExerciseTimingLabel(steadyQuarterRightHandExercise)).toBe("Steady pulse · 60 BPM");
     expect(formatExerciseTimingLabel(steadyBrokenChordRightHandExercise, true)).toBe("Steady pulse · 60 BPM · 4/4");
+    expect(formatExerciseTimingLabel(threeFourBrokenChordRightHandExercise, true)).toBe("Steady pulse · 60 BPM · 3/4");
     expect(formatExerciseTimingLabel(evenEighthsRightHandExercise, true)).toBe("Eighth-note grid · 60 BPM · 4/4");
     expect(formatExerciseTimingLabel(offbeatStepSkipRightHandExercise, true)).toBe("Offbeat grid · 60 BPM · 4/4");
   });
@@ -233,6 +256,7 @@ describe("exercise presentation", () => {
     };
 
     expect(projectPracticeKeyboardNotes(orderedChordTonesRightHandExercise)).toEqual([60, 62, 64, 65, 67]);
+    expect(projectPracticeKeyboardNotes(threeFourBrokenChordRightHandExercise)).toEqual([60, 62, 64, 65, 67]);
     expect(projectPracticeKeyboardNotes(repeatedNotesRightHandExercise)).toEqual([60, 62, 64]);
     expect(projectPracticeKeyboardNotes(chromaticFixture)).toEqual([61, 62, 64, 65, 67]);
     expect(projectPracticeKeyboardNotes({ ...fiveNoteAscentExercise, expectedEvents: [] })).toEqual([]);

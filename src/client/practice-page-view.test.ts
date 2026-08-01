@@ -49,6 +49,17 @@ class FakeKey extends FakeControl {
   public readonly dataset: Record<string, string | undefined> = {};
 }
 
+const threeFourExercise: Exercise = {
+  ...steadyQuarterRightHandExercise,
+  id: "three-four-view-test",
+  title: "Three-four view test",
+  timing: {
+    ...steadyQuarterRightHandExercise.timing!,
+    beatsPerMeasure: 3,
+    countInBeats: 3,
+  },
+};
+
 type FakePracticePageElements = PracticePageElements & {
   readonly connectionStatus: FakeElement;
   readonly feedbackMessage: FakeElement;
@@ -425,6 +436,37 @@ describe("createPracticePageView", () => {
     expect(elements.pulseStatus.textContent).toBe("Pulse running at 60 BPM. Keep the notes even and unhurried.");
     expect(elements.pulseBeats[2]?.getAttribute("data-beat-state")).toBe("active");
     expect(keys.every((key) => !key.disabled)).toBe(true);
+  });
+
+  it("wraps three pulse indicators after the third beat", () => {
+    const { elements } = createElements(threeFourExercise);
+    const view = createPracticePageView(elements);
+    const threeFourSnapshot = (pulseState: PracticePulseState): PracticeSnapshot =>
+      timedSnapshot({
+        exercise: threeFourExercise,
+        connection: connection("connected", "mock-midi-input"),
+        pulse: pulseState,
+        evaluation: createEvaluationState(threeFourExercise, 60),
+      });
+
+    expect(elements.pulseBeats).toHaveLength(3);
+
+    view.render(threeFourSnapshot(pulse("counting-in", { countInBeat: 3 })));
+    expect(elements.pulseStatus.textContent).toBe("Count-in 3 of 3.");
+    expect(elements.feedbackMessage.textContent).toBe("Listen through the 3-beat count-in. Begin with C4 when the pulse starts.");
+    expect(elements.pulseBeats.map((beat) => beat.getAttribute("data-beat-state"))).toEqual(["idle", "idle", "active"]);
+
+    createPracticePageView(elements, () => "reading-focus").render(threeFourSnapshot(pulse("counting-in", { countInBeat: 3 })));
+    expect(elements.feedbackMessage.textContent).toBe(
+      "Listen through the 3-beat count-in. Begin with the highlighted staff note when the pulse starts.",
+    );
+    expect(elements.feedbackMessage.textContent).not.toContain("C4");
+
+    view.render(threeFourSnapshot(pulse("running", { currentBeat: 3 })));
+    expect(elements.pulseBeats.map((beat) => beat.getAttribute("data-beat-state"))).toEqual(["idle", "idle", "active"]);
+
+    view.render(threeFourSnapshot(pulse("running", { currentBeat: 1 })));
+    expect(elements.pulseBeats.map((beat) => beat.getAttribute("data-beat-state"))).toEqual(["active", "idle", "idle"]);
   });
 
   it("surfaces pulse errors calmly and permits a connected ready study to retry", () => {
@@ -858,7 +900,7 @@ function createElements(exercise: Exercise = fiveNoteAscentExercise): {
       pulseTempo: new FakeSelect(),
       startPulseButton: new FakeControl(),
       stopPulseButton: new FakeControl(),
-      pulseBeats: [new FakeElement(), new FakeElement(), new FakeElement(), new FakeElement()],
+      pulseBeats: Array.from({ length: exercise.timing?.beatsPerMeasure ?? 4 }, () => new FakeElement()),
       connectionStatus: new FakeElement(),
       nextNote: new FakeElement(),
       readingFocusNextNote: new FakeElement(),

@@ -16,6 +16,10 @@ import {
   steadyQuarterStepSkipLeftHandExercise,
   steadyQuarterStepSkipRightHandExercise,
 } from "../exercises/library/steady-quarter-exercises";
+import {
+  threeFourBrokenChordLeftHandExercise,
+  threeFourBrokenChordRightHandExercise,
+} from "../exercises/library/three-four-broken-chord-exercises.js";
 import { exercisePracticeHref } from "./exercise-presentation";
 import { renderHomePage } from "./home";
 
@@ -23,10 +27,10 @@ describe("renderHomePage", () => {
   it("renders the piano practice entry point and stylesheet wiring", () => {
     const html = renderHomePage(exampleRoutes, exerciseLibrary, defaultExercise);
 
-    expect(exerciseLibrary).toHaveLength(22);
+    expect(exerciseLibrary).toHaveLength(24);
     expect(html).toContain("Personal practice studio");
     expect(html).toContain("Choose your next study");
-    expect(html).toContain("22 short patterns for both hands, including pulse and subdivision studies.");
+    expect(html).toContain("24 short patterns for both hands, including pulse and subdivision studies.");
     expect(html).toContain("Begin today’s study");
     expect(html).toContain("A calm, local-first practice companion");
     expect(html).not.toContain("Piano practice companion overview");
@@ -39,8 +43,8 @@ describe("renderHomePage", () => {
     expect(html).toContain("cannot assess posture, tension, fingering, or replace a qualified teacher");
     expect(html).toContain('class="home-hero');
     expect(html).toContain('class="folio-grid"');
-    expect(html.match(/data-mode="timed"/g)).toHaveLength(14);
-    expect(html.match(/Steady pulse · 60 BPM/g)).toHaveLength(6);
+    expect(html.match(/data-mode="timed"/g)).toHaveLength(16);
+    expect(html.match(/Steady pulse · 60 BPM/g)).toHaveLength(8);
     for (const exercise of [
       steadyQuarterStepSkipRightHandExercise,
       steadyQuarterStepSkipLeftHandExercise,
@@ -55,6 +59,16 @@ describe("renderHomePage", () => {
       expect(card).toContain(exercise.title);
       expect(card).toContain(exercise.instructions);
       expect(card).toContain("Steady pulse · 60 BPM · 4/4");
+    }
+    for (const exercise of [threeFourBrokenChordRightHandExercise, threeFourBrokenChordLeftHandExercise]) {
+      const cardStart = html.indexOf(`href="${exercisePracticeHref(exercise)}"`);
+      const cardEnd = html.indexOf("</a>", cardStart);
+      const card = html.slice(cardStart, cardEnd);
+
+      expect(cardStart, `missing folio card for ${exercise.id}`).toBeGreaterThanOrEqual(0);
+      expect(card).toContain(exercise.title);
+      expect(card).toContain(exercise.instructions);
+      expect(card).toContain("Steady pulse · 60 BPM · 3/4");
     }
     for (const exercise of [
       evenEighthsRightHandExercise,

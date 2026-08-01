@@ -1160,9 +1160,10 @@
 
   .pulse-beats {
     display: grid;
-    width: 4.9rem;
+    width: auto;
     flex: none;
-    grid-template-columns: repeat(4, 1fr);
+    grid-auto-columns: 0.95rem;
+    grid-auto-flow: column;
     gap: 0.35rem;
   }
 
@@ -1927,7 +1928,7 @@
   }
 
   .pulse-beats {
-    width: 4.25rem;
+    width: auto;
     padding-top: 0.15rem;
   }
 

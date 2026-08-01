@@ -152,7 +152,7 @@ function collectPageElements(
     pulseTempo: requireElement(pageDocument, "pulse-tempo", HTMLSelectElement),
     startPulseButton: requireElement(pageDocument, "start-pulse", HTMLButtonElement),
     stopPulseButton: requireElement(pageDocument, "stop-pulse", HTMLButtonElement),
-    pulseBeats: [1, 2, 3, 4].map((beat) => requireElement(pageDocument, `pulse-beat-${beat}`, HTMLElement)),
+    pulseBeats: [...pageDocument.querySelectorAll<HTMLElement>("[data-pulse-beat]")],
     connectionStatus: requireElement(pageDocument, "connection-status", HTMLElement),
     nextNote: requireElement(pageDocument, "next-note", HTMLElement),
     readingFocusNextNote: requireElement(pageDocument, "reading-focus-next-note", HTMLElement),

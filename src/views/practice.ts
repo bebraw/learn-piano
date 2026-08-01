@@ -30,7 +30,8 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
   const timingStatus =
     timing === null
       ? "This study does not use a pulse guide."
-      : `${timing.defaultBpm} BPM · ${timing.beatsPerMeasure}/${timing.beatUnit} · Four-beat count-in before your first note.`;
+      : `${timing.defaultBpm} BPM · ${timing.beatsPerMeasure}/${timing.beatUnit} · ${formatCountInLabel(timing.countInBeats)} before your first note.`;
+  const pulseBeats = renderPulseBeats(timing?.beatsPerMeasure ?? 4);
   const expectedPitches = new Set(exercise.expectedEvents.map(({ noteNumber }) => noteNumber));
   const keyboardNotes = projectPracticeKeyboardNotes(exercise);
   const pianoKeys = keyboardNotes
@@ -142,10 +143,7 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
             >
               <div class="pulse-summary">
                 <div class="pulse-beats" aria-hidden="true">
-                  <span id="pulse-beat-1" data-beat-state="idle"></span>
-                  <span id="pulse-beat-2" data-beat-state="idle"></span>
-                  <span id="pulse-beat-3" data-beat-state="idle"></span>
-                  <span id="pulse-beat-4" data-beat-state="idle"></span>
+                  ${pulseBeats}
                 </div>
                 <div>
                   <p class="app-eyebrow" id="pulse-heading">Steady pulse</p>
@@ -301,4 +299,16 @@ function renderTempoOptions(defaultBpm: number): string {
   return [40, 50, 60, 70, 80, 90, 100]
     .map((bpm) => `<option value="${bpm}"${bpm === defaultBpm ? " selected" : ""}>${bpm} BPM</option>`)
     .join("");
+}
+
+function renderPulseBeats(beatsPerMeasure: number): string {
+  return Array.from(
+    { length: beatsPerMeasure },
+    (_, index) => `<span id="pulse-beat-${index + 1}" data-beat-state="idle" data-pulse-beat></span>`,
+  ).join("");
+}
+
+function formatCountInLabel(countInBeats: number): string {
+  const smallNumberWords = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
+  return `${smallNumberWords[countInBeats] ?? countInBeats}-beat count-in`;
 }

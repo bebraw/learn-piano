@@ -69,7 +69,7 @@ describe("renderPracticePage", () => {
     expect(html).toContain('<option value="60" selected>60 BPM</option>');
     expect(html.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).toContain("hidden");
     expect(html).not.toContain("The next expected key stays lit.");
-    expect(exerciseLibrary).toHaveLength(22);
+    expect(exerciseLibrary).toHaveLength(24);
   });
 
   it("derives the rendered sequence and physical key order from the supplied exercise", () => {
@@ -233,6 +233,27 @@ describe("renderPracticePage", () => {
     expect(html).toContain("<span>60 BPM</span><span>4/4</span>");
     expect(html.match(/<select[^>]*id="pulse-tempo"[^>]*>/)?.[0]).toContain("disabled");
     expect(html).not.toContain('id="pulse-status" role="status"');
+  });
+
+  it("derives count-in copy independently from three-beat pulse indicators", () => {
+    const threeFourExercise: Exercise = {
+      ...steadyQuarterStepSkipRightHandExercise,
+      id: "three-four-rendering-test",
+      title: "Three-four rendering test",
+      timing: {
+        ...steadyQuarterStepSkipRightHandExercise.timing!,
+        beatsPerMeasure: 3,
+        countInBeats: 2,
+      },
+    };
+
+    const html = renderPracticePage(threeFourExercise, [threeFourExercise]);
+
+    expect(html).toContain("60 BPM · 3/4 · Two-beat count-in before your first note.");
+    expect(html).toContain("<span>60 BPM</span><span>3/4</span>");
+    expect(html.match(/data-pulse-beat/g)).toHaveLength(3);
+    expect(html).toContain('id="pulse-beat-3"');
+    expect(html).not.toContain('id="pulse-beat-4"');
   });
 
   it("explains the eighth-note grid and distinguishes it in the exercise catalog", () => {

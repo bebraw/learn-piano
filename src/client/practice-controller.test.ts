@@ -9,6 +9,7 @@ import type {
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { exerciseLibrary } from "../exercises/library/index.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
+import { threeFourBrokenChordRightHandExercise } from "../exercises/library/three-four-broken-chord-exercises.js";
 import type { MidiInputPort } from "../midi/midi-input-port.js";
 import { MOCK_MIDI_INPUT_ID, MockMidiInputPort } from "../midi/mock-midi-input-port.js";
 import type {
@@ -502,6 +503,33 @@ describe("PracticeController", () => {
         },
       }),
     ]);
+  });
+
+  it("forwards count-in length independently from the canonical 3/4 meter", () => {
+    let pulseConfig: PracticePulseConfig | null = null;
+    const exerciseWithTwoBeatCountIn = {
+      ...threeFourBrokenChordRightHandExercise,
+      id: "three-four-with-two-beat-count-in",
+      timing: {
+        ...threeFourBrokenChordRightHandExercise.timing!,
+        countInBeats: 2,
+      },
+    };
+    const controller = new PracticeController(
+      exerciseWithTwoBeatCountIn,
+      { mock: new MockMidiInputPort(), "web-midi": new MockMidiInputPort(), "native-midi": new MockMidiInputPort() },
+      new MemoryAttemptRepository(),
+      new RecordingView(),
+      {
+        createPulse: (config) => {
+          pulseConfig = config;
+          return new ControllablePracticePulse(config);
+        },
+      },
+    );
+
+    expect(pulseConfig).toEqual({ tempoBpm: 60, countIn: 2, beatsPerMeasure: 3 });
+    controller.dispose();
   });
 
   it("rebuilds a ready timed attempt at a selected tempo and locks tempo after count-in", async () => {

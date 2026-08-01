@@ -92,6 +92,7 @@ No accepted-only ADRs are currently pending implementation.
 | [ADR-057](./implemented/ADR-057-represent-subdivisions-with-fractional-beat-offsets.md) | Implemented | Represent onset subdivisions with fractional beat offsets while quarter-note audio remains guidance. |
 | [ADR-058](./implemented/ADR-058-separate-event-occurrences-from-physical-keys.md)       | Implemented | Separate occurrence progress from pitch-keyed physical controls.                                     |
 | [ADR-059](./implemented/ADR-059-keep-reading-focus-transient-and-presentational.md)     | Implemented | Keep reading focus learner-controlled, page-local, and separate from exercise or attempt evidence.   |
+| [ADR-060](./implemented/ADR-060-drive-pulse-meter-from-exercise-timing.md)              | Implemented | Drive visible and audible pulse-meter guidance from canonical exercise timing.                       |
 
 ## Creating A New ADR
 

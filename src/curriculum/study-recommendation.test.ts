@@ -29,6 +29,10 @@ import {
   STEADY_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID,
   STEADY_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID,
 } from "../exercises/library/steady-broken-chord-exercises.js";
+import {
+  THREE_FOUR_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID,
+  THREE_FOUR_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID,
+} from "../exercises/library/three-four-broken-chord-exercises.js";
 import type { Exercise } from "../exercises/types.js";
 import { recommendNextStudy, type StudyAttemptEvidence } from "./study-recommendation.js";
 
@@ -332,6 +336,39 @@ describe("recommendNextStudy", () => {
         reason: {
           kind: "direct-dependent",
           prerequisiteExerciseIds: [chordTones.id, straightPulse.id],
+        },
+      });
+    },
+  );
+
+  it.each([
+    {
+      steadyBrokenChordId: STEADY_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID,
+      oppositeSteadyBrokenChordId: STEADY_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID,
+      threeFourBrokenChordId: THREE_FOUR_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID,
+    },
+    {
+      steadyBrokenChordId: STEADY_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID,
+      oppositeSteadyBrokenChordId: STEADY_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID,
+      threeFourBrokenChordId: THREE_FOUR_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID,
+    },
+  ])(
+    "recommends $threeFourBrokenChordId only after its matching steady broken-chord prerequisite",
+    ({ steadyBrokenChordId, oppositeSteadyBrokenChordId, threeFourBrokenChordId }) => {
+      const steadyBrokenChord = requireLibraryExercise(steadyBrokenChordId);
+      const oppositeSteadyBrokenChord = requireLibraryExercise(oppositeSteadyBrokenChordId);
+      const threeFourBrokenChord = requireLibraryExercise(threeFourBrokenChordId);
+
+      expect(
+        recommendNextStudy(exerciseLibrary, [attempt(oppositeSteadyBrokenChord, "2026-08-01T08:00:00.000Z")], oppositeSteadyBrokenChord.id)
+          ?.exercise,
+      ).not.toBe(threeFourBrokenChord);
+      expect(recommendNextStudy(exerciseLibrary, [attempt(steadyBrokenChord, "2026-08-01T08:05:00.000Z")], steadyBrokenChord.id)).toEqual({
+        kind: "new-study",
+        exercise: threeFourBrokenChord,
+        reason: {
+          kind: "direct-dependent",
+          prerequisiteExerciseIds: [steadyBrokenChord.id],
         },
       });
     },

@@ -275,8 +275,8 @@ function readingFocusFeedbackMessage(snapshot: PracticeSnapshot): string {
   }
 
   if (snapshot.pulse?.status === "counting-in") {
-    const countInBeats = snapshot.exercise.timing?.countInBeats ?? 4;
-    return `Listen through the ${countInBeats}-beat count-in. Begin with the highlighted staff note when the pulse starts.`;
+    const countIn = formatCountInDescription(snapshot.exercise.timing?.countInBeats);
+    return `Listen through the ${countIn}. Begin with the highlighted staff note when the pulse starts.`;
   }
 
   if (snapshot.pulse?.status === "starting") {
@@ -391,9 +391,9 @@ function feedbackMessage(snapshot: PracticeSnapshot, nextNoteNumber: number | un
   }
 
   if (snapshot.pulse?.status === "counting-in") {
-    const countInBeats = snapshot.exercise.timing?.countInBeats ?? 4;
+    const countIn = formatCountInDescription(snapshot.exercise.timing?.countInBeats);
     const firstNote = formatMidiNote(snapshot.exercise.expectedEvents[0]?.noteNumber ?? 60);
-    return `Listen through the ${countInBeats}-beat count-in. Begin with ${firstNote} when the pulse starts.`;
+    return `Listen through the ${countIn}. Begin with ${firstNote} when the pulse starts.`;
   }
 
   if (snapshot.pulse?.status === "starting") {
@@ -414,6 +414,10 @@ function feedbackMessage(snapshot: PracticeSnapshot, nextNoteNumber: number | un
   }
 
   return `Begin when your input is connected. ${formatMidiNote(snapshot.exercise.expectedEvents[0]?.noteNumber ?? 60)} is first.`;
+}
+
+function formatCountInDescription(countInBeats: number | undefined): string {
+  return countInBeats === undefined ? "count-in" : `${countInBeats}-beat count-in`;
 }
 
 function keyboardHelpMessage(snapshot: PracticeSnapshot, mockKeysEnabled: boolean): string {

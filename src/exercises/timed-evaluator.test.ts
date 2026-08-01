@@ -8,6 +8,7 @@ import { offbeatStepSkipRightHandExercise } from "./library/offbeat-step-skip-ex
 import { repeatedNotesRightHandExercise } from "./library/repeated-note-exercises.js";
 import { steadyBrokenChordRightHandExercise } from "./library/steady-broken-chord-exercises.js";
 import { steadyQuarterRightHandExercise, steadyQuarterStepSkipRightHandExercise } from "./library/steady-quarter-exercises.js";
+import { threeFourBrokenChordRightHandExercise } from "./library/three-four-broken-chord-exercises.js";
 import { parseExercise } from "./schema.js";
 
 function noteOn(noteNumber: number, timestamp: number): NormalizedMidiEvent {
@@ -273,6 +274,56 @@ describe("timed ordered-note evaluation", () => {
       completionSummary: {
         errorFree: true,
         timing: { tempoBpm: 60, assessedIntervals: 7, onPulse: 7, early: 0, late: 0, meanAbsoluteErrorMs: 0 },
+      },
+    });
+    expect(translated.timingClassifications).toEqual(first.timingClassifications);
+    expect(translated.state.timing).toEqual({ ...first.state.timing, anchorTimestamp: 12_000 });
+    expect(translated.state.completionSummary).toEqual(first.state.completionSummary);
+  });
+
+  it("evaluates the seven-note 3/4 broken chord independently of timestamp origin", () => {
+    const performAt = (anchorTimestamp: number) => {
+      let state = createEvaluationState(threeFourBrokenChordRightHandExercise);
+      const timingClassifications: string[] = [];
+
+      for (const event of threeFourBrokenChordRightHandExercise.expectedEvents) {
+        const transition = evaluateMidiEvent(
+          threeFourBrokenChordRightHandExercise,
+          state,
+          noteOn(event.noteNumber, anchorTimestamp + event.beatOffset! * 1_000),
+        );
+        expect(transition.feedback?.classification).toBe("correct");
+        if (transition.feedback?.timing !== undefined) {
+          timingClassifications.push(transition.feedback.timing.classification);
+        }
+        state = transition.state;
+      }
+
+      return { state, timingClassifications };
+    };
+
+    const first = performAt(2_000);
+    const translated = performAt(12_000);
+
+    expect(threeFourBrokenChordRightHandExercise.expectedEvents.map(({ noteNumber }) => noteNumber)).toEqual([60, 64, 67, 60, 64, 67, 60]);
+    expect(threeFourBrokenChordRightHandExercise.expectedEvents.map(({ beatOffset }) => beatOffset)).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    expect(first.timingClassifications).toEqual(["anchor", "on-pulse", "on-pulse", "on-pulse", "on-pulse", "on-pulse", "on-pulse"]);
+    expect(first.state).toMatchObject({
+      nextExpectedIndex: 7,
+      counts: { correct: 7, repeated: 0, outOfOrder: 0, wrong: 0 },
+      completed: true,
+      timing: {
+        tempoBpm: 60,
+        anchorTimestamp: 2_000,
+        assessedIntervals: 6,
+        onPulse: 6,
+        early: 0,
+        late: 0,
+        totalAbsoluteErrorMs: 0,
+      },
+      completionSummary: {
+        errorFree: true,
+        timing: { tempoBpm: 60, assessedIntervals: 6, onPulse: 6, early: 0, late: 0, meanAbsoluteErrorMs: 0 },
       },
     });
     expect(translated.timingClassifications).toEqual(first.timingClassifications);
