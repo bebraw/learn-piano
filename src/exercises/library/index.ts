@@ -18,6 +18,7 @@ import { mixedEighthPatternLeftHandExercise, mixedEighthPatternRightHandExercise
 import { offbeatStepSkipLeftHandExercise, offbeatStepSkipRightHandExercise } from "./offbeat-step-skip-exercises.js";
 import { orderedChordTonesLeftHandExercise, orderedChordTonesRightHandExercise } from "./ordered-chord-tone-exercises.js";
 import { repeatedNotesLeftHandExercise, repeatedNotesRightHandExercise } from "./repeated-note-exercises.js";
+import { steadyBrokenChordLeftHandExercise, steadyBrokenChordRightHandExercise } from "./steady-broken-chord-exercises.js";
 import { parseExerciseLibrary } from "../schema.js";
 
 export const DEFAULT_EXERCISE_ID = FIVE_NOTE_ASCENT_EXERCISE_ID;
@@ -37,6 +38,8 @@ export const exerciseLibrary: readonly Exercise[] = Object.freeze([
   evenEighthsLeftHandExercise,
   orderedChordTonesRightHandExercise,
   orderedChordTonesLeftHandExercise,
+  steadyBrokenChordRightHandExercise,
+  steadyBrokenChordLeftHandExercise,
   repeatedNotesRightHandExercise,
   repeatedNotesLeftHandExercise,
   mixedEighthPatternRightHandExercise,

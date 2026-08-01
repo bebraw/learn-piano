@@ -6,6 +6,7 @@ import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-
 import { offbeatStepSkipRightHandExercise } from "../exercises/library/offbeat-step-skip-exercises.js";
 import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises.js";
+import { steadyBrokenChordRightHandExercise } from "../exercises/library/steady-broken-chord-exercises.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import type { Exercise } from "../exercises/types.js";
 import { renderStaffPitchGuide } from "./staff-pitch-guide.js";
@@ -95,6 +96,18 @@ describe("renderStaffPitchGuide", () => {
         expect(html.indexOf(`id="staff-note-${eventIds[index - 1]}"`)).toBeLessThan(html.indexOf(`id="staff-note-${eventId}"`));
       }
     }
+  });
+
+  it("keeps all eight steady broken-chord occurrences under the steady-pulse label", () => {
+    const html = renderStaffPitchGuide(steadyBrokenChordRightHandExercise);
+
+    expect(html).toContain("Pitch order · One note per beat");
+    expect(html.match(/data-staff-note/g)).toHaveLength(8);
+    for (const event of steadyBrokenChordRightHandExercise.expectedEvents) {
+      expect(html).toContain(`data-event-id="${event.id}"`);
+    }
+    expect(html).not.toContain("No fixed rhythm");
+    expect(html).not.toContain("Even eighth-note onsets");
   });
 
   it("labels offbeat intent without turning equal staff spacing into rhythm notation", () => {

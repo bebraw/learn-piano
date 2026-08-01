@@ -5,6 +5,7 @@ import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-
 import { offbeatStepSkipRightHandExercise } from "../exercises/library/offbeat-step-skip-exercises.js";
 import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises.js";
+import { steadyBrokenChordRightHandExercise } from "../exercises/library/steady-broken-chord-exercises.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import type { Exercise } from "../exercises/types.js";
 import {
@@ -79,6 +80,12 @@ describe("exercise presentation", () => {
       practiceTask: "After the count-in, place one note on each beat.",
       staffLabel: "Pitch order · One note per beat",
     });
+    expect(getExerciseRhythmPresentation(steadyBrokenChordRightHandExercise)).toMatchObject({
+      kind: "steady-quarter",
+      label: "Steady pulse",
+      practiceTask: "After the count-in, place one note on each beat.",
+      staffLabel: "Pitch order · One note per beat",
+    });
     expect(getExerciseRhythmPresentation(evenEighthsRightHandExercise)).toMatchObject({
       kind: "even-eighth",
       label: "Eighth-note grid",
@@ -104,6 +111,7 @@ describe("exercise presentation", () => {
       [
         fiveNoteAscentExercise,
         steadyQuarterRightHandExercise,
+        steadyBrokenChordRightHandExercise,
         evenEighthsRightHandExercise,
         offbeatStepSkipRightHandExercise,
         genericTimed,
@@ -210,6 +218,7 @@ describe("exercise presentation", () => {
   it("formats rhythm labels with tempo and optional meter", () => {
     expect(formatExerciseTimingLabel(fiveNoteAscentExercise)).toBe("Untimed");
     expect(formatExerciseTimingLabel(steadyQuarterRightHandExercise)).toBe("Steady pulse · 60 BPM");
+    expect(formatExerciseTimingLabel(steadyBrokenChordRightHandExercise, true)).toBe("Steady pulse · 60 BPM · 4/4");
     expect(formatExerciseTimingLabel(evenEighthsRightHandExercise, true)).toBe("Eighth-note grid · 60 BPM · 4/4");
     expect(formatExerciseTimingLabel(offbeatStepSkipRightHandExercise, true)).toBe("Offbeat grid · 60 BPM · 4/4");
   });

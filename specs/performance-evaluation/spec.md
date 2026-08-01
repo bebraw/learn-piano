@@ -15,8 +15,9 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - The paired repeated-note studies evaluate C-C-D-D-E as five individual occurrences. The second adjacent C or D is correct when it is next; an extra third same-pitch onset is `repeated` once the next canonical pitch differs.
 - The paired mixed-pattern studies evaluate C-E-D-D-F-G-E-C as eight individual occurrences. The adjacent D pair and later E and C returns remain distinct expected events, so all eight onsets advance independently when they become next.
 - The paired offbeat studies evaluate C-E-D-F-G as five individual occurrences at offsets 0, 0.5, 1.5, 2.5, and 3.5. The first C is the ungraded MIDI anchor and the four later accepted notes are classified only against their canonical gaps from it.
-- For the four steady-quarter studies—straight and step-and-skip for each hand—the first accepted correct note anchors timing and each later accepted correct note is additionally classified against its canonical beat gap with an inclusive ±0.2-beat tolerance. The ascending even-eighth, repeated-note, mixed-pattern, and offbeat pairs use fractional offsets and a proportional ±0.1-beat window. The domain classifications remain `on-pulse`, `early`, and `late`; learner-facing copy says “on time,” “early,” or “late.”
-- Pitch and order are evaluated for every exercise. Timing is evaluated only for `timed-ordered-notes`; audible downbeat alignment, rests, silence, duration, release, holding, velocity quality, fingering, accents, articulation, dynamics, syncopation, declared-hand use, relaxation, physical technique, reading, consistency, and mastery are not evaluated.
+- The paired steady broken-chord studies evaluate C-E-G-E-C-E-G-E as eight individual occurrences at offsets 0–7. Each returning C, E, and G advances only when its distinct expected event becomes next; the first C is the ungraded MIDI anchor and the seven later accepted notes are classified only against their canonical gaps from it.
+- For the six steady-quarter studies—straight, step-and-skip, and steady broken chord for each hand—the first accepted correct note anchors timing and each later accepted correct note is additionally classified against its canonical beat gap with an inclusive ±0.2-beat tolerance. The ascending even-eighth, repeated-note, mixed-pattern, and offbeat pairs use fractional offsets and a proportional ±0.1-beat window. The domain classifications remain `on-pulse`, `early`, and `late`; learner-facing copy says “on time,” “early,” or “late.”
+- Pitch and order are evaluated for every exercise. Timing is evaluated only for `timed-ordered-notes`; audible phase, downbeat or measure alignment, rests, silence, duration, release, holding, legato, velocity quality, fingering, accents, articulation, dynamics, syncopation, declared-hand use, relaxation, physical technique, harmony recognition, reading, consistency, and mastery are not evaluated.
 - Feedback is deterministic, brief, calm, specific about actual and expected notes, and limited to the next useful correction.
 
 ### Future Scope
@@ -39,9 +40,9 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - **Timing anchor:** The first accepted correct note records its normalized MIDI timestamp and canonical beat offset as the fixed anchor. It advances pitch progress but is not itself classified as `early`, `late`, or `on-pulse`.
 - **Timing comparison:** For each later accepted correct note, observed elapsed milliseconds from the anchor are compared with the note's canonical beat gap from the anchored event. Absolute error at or below the exercise's `timingWindowBeats × millisecondsPerBeat` is internally `on-pulse`; a more negative error is early and a more positive error is late. Fractional gaps represent onset placement only, not duration, silence, notation, or simultaneity.
 - **Pitch-error isolation:** Wrong, repeated, and out-of-order events never create, replace, or move the timing anchor and receive no timing classification. When the correct expected pitch arrives, its own MIDI timestamp is compared with the original anchor.
-- **Timing summary:** Completed timed state exposes the selected tempo, number of assessed intervals, `onPulse`, early, and late counts, and mean absolute error in milliseconds. Those compatibility-named classification counts sum to assessed intervals. Each of the ten current five-note timed studies assesses four intervals; each mixed-pattern study assesses seven.
+- **Timing summary:** Completed timed state exposes the selected tempo, number of assessed intervals, `onPulse`, early, and late counts, and mean absolute error in milliseconds. Those compatibility-named classification counts sum to assessed intervals. Each of the ten current five-event timed studies assesses four intervals; each of the four eight-event timed studies—the mixed-pattern and steady broken-chord pairs—assesses seven.
 - **Feedback projection:** Domain feedback contains stable classifications plus actual and expected pitch or timing facts. Persisted `onPulse` and internal `on-pulse` remain compatibility names, while learner-facing copy says “on time” so a midpoint between clicks is not described as landing on an audible pulse. Copy may include note labels and signed timing error. Completion distinguishes an error-free sequence from one completed with pitch corrections and may summarize onset-timing evidence without producing a percentage grade.
-- **Audio boundary:** Web Audio schedules a four-beat count-in and quarter-note click guidance outside the evaluator. The six regular half-beat-grid studies ask the learner to place every “and” count halfway between clicks; the offbeat pair anchors C on the instructed downbeat and targets four successive “and” counts. Audio times, wall-clock receipt times, and latency estimates are never inputs to timing classification. A globally phase-shifted offbeat performance can therefore retain the same four MIDI-relative classifications and cannot prove audible downbeat or between-click alignment.
+- **Audio boundary:** Web Audio schedules a four-beat count-in and quarter-note click guidance outside the evaluator. The six regular half-beat-grid studies ask the learner to place every “and” count halfway between clicks; the offbeat pair anchors C on the instructed downbeat and targets four successive “and” counts; the steady broken-chord pair asks for one note per click across two four-beat groups. Audio times, wall-clock receipt times, and latency estimates are never inputs to timing classification. A globally phase-shifted offbeat or steady broken-chord performance can therefore retain the same MIDI-relative classifications and cannot prove audible phase, downbeat, between-click, or measure alignment.
 - **Dependencies:** The evaluator depends only on exercise-domain and normalized-MIDI types. Session, persistence, and views depend on evaluator results.
 
 ### Classification Precedence and Edge Cases
@@ -71,6 +72,7 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - Completing a repeated-note study must not be described as evidence of key release, duration, articulation, fingering, relaxation, tension, or physical repeated-note control.
 - Completing a mixed-pattern study proves only the accepted pitch order and onset placement. It must not be described as evidence of duration, release, articulation, fingering, declared-hand use, relaxation, reading, or consistency.
 - Completing an offbeat study proves only accepted pitch order and four timing gaps relative to the first accepted MIDI note. It must not be described as proof of audible downbeat or between-click alignment, rests, silence, duration, release, holding, accents, articulation, velocity quality, syncopation, fingering, declared-hand use, reading, relaxation, consistency, or mastery.
+- Completing a steady broken-chord study proves only eight accepted pitches in order and seven timing gaps relative to the first accepted MIDI note. It must not be described as proof of audible phase or measure alignment, duration, release, legato, rests, articulation, dynamics or velocity quality, fingering, declared-hand use, relaxation, harmony recognition, staff reading, consistency, or mastery.
 
 ### Anti-Patterns
 
@@ -81,7 +83,7 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - Do not add hidden timing or velocity thresholds to an untimed exercise.
 - Do not compare normalized MIDI timestamps with Web Audio, `Date.now()`, animation-frame, or DOM-event times.
 - Do not move the fixed timing anchor after a pitch error or each newly accepted note.
-- Do not promote onset subdivision or missing numbered-beat targets into duration, release, holding, velocity-quality, rest, silence, accent, articulation, notation, syncopation, simultaneous-chord, hands-together, or adaptive-tempo evidence.
+- Do not promote onset spacing, missing numbered-beat targets, chord-derived pitch order, or a two-measure count into audible phase or measure-alignment, duration, release, holding, legato, dynamics or velocity-quality, rest, silence, accent, articulation, notation, syncopation, harmony-recognition, simultaneous-chord, hands-together, or adaptive-tempo evidence.
 - Do not collapse all error categories into one score that loses the next useful correction.
 - Do not call a remote or generative service in the live evaluation loop.
 - Do not infer physical technique from MIDI evidence.
@@ -95,7 +97,7 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - [ ] Wrong, repeated, and out-of-order classifications are mutually exclusive and follow the documented precedence.
 - [ ] Errors preserve the next expectation and accepted progress.
 - [ ] Note-off events and post-completion events do not mutate evaluation.
-- [ ] Timed mode accepts 40–100 BPM for the current studies, defaults to 60 BPM, and assesses each post-anchor interval against canonical beat gaps. The ten five-note timed studies assess four intervals; the mixed-pattern studies assess seven. The steady-quarter studies use inclusive ±0.2-beat tolerance; the ascending even-eighth and repeated-note studies use inclusive ±0.1-beat tolerance at offsets 0, 0.5, 1, 1.5, and 2; the mixed-pattern pair extends the regular half-beat grid through beat 3.5; and the offbeat pair uses offsets 0, 0.5, 1.5, 2.5, and 3.5 with the same ±0.1-beat tolerance.
+- [ ] Timed mode accepts 40–100 BPM for all fourteen current studies, defaults to 60 BPM, and assesses each post-anchor interval against canonical beat gaps. The ten five-event timed studies assess four intervals; the mixed-pattern and steady broken-chord pairs each assess seven. The six steady-quarter studies use inclusive ±0.2-beat tolerance, with the broken-chord pair extending integer offsets through beat 7; the ascending even-eighth and repeated-note studies use inclusive ±0.1-beat tolerance at offsets 0, 0.5, 1, 1.5, and 2; the mixed-pattern pair extends the regular half-beat grid through beat 3.5; and the offbeat pair uses offsets 0, 0.5, 1.5, 2.5, and 3.5 with the same ±0.1-beat tolerance.
 - [ ] The first accepted correct note establishes the only timing anchor; pitch errors neither receive timing classifications nor move it.
 - [ ] Evaluation is deterministic for replayed fixtures, selected tempo, and MIDI timestamps without consulting Web Audio or wall-clock time.
 - [ ] Completion feedback distinguishes an error-free sequence from a sequence completed with corrections.
@@ -117,6 +119,7 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - Untimed mode must not regress into implicit tempo, duration, or velocity scoring.
 - Timed results must use normalized MIDI timestamp deltas from the first accepted correct note and must never compare MIDI with audible click timestamps.
 - Offbeat-study timing must remain MIDI-relative and must never be presented as proof that its first note aligned with the audible downbeat or its later events occurred between audible clicks.
+- Steady broken-chord timing must remain MIDI-relative and must never be presented as proof that its first note aligned with the audible pulse, that its later notes aligned with clicks, or that the eight onsets aligned with audible measure boundaries.
 - Pitch errors must preserve both accepted pitch progress and the original timing anchor.
 - `onPulse`, early, and late counts must be mutually exclusive and sum to the number of assessed correct-note intervals.
 - Selected tempo must remain fixed for one attempt; timing evaluation must not adapt its target from the learner's performance.
@@ -124,7 +127,7 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 
 ### Verification
 
-- **Unit tests:** Correct sequence, wrong note, immediate repeat, older accepted pitch, later-note out-of-order input, correction after every error type, adjacent and returning repeated pitches in five- and eight-event exercises, an extra repeat after a canonical pair, note-off, velocity-zero normalization integration, equal timestamps, post-completion input, tempo-range validation, anchor establishment, four- and seven-interval summaries, quarter-note, regular half-beat, and offbeat-offset fixtures, tolerance boundaries, fractional beat gaps, early/late classifications, phase-shift invariance, and pitch-error anchor isolation.
+- **Unit tests:** Correct sequence, wrong note, immediate repeat, older accepted pitch, later-note out-of-order input, correction after every error type, adjacent and returning repeated pitches in five- and eight-event exercises, an extra repeat after a canonical pair, note-off, velocity-zero normalization integration, equal timestamps, post-completion input, tempo-range validation, anchor establishment, four- and seven-interval summaries, five- and eight-event quarter-note, regular half-beat, and offbeat-offset fixtures, tolerance boundaries, fractional beat gaps, early/late classifications, offbeat and steady-broken-chord phase-shift invariance, and pitch-error anchor isolation.
 - **Fixture replay:** Deterministic sequences assert the complete ordered pitch and timing classification log, fixed anchor, final counts, and mean absolute error rather than only a final boolean.
 - **Mutation strength:** Assertions must fail if advancement, classification precedence, error counts, timing conversion, tolerance inclusivity, anchor handling, or completion idempotence are changed.
 - **Coverage target:** All classification branches, state transitions, and completion-summary branches remain exercised.
@@ -190,6 +193,18 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - Given: `mixed-eighth-pattern-c-major-right-hand` expects C4-E4-D4-D4-F4-G4-E4-C4 at beat offsets 0 through 3.5 in half-beat steps
 - When: the learner plays those eight pitches at 500 ms intervals after the first C4 anchors a 60 BPM attempt
 - Then: all eight occurrences are accepted, all seven assessed intervals are on time, and completion claims no evidence about duration, release, articulation, fingering, declared-hand use, relaxation, reading, or consistency
+
+**Scenario: Evaluate a steady broken-chord sequence**
+
+- Given: `steady-quarter-broken-chord-c-major-right-hand` expects C4-E4-G4-E4-C4-E4-G4-E4 at beat offsets 0–7
+- When: those eight pitches are accepted at one-second intervals after the first C4 anchors a 60 BPM attempt
+- Then: all eight occurrences are accepted, all seven assessed intervals are on time within the ±0.2-beat window, and completion claims only ordered-pitch and MIDI-relative onset-gap evidence
+
+**Scenario: Shift a steady broken chord away from the audible phase**
+
+- Given: two steady-broken-chord fixtures have identical MIDI timestamp gaps but different first-note timestamps relative to Web Audio guidance
+- When: both are evaluated with the same exercise revision and tempo
+- Then: their seven timing classifications are identical, and neither result claims audible phase or measure alignment, duration, release, legato, rests, articulation, dynamics or velocity quality, fingering, hand use, relaxation, harmony recognition, staff reading, consistency, or mastery
 
 **Scenario: Ignore note-off**
 

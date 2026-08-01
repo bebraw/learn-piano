@@ -6,6 +6,7 @@ import { mixedEighthPatternRightHandExercise } from "./exercises/library/mixed-e
 import { offbeatStepSkipRightHandExercise } from "./exercises/library/offbeat-step-skip-exercises.js";
 import { orderedChordTonesRightHandExercise } from "./exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "./exercises/library/repeated-note-exercises.js";
+import { steadyBrokenChordRightHandExercise } from "./exercises/library/steady-broken-chord-exercises.js";
 import { ATTEMPT_STORAGE_KEY } from "./client/persistence/attempt-repository.js";
 import { exercisePracticeHref } from "./views/exercise-presentation.js";
 
@@ -410,6 +411,58 @@ test("completes and persists an eight-onset mixed pattern", async ({ page }) => 
       await expect(staffNotes[3]!).toHaveAttribute("data-note-state", "expected");
       await expect(dKey).toHaveAttribute("data-note-state", "expected");
     }
+  }
+
+  await expect(page.getByText("8 of 8 notes")).toBeVisible();
+  await expect(page.getByText("1 attempt completed today")).toBeVisible();
+
+  const attempt = await page.evaluate((storageKey) => {
+    const value = localStorage.getItem(storageKey);
+    return value === null
+      ? null
+      : (
+          JSON.parse(value) as {
+            attempts?: Array<{ exerciseId?: string; timing?: { assessedIntervals?: number } }>;
+          }
+        ).attempts?.[0];
+  }, ATTEMPT_STORAGE_KEY);
+  expect(attempt).toMatchObject({
+    exerciseId: exercise.id,
+    timing: { assessedIntervals: 7 },
+  });
+});
+
+test("completes and persists the eight-onset steady broken chord", async ({ page }) => {
+  const exercise = steadyBrokenChordRightHandExercise;
+  await page.goto(exercisePracticeHref(exercise));
+
+  const instructions = page.locator(".practice-heading-copy");
+  const task = page.locator(".practice-score-task");
+  const sequence = page.locator(".practice-score-sequence");
+  await expect(page.getByRole("heading", { level: 1, name: exercise.title })).toBeVisible();
+  await expect(page.locator('a[aria-current="page"] .study-link-mode')).toHaveText("Steady pulse · 60 BPM");
+  await expect(instructions).toBeVisible();
+  await expect(task).toHaveText("After the count-in, place one note on each beat.");
+  await expect(task).toBeHidden();
+  await expect(page.getByText("Pitch order · One note per beat")).toBeVisible();
+  await expect(page.locator("[data-staff-note]")).toHaveCount(8);
+  await expect(page.locator("[data-practice-key]")).toHaveCount(5);
+
+  await page.getByRole("button", { name: "Reading focus" }).click();
+  await expect(instructions).toHaveCSS("position", "absolute");
+  await expect(instructions).toHaveCSS("width", "1px");
+  await expect(sequence).toHaveCSS("position", "absolute");
+  await expect(task).toBeVisible();
+
+  const staffNotes = exercise.expectedEvents.map((event) => page.locator(`#staff-note-${event.id}`));
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await page.locator("#pulse-tempo").selectOption("100");
+  await page.getByRole("button", { name: "Start pulse" }).click();
+  await expect(page.locator("#practice-stage")).toHaveAttribute("data-pulse-status", "running", { timeout: 5_000 });
+
+  for (const [index, event] of exercise.expectedEvents.entries()) {
+    await playNote(page, event.noteNumber);
+    await expect(staffNotes[index]!).toHaveAttribute("data-note-state", "accepted");
   }
 
   await expect(page.getByText("8 of 8 notes")).toBeVisible();

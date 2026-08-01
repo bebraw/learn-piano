@@ -6,6 +6,7 @@ import { fiveNoteAscentExercise } from "./library/five-note-ascent.js";
 import { mixedEighthPatternRightHandExercise } from "./library/mixed-eighth-pattern-exercises.js";
 import { offbeatStepSkipRightHandExercise } from "./library/offbeat-step-skip-exercises.js";
 import { repeatedNotesRightHandExercise } from "./library/repeated-note-exercises.js";
+import { steadyBrokenChordRightHandExercise } from "./library/steady-broken-chord-exercises.js";
 import { steadyQuarterRightHandExercise, steadyQuarterStepSkipRightHandExercise } from "./library/steady-quarter-exercises.js";
 import { parseExercise } from "./schema.js";
 
@@ -219,6 +220,64 @@ describe("timed ordered-note evaluation", () => {
         },
       },
     });
+  });
+
+  it("evaluates an exact eight-note broken-chord pulse independently of timestamp origin", () => {
+    const performAt = (anchorTimestamp: number) => {
+      let state = createEvaluationState(steadyBrokenChordRightHandExercise);
+      const timingClassifications: string[] = [];
+
+      for (const event of steadyBrokenChordRightHandExercise.expectedEvents) {
+        const transition = evaluateMidiEvent(
+          steadyBrokenChordRightHandExercise,
+          state,
+          noteOn(event.noteNumber, anchorTimestamp + event.beatOffset! * 1_000),
+        );
+        expect(transition.feedback?.classification).toBe("correct");
+        if (transition.feedback?.timing !== undefined) {
+          timingClassifications.push(transition.feedback.timing.classification);
+        }
+        state = transition.state;
+      }
+
+      return { state, timingClassifications };
+    };
+
+    const first = performAt(2_000);
+    const translated = performAt(12_000);
+
+    expect(steadyBrokenChordRightHandExercise.expectedEvents.map(({ beatOffset }) => beatOffset)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    expect(first.timingClassifications).toEqual([
+      "anchor",
+      "on-pulse",
+      "on-pulse",
+      "on-pulse",
+      "on-pulse",
+      "on-pulse",
+      "on-pulse",
+      "on-pulse",
+    ]);
+    expect(first.state).toMatchObject({
+      nextExpectedIndex: 8,
+      counts: { correct: 8, repeated: 0, outOfOrder: 0, wrong: 0 },
+      completed: true,
+      timing: {
+        tempoBpm: 60,
+        anchorTimestamp: 2_000,
+        assessedIntervals: 7,
+        onPulse: 7,
+        early: 0,
+        late: 0,
+        totalAbsoluteErrorMs: 0,
+      },
+      completionSummary: {
+        errorFree: true,
+        timing: { tempoBpm: 60, assessedIntervals: 7, onPulse: 7, early: 0, late: 0, meanAbsoluteErrorMs: 0 },
+      },
+    });
+    expect(translated.timingClassifications).toEqual(first.timingClassifications);
+    expect(translated.state.timing).toEqual({ ...first.state.timing, anchorTimestamp: 12_000 });
+    expect(translated.state.completionSummary).toEqual(first.state.completionSummary);
   });
 
   it("evaluates offbeat onsets from the fixed first-note anchor regardless of timestamp origin", () => {

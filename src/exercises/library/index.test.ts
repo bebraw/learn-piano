@@ -22,6 +22,7 @@ import {
   STEADY_QUARTER_STEP_SKIP_LEFT_HAND_EXERCISE_ID,
   STEADY_QUARTER_STEP_SKIP_RIGHT_HAND_EXERCISE_ID,
 } from "./steady-quarter-exercises.js";
+import { STEADY_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID, STEADY_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID } from "./steady-broken-chord-exercises.js";
 
 const EXPECTED_SEQUENCES = new Map<string, readonly number[]>([
   ["five-note-ascent-c-major-right-hand", [60, 62, 64, 65, 67]],
@@ -38,6 +39,8 @@ const EXPECTED_SEQUENCES = new Map<string, readonly number[]>([
   [EVEN_EIGHTHS_LEFT_HAND_EXERCISE_ID, [48, 50, 52, 53, 55]],
   [ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID, [60, 64, 67, 64, 60]],
   [ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID, [48, 52, 55, 52, 48]],
+  [STEADY_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID, [60, 64, 67, 64, 60, 64, 67, 64]],
+  [STEADY_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID, [48, 52, 55, 52, 48, 52, 55, 52]],
   [REPEATED_NOTES_RIGHT_HAND_EXERCISE_ID, [60, 60, 62, 62, 64]],
   [REPEATED_NOTES_LEFT_HAND_EXERCISE_ID, [48, 48, 50, 50, 52]],
   [MIXED_EIGHTH_PATTERN_RIGHT_HAND_EXERCISE_ID, [60, 64, 62, 62, 65, 67, 64, 60]],
@@ -67,12 +70,14 @@ const EXPECTED_FINGERINGS = new Map<string, string>([
   [MIXED_EIGHTH_PATTERN_LEFT_HAND_EXERCISE_ID, "5-3-4-4-2-1-3-5"],
   [OFFBEAT_STEP_SKIP_RIGHT_HAND_EXERCISE_ID, "1-3-2-4-5"],
   [OFFBEAT_STEP_SKIP_LEFT_HAND_EXERCISE_ID, "5-3-4-2-1"],
+  [STEADY_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID, "1-3-5-3-1-3-5-3"],
+  [STEADY_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID, "5-3-1-3-5-3-1-3"],
 ]);
 
 describe("beginner exercise library", () => {
-  it("exposes twenty stable identities with the original ascent as default", () => {
+  it("exposes twenty-two stable identities with the original ascent as default", () => {
     expect(exerciseLibrary.map(({ id, revision }) => [id, revision])).toEqual([...EXPECTED_SEQUENCES.keys()].map((id) => [id, 1]));
-    expect(new Set(exerciseLibrary.map(({ id }) => id))).toHaveLength(20);
+    expect(new Set(exerciseLibrary.map(({ id }) => id))).toHaveLength(22);
     expect(DEFAULT_EXERCISE_ID).toBe("five-note-ascent-c-major-right-hand");
     expect(defaultExercise.id).toBe(DEFAULT_EXERCISE_ID);
     expect(findExerciseById(DEFAULT_EXERCISE_ID)).toBe(defaultExercise);
@@ -125,11 +130,11 @@ describe("beginner exercise library", () => {
     }
   });
 
-  it("covers both hands, motion, step-skip patterns, subdivision, repeated pairs, mixed patterns, offbeats, and returning chord tones", () => {
+  it("covers both hands, motion, step-skip patterns, subdivision, repeated pairs, mixed patterns, offbeats, and broken chords", () => {
     const rightHandExercises = exerciseLibrary.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "right"));
     const leftHandExercises = exerciseLibrary.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "left"));
-    expect(rightHandExercises).toHaveLength(10);
-    expect(leftHandExercises).toHaveLength(10);
+    expect(rightHandExercises).toHaveLength(11);
+    expect(leftHandExercises).toHaveLength(11);
 
     expect(findExerciseById(FIVE_NOTE_DESCENT_RIGHT_HAND_EXERCISE_ID)?.expectedEvents.map(({ noteNumber }) => noteNumber)).toEqual([
       67, 65, 64, 62, 60,
@@ -155,8 +160,21 @@ describe("beginner exercise library", () => {
       expect(intervals.some((interval) => interval >= 3)).toBe(true);
     }
 
-    expect(exerciseLibrary.filter(({ evaluationMode }) => evaluationMode === "timed-ordered-notes")).toHaveLength(12);
+    expect(exerciseLibrary.filter(({ evaluationMode }) => evaluationMode === "timed-ordered-notes")).toHaveLength(14);
     expect(exerciseLibrary.filter(({ evaluationMode }) => evaluationMode === "untimed-ordered-notes")).toHaveLength(8);
+  });
+
+  it.each([
+    {
+      id: STEADY_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID,
+      prerequisites: [ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID, STEADY_QUARTER_RIGHT_HAND_EXERCISE_ID],
+    },
+    {
+      id: STEADY_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID,
+      prerequisites: [ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID, STEADY_QUARTER_LEFT_HAND_EXERCISE_ID],
+    },
+  ])("requires matching chord-tone and straight steady-quarter studies for $id", ({ id, prerequisites }) => {
+    expect(findExerciseById(id)?.prerequisites).toEqual(prerequisites);
   });
 
   it.each([

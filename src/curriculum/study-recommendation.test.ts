@@ -25,6 +25,10 @@ import {
   STEADY_QUARTER_STEP_SKIP_LEFT_HAND_EXERCISE_ID,
   STEADY_QUARTER_STEP_SKIP_RIGHT_HAND_EXERCISE_ID,
 } from "../exercises/library/steady-quarter-exercises.js";
+import {
+  STEADY_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID,
+  STEADY_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID,
+} from "../exercises/library/steady-broken-chord-exercises.js";
 import type { Exercise } from "../exercises/types.js";
 import { recommendNextStudy, type StudyAttemptEvidence } from "./study-recommendation.js";
 
@@ -290,6 +294,48 @@ describe("recommendNextStudy", () => {
       },
     });
   });
+
+  it.each([
+    {
+      chordTonesId: ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
+      straightPulseId: STEADY_QUARTER_RIGHT_HAND_EXERCISE_ID,
+      brokenChordId: STEADY_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID,
+    },
+    {
+      chordTonesId: ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
+      straightPulseId: STEADY_QUARTER_LEFT_HAND_EXERCISE_ID,
+      brokenChordId: STEADY_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID,
+    },
+  ])(
+    "gates $brokenChordId on matching ordered chord tones and straight steady quarters",
+    ({ chordTonesId, straightPulseId, brokenChordId }) => {
+      const chordTones = requireLibraryExercise(chordTonesId);
+      const straightPulse = requireLibraryExercise(straightPulseId);
+      const brokenChord = requireLibraryExercise(brokenChordId);
+
+      expect(recommendNextStudy(exerciseLibrary, [attempt(chordTones, "2026-08-01T08:00:00.000Z")], chordTones.id)?.exercise).not.toBe(
+        brokenChord,
+      );
+      expect(
+        recommendNextStudy(exerciseLibrary, [attempt(straightPulse, "2026-08-01T08:05:00.000Z")], straightPulse.id)?.exercise,
+      ).not.toBe(brokenChord);
+
+      expect(
+        recommendNextStudy(
+          exerciseLibrary,
+          [attempt(chordTones, "2026-08-01T08:00:00.000Z"), attempt(straightPulse, "2026-08-01T08:05:00.000Z")],
+          chordTones.id,
+        ),
+      ).toEqual({
+        kind: "new-study",
+        exercise: brokenChord,
+        reason: {
+          kind: "direct-dependent",
+          prerequisiteExerciseIds: [chordTones.id, straightPulse.id],
+        },
+      });
+    },
+  );
 
   it.each([
     {

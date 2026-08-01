@@ -5,6 +5,7 @@ import { mixedEighthPatternRightHandExercise } from "./exercises/library/mixed-e
 import { offbeatStepSkipRightHandExercise } from "./exercises/library/offbeat-step-skip-exercises.js";
 import { orderedChordTonesRightHandExercise } from "./exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "./exercises/library/repeated-note-exercises.js";
+import { steadyBrokenChordRightHandExercise } from "./exercises/library/steady-broken-chord-exercises.js";
 import { steadyQuarterStepSkipRightHandExercise } from "./exercises/library/steady-quarter-exercises.js";
 import { exercisePracticeHref } from "./views/exercise-presentation.js";
 
@@ -15,9 +16,9 @@ test("renders the piano practice home page", async ({ page }) => {
   await expect(page.getByText("Small, focused studies for building calm and reliable movement at the keyboard.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Choose your next study" })).toBeVisible();
   const exerciseFolio = page.locator(".folio-grid");
-  expect(exerciseLibrary).toHaveLength(20);
+  expect(exerciseLibrary).toHaveLength(22);
   await expect(exerciseFolio.locator('a[href^="/practice?exercise="]')).toHaveCount(exerciseLibrary.length);
-  await expect(exerciseFolio.locator('[data-mode="timed"]')).toHaveCount(12);
+  await expect(exerciseFolio.locator('[data-mode="timed"]')).toHaveCount(14);
   await expect(page.getByRole("link", { name: new RegExp(evenEighthsRightHandExercise.title) })).toContainText("Eighth-note grid · 60 BPM");
   await expect(page.getByRole("link", { name: new RegExp(orderedChordTonesRightHandExercise.title) })).toContainText("Untimed");
   await expect(page.getByRole("link", { name: new RegExp(repeatedNotesRightHandExercise.title) })).toContainText(
@@ -27,6 +28,9 @@ test("renders the piano practice home page", async ({ page }) => {
     "Eighth-note grid · 60 BPM",
   );
   await expect(page.getByRole("link", { name: new RegExp(offbeatStepSkipRightHandExercise.title) })).toContainText("Offbeat grid · 60 BPM");
+  await expect(page.getByRole("link", { name: new RegExp(steadyBrokenChordRightHandExercise.title) })).toContainText(
+    "Steady pulse · 60 BPM",
+  );
   for (const exercise of exerciseLibrary) {
     await expect(page.getByRole("link", { name: new RegExp(exercise.title) })).toBeVisible();
   }

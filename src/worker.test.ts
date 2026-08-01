@@ -5,6 +5,7 @@ import { offbeatStepSkipRightHandExercise } from "./exercises/library/offbeat-st
 import { steadyQuarterStepSkipRightHandExercise } from "./exercises/library/steady-quarter-exercises";
 import { orderedChordTonesRightHandExercise } from "./exercises/library/ordered-chord-tone-exercises";
 import { repeatedNotesRightHandExercise } from "./exercises/library/repeated-note-exercises";
+import { steadyBrokenChordRightHandExercise } from "./exercises/library/steady-broken-chord-exercises.js";
 import { exercisePracticeHref } from "./views/exercise-presentation";
 import worker, { handleRequest } from "./worker";
 import { ensureGeneratedStylesheet } from "./test-support";
@@ -25,9 +26,9 @@ describe("worker", () => {
     expect(body).toContain("Piano Practice");
     expect(body).toContain(exercisePracticeHref(defaultExercise));
     expect(body).toContain("Choose your next study");
-    expect(exerciseLibrary).toHaveLength(20);
+    expect(exerciseLibrary).toHaveLength(22);
     expect(body.match(/class="folio-card group"/g)).toHaveLength(exerciseLibrary.length);
-    expect(body.match(/data-mode="timed"/g)).toHaveLength(12);
+    expect(body.match(/data-mode="timed"/g)).toHaveLength(14);
     expect(body).toContain("/api/health");
   });
 
@@ -93,6 +94,21 @@ describe("worker", () => {
     expect(body.match(/data-staff-note/g)).toHaveLength(8);
     expect(body.match(/data-practice-key/g)).toHaveLength(5);
     expect(body).toContain("Count 1 &amp; 2 &amp; 3 &amp; 4 &amp;.");
+  });
+
+  it("server-renders the selected steady broken chord as eight occurrences over five keys", async () => {
+    const response = await handleRequest(new Request(`http://example.com${exercisePracticeHref(steadyBrokenChordRightHandExercise)}`));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain(steadyBrokenChordRightHandExercise.instructions);
+    expect(body).toContain(`data-exercise-id="${steadyBrokenChordRightHandExercise.id}"`);
+    expect(body).toContain('aria-label="Pitch order: C4 · E4 · G4 · E4 · C4 · E4 · G4 · E4"');
+    expect(body).toContain("Pitch order · One note per beat");
+    expect(body).toContain("Steady pulse · 60 BPM");
+    expect(body.match(/data-staff-note/g)).toHaveLength(8);
+    expect(body.match(/data-practice-key/g)).toHaveLength(5);
+    expect(body.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).not.toContain("hidden");
   });
 
   it("renders a selected offbeat study with explicit onset guidance", async () => {
