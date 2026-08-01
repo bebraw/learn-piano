@@ -1,7 +1,9 @@
 import { createHealthResponse } from "./api/health";
 import { exampleRoutes } from "./app-routes";
+import { defaultExercise, exerciseLibrary, findExerciseById } from "./exercises/library";
 import { renderHomePage } from "./views/home";
 import { renderNotFoundPage } from "./views/not-found";
+import { renderPracticePage } from "./views/practice";
 import { cssResponse, htmlResponse } from "./views/shared";
 
 export default {
@@ -18,7 +20,21 @@ export async function handleRequest(request: Request): Promise<Response> {
   }
 
   if (url.pathname === "/") {
-    return htmlResponse(renderHomePage(exampleRoutes));
+    return htmlResponse(renderHomePage(exampleRoutes, exerciseLibrary, defaultExercise));
+  }
+
+  if (url.pathname === "/practice") {
+    const requestedExerciseIds = url.searchParams.getAll("exercise");
+    const exercise =
+      requestedExerciseIds.length === 0
+        ? defaultExercise
+        : requestedExerciseIds.length === 1
+          ? findExerciseById(requestedExerciseIds[0]!)
+          : null;
+    if (exercise === null) {
+      return htmlResponse(renderNotFoundPage(`${url.pathname}?${url.searchParams.toString()}`), 404);
+    }
+    return htmlResponse(renderPracticePage(exercise, exerciseLibrary));
   }
 
   if (url.pathname === "/api/health") {
@@ -32,9 +48,9 @@ async function loadStylesheet(): Promise<string> {
   // Stryker disable next-line ConditionalExpression,OptionalChaining: Environment probe selects Node fs in tests and bundled CSS in Workers.
   if (typeof process !== "undefined" && process.release?.name === "node") {
     const { readFile } = await import("node:fs/promises");
-    return await readFile(new URL("../.generated/styles.css", import.meta.url), "utf8");
+    return await readFile(new URL("../.generated/browser/styles.css", import.meta.url), "utf8");
   }
 
-  const styles = await import("../.generated/styles.css");
+  const styles = await import("../.generated/browser/styles.css");
   return styles.default;
 }

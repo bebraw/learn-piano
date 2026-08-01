@@ -1,7 +1,11 @@
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 
-export function ensureGeneratedStylesheet(): void {
-  mkdirSync(".generated", { recursive: true });
-  writeFileSync(join(".generated", "styles.css"), ":root{--color-app-canvas:#f3eee6;}", "utf8");
+export function ensureGeneratedStylesheet(stylesheetPath = join(".generated", "browser", "styles.css")): void {
+  if (existsSync(stylesheetPath)) {
+    return;
+  }
+
+  mkdirSync(dirname(stylesheetPath), { recursive: true });
+  writeFileSync(stylesheetPath, ":root{--color-app-canvas:#f3eee6;}", "utf8");
 }

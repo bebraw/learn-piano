@@ -70,6 +70,7 @@ function affectsTestEnvironment(file) {
     "package.json",
     "package-lock.json",
     "tsconfig.json",
+    "tsconfig.client.json",
     "vitest.config.ts",
     "scripts/run-coverage-gate.mjs",
     "scripts/run-affected-tests.mjs",

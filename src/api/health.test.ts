@@ -8,7 +8,7 @@ describe("createHealthResponse", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       ok: true,
-      name: "vibe-template-worker",
+      name: "learn-piano-worker",
       routes: ["/", "/api/health"],
     });
   });

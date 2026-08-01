@@ -1,0 +1,368 @@
+import { createEvaluationState, evaluateMidiEvent, type EvaluationFeedback, type EvaluationState } from "../exercises/evaluator.js";
+import type { Exercise } from "../exercises/types.js";
+import type { MidiInputPort } from "../midi/midi-input-port.js";
+import type { MidiConnectionState, MidiInputDevice, NormalizedMidiEvent } from "../midi/types.js";
+import type { AttemptInputKind, AttemptRepository, CompletedAttemptRecord } from "./persistence/attempt-repository.js";
+import { summarizePracticeHistory, type PracticeHistorySummary } from "./persistence/practice-history.js";
+
+export type PracticeSessionStatus = "ready" | "in-progress" | "completed" | "interrupted";
+export type PracticeHistoryStatus = "loading" | "ready" | "unavailable";
+
+export interface PracticeSnapshot {
+  readonly exercise: Exercise;
+  readonly inputKind: AttemptInputKind;
+  readonly inputs: readonly MidiInputDevice[];
+  readonly connection: MidiConnectionState;
+  readonly sessionStatus: PracticeSessionStatus;
+  readonly evaluation: EvaluationState;
+  readonly feedback: EvaluationFeedback | null;
+  readonly activeNoteNumbers: readonly number[];
+  readonly historyStatus: PracticeHistoryStatus;
+  readonly history: PracticeHistorySummary;
+  readonly persistenceMessage: string | null;
+}
+
+export interface PracticeView {
+  render(snapshot: PracticeSnapshot): void;
+}
+
+export interface PracticeControllerOptions {
+  readonly now?: () => Date;
+  readonly monotonicNow?: () => number;
+  readonly createAttemptId?: () => string;
+}
+
+const EMPTY_HISTORY: PracticeHistorySummary = {
+  completedToday: 0,
+  totalCompleted: 0,
+  mostRecent: null,
+};
+
+export class PracticeController {
+  private readonly now: () => Date;
+  private readonly monotonicNow: () => number;
+  private readonly createAttemptId: () => string;
+  private inputKind: AttemptInputKind = "mock";
+  private activePort: MidiInputPort;
+  private inputs: readonly MidiInputDevice[] = [];
+  private connection: MidiConnectionState;
+  private sessionStatus: PracticeSessionStatus = "ready";
+  private evaluation: EvaluationState;
+  private feedback: EvaluationFeedback | null = null;
+  private activeNoteNumbers = new Set<number>();
+  private historyStatus: PracticeHistoryStatus = "loading";
+  private history = EMPTY_HISTORY;
+  private historyRecords: readonly CompletedAttemptRecord[] = [];
+  private persistenceMessage: string | null = null;
+  private attemptStartedAt: Date | null = null;
+  private latestEventTimestamp: number | null = null;
+  private eventTimestampFloor: number | null = null;
+  private inputOperationEpoch = 0;
+  private removeEventListener: (() => void) | null = null;
+  private removeStateListener: (() => void) | null = null;
+  private persistenceWork: Promise<void> = Promise.resolve();
+  private disposed = false;
+
+  public constructor(
+    private readonly exercise: Exercise,
+    private readonly ports: Readonly<Record<AttemptInputKind, MidiInputPort>>,
+    private readonly attempts: AttemptRepository,
+    private readonly view: PracticeView,
+    options: PracticeControllerOptions = {},
+  ) {
+    this.now = options.now ?? (() => new Date());
+    this.monotonicNow = options.monotonicNow ?? defaultMonotonicNow;
+    this.createAttemptId = options.createAttemptId ?? (() => globalThis.crypto.randomUUID());
+    this.activePort = ports.mock;
+    this.connection = this.activePort.getState();
+    this.evaluation = createEvaluationState(exercise);
+  }
+
+  public async initialize(): Promise<void> {
+    this.assertActive();
+    this.subscribeToActivePort();
+    this.render();
+
+    await Promise.all([this.refreshInputs(), this.loadHistory()]);
+  }
+
+  public getSnapshot(): PracticeSnapshot {
+    const history = this.historyStatus === "ready" ? summarizePracticeHistory(this.historyRecords, this.now()) : this.history;
+    return {
+      exercise: this.exercise,
+      inputKind: this.inputKind,
+      inputs: [...this.inputs],
+      connection: { ...this.connection },
+      sessionStatus: this.sessionStatus,
+      evaluation: this.evaluation,
+      feedback: this.feedback,
+      activeNoteNumbers: [...this.activeNoteNumbers],
+      historyStatus: this.historyStatus,
+      history,
+      persistenceMessage: this.persistenceMessage,
+    };
+  }
+
+  public async selectInputKind(kind: AttemptInputKind): Promise<void> {
+    this.assertActive();
+
+    if (kind === this.inputKind) {
+      await this.refreshInputs();
+      return;
+    }
+
+    const operationEpoch = ++this.inputOperationEpoch;
+    this.interruptInProgressAttempt();
+    this.unsubscribeFromActivePort();
+    this.activePort.disconnect();
+    this.inputKind = kind;
+    this.activePort = this.ports[kind];
+    this.connection = this.activePort.getState();
+    this.inputs = this.activePort.getInputs();
+    this.activeNoteNumbers.clear();
+    this.subscribeToActivePort();
+    this.render();
+    await this.refreshInputsFor(this.activePort, operationEpoch);
+  }
+
+  public async refreshInputs(): Promise<void> {
+    this.assertActive();
+    const operationEpoch = ++this.inputOperationEpoch;
+    await this.refreshInputsFor(this.activePort, operationEpoch);
+  }
+
+  private async refreshInputsFor(port: MidiInputPort, operationEpoch: number): Promise<void> {
+    let inputs: readonly MidiInputDevice[];
+
+    try {
+      inputs = await port.requestAccess();
+    } catch (error: unknown) {
+      if (!this.isCurrentInputOperation(port, operationEpoch)) {
+        return;
+      }
+      this.connection = {
+        status: "error",
+        selectedInputId: null,
+        errorMessage: describeError(error, "MIDI access was not available."),
+      };
+      this.inputs = [];
+      this.render();
+      return;
+    }
+
+    if (!this.isCurrentInputOperation(port, operationEpoch)) {
+      return;
+    }
+
+    this.inputs = inputs;
+    this.connection = port.getState();
+    this.render();
+  }
+
+  public async connect(inputId: string): Promise<boolean> {
+    this.assertActive();
+    const operationEpoch = ++this.inputOperationEpoch;
+    const port = this.activePort;
+    const connected = await port.selectInput(inputId);
+    if (!this.isCurrentInputOperation(port, operationEpoch)) {
+      return false;
+    }
+
+    this.inputs = port.getInputs();
+    this.connection = port.getState();
+    this.render();
+    return connected;
+  }
+
+  public disconnect(): void {
+    this.assertActive();
+    this.inputOperationEpoch += 1;
+    this.activePort.disconnect();
+  }
+
+  public restart(): void {
+    this.assertActive();
+    this.eventTimestampFloor = Math.max(this.latestEventTimestamp ?? Number.NEGATIVE_INFINITY, this.monotonicNow());
+    this.evaluation = createEvaluationState(this.exercise);
+    this.feedback = null;
+    this.sessionStatus = "ready";
+    this.attemptStartedAt = null;
+    this.activeNoteNumbers.clear();
+    this.persistenceMessage = null;
+    this.render();
+  }
+
+  public async waitForPersistence(): Promise<void> {
+    await this.persistenceWork;
+  }
+
+  public dispose(): void {
+    if (this.disposed) {
+      return;
+    }
+
+    this.disposed = true;
+    this.inputOperationEpoch += 1;
+    this.unsubscribeFromActivePort();
+    for (const port of new Set(Object.values(this.ports))) {
+      port.dispose();
+    }
+  }
+
+  private subscribeToActivePort(): void {
+    const port = this.activePort;
+    this.removeEventListener = port.onEvent((event) => {
+      if (port === this.activePort) {
+        this.handleMidiEvent(event);
+      }
+    });
+    this.removeStateListener = port.onStateChange((state) => this.handleConnectionState(port, state));
+  }
+
+  private unsubscribeFromActivePort(): void {
+    this.removeEventListener?.();
+    this.removeStateListener?.();
+    this.removeEventListener = null;
+    this.removeStateListener = null;
+  }
+
+  private handleMidiEvent(event: NormalizedMidiEvent): void {
+    if (
+      this.disposed ||
+      this.sessionStatus === "interrupted" ||
+      (this.eventTimestampFloor !== null && event.timestamp <= this.eventTimestampFloor)
+    ) {
+      return;
+    }
+
+    this.latestEventTimestamp = Math.max(this.latestEventTimestamp ?? event.timestamp, event.timestamp);
+
+    if (event.type === "note-on") {
+      this.activeNoteNumbers.add(event.noteNumber);
+    } else {
+      this.activeNoteNumbers.delete(event.noteNumber);
+    }
+
+    if (this.sessionStatus === "completed") {
+      this.render();
+      return;
+    }
+
+    if (event.type === "note-on" && this.sessionStatus === "ready") {
+      this.sessionStatus = "in-progress";
+      this.attemptStartedAt = this.now();
+    }
+
+    const transition = evaluateMidiEvent(this.exercise, this.evaluation, event);
+    this.evaluation = transition.state;
+    this.feedback = transition.feedback ?? this.feedback;
+
+    if (transition.completedNow) {
+      this.sessionStatus = "completed";
+      this.queueCompletedAttempt();
+    }
+
+    this.render();
+  }
+
+  private handleConnectionState(port: MidiInputPort, state: MidiConnectionState): void {
+    if (this.disposed || port !== this.activePort) {
+      return;
+    }
+
+    const previousConnection = this.connection;
+    this.connection = state;
+    this.inputs = port.getInputs();
+    const inputSourceChanged =
+      previousConnection.status === "connected" &&
+      (state.status !== "connected" || previousConnection.selectedInputId !== state.selectedInputId);
+    if (inputSourceChanged) {
+      this.activeNoteNumbers.clear();
+      this.interruptInProgressAttempt();
+    }
+    this.render();
+  }
+
+  private interruptInProgressAttempt(): void {
+    if (this.sessionStatus !== "in-progress") {
+      return;
+    }
+
+    this.sessionStatus = "interrupted";
+    this.attemptStartedAt = null;
+    this.activeNoteNumbers.clear();
+  }
+
+  private queueCompletedAttempt(): void {
+    const startedAt = this.attemptStartedAt;
+    if (startedAt === null) {
+      throw new Error("A completed attempt must have a start time");
+    }
+
+    const completedAt = this.now();
+    const record: CompletedAttemptRecord = {
+      schemaVersion: 1,
+      id: this.createAttemptId(),
+      exerciseId: this.exercise.id,
+      exerciseRevision: this.exercise.revision,
+      startedAt: startedAt.toISOString(),
+      completedAt: completedAt.toISOString(),
+      inputKind: this.inputKind,
+      status: "completed",
+      errorCounts: {
+        outOfOrder: this.evaluation.counts.outOfOrder,
+        repeated: this.evaluation.counts.repeated,
+        wrong: this.evaluation.counts.wrong,
+      },
+    };
+
+    this.attemptStartedAt = null;
+    this.persistenceWork = this.persistenceWork.then(async () => {
+      try {
+        await this.attempts.save(record);
+        this.persistenceMessage = null;
+        await this.loadHistory();
+      } catch (error: unknown) {
+        this.historyStatus = "unavailable";
+        this.persistenceMessage = describeError(error, "The sequence is complete, but history could not be saved in this browser.");
+        this.render();
+      }
+    });
+  }
+
+  private async loadHistory(): Promise<void> {
+    try {
+      const records = await this.attempts.list(this.exercise.id, this.exercise.revision);
+      this.historyRecords = records;
+      this.history = summarizePracticeHistory(records, this.now());
+      this.historyStatus = "ready";
+    } catch {
+      this.historyRecords = [];
+      this.history = EMPTY_HISTORY;
+      this.historyStatus = "unavailable";
+    }
+    this.render();
+  }
+
+  private render(): void {
+    this.view.render(this.getSnapshot());
+  }
+
+  private assertActive(): void {
+    if (this.disposed) {
+      throw new Error("PracticeController has been disposed");
+    }
+  }
+
+  private isCurrentInputOperation(port: MidiInputPort, operationEpoch: number): boolean {
+    return !this.disposed && this.activePort === port && this.inputOperationEpoch === operationEpoch;
+  }
+}
+
+function defaultMonotonicNow(): number {
+  return typeof performance === "undefined" ? 0 : performance.now();
+}
+
+function describeError(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message.length > 0 ? `${fallback} ${error.message}` : fallback;
+}

@@ -43,7 +43,8 @@ The template needs a verification baseline that stays strict enough for end-to-e
 - **Package manager hint source:** `package.json#packageManager`
 - **Browser runtime image:** `mcr.microsoft.com/playwright:v1.61.1-noble`
 - **Coverage gate logic:** `scripts/run-coverage-gate.mjs`
-- **Worker client-code guard:** `scripts/assert-no-worker-client-scripts.mjs`
+- **Browser composition ownership:** `src/client/main.ts` is exercised through Playwright and excluded from the Node-only unit coverage and mutation inputs; browser-independent client logic remains included.
+- **Worker client-code guard:** `scripts/assert-no-worker-client-scripts.mjs`, allowing only empty same-origin external module scripts while rejecting inline or unverifiable browser execution paths
 - **Codebase diagnostics config:** `.fallowrc.json`
 - **Mutation config:** `stryker.config.mjs`
 - **Local mutation concurrency:** 50% of available parallelism
@@ -56,6 +57,7 @@ The template needs a verification baseline that stays strict enough for end-to-e
 
 - Do not collapse fast and browser verification back into one opaque step without a concrete reason.
 - Do not treat colocated tests or test-support files as runtime source code when deciding whether unit coverage is missing.
+- Do not move browser-independent behavior into the Playwright-owned client entry merely to avoid unit coverage or mutation testing.
 - Do not weaken the deterministic baseline checks just to make iteration faster.
 - Do not spend the full formatting budget on duplicated or vendored skill documentation that the project does not author.
 - Do not replace Prettier formatting or TypeScript project checking with Oxlint.
@@ -116,8 +118,10 @@ The template needs a verification baseline that stays strict enough for end-to-e
 - The CI workflow must pin every GitHub Actions `uses:` action reference to a full commit SHA, with any tag information kept only as a comment.
 - The browser CI job must use a container image whose version exactly matches the pinned `@playwright/test` version instead of reinstalling Chromium at runtime.
 - The coverage gate must only require unit tests when runtime `src/` code exists.
+- The Node unit coverage and mutation configurations may exclude only the DOM-bound `src/client/main.ts` composition entry; controller, view projection, persistence, exercise, and MIDI modules must remain in both gates.
 - The coverage gate must work in both the normal workspace and local Agent CI's warmed `node_modules` layout.
-- The Worker client-code guard must fail on inline `<script>` tags, inline event-handler attributes, and `javascript:` URLs in Worker/view runtime files.
+- The Worker client-code guard must allow empty same-origin external module script tags with literal sources in Worker/view runtime files.
+- The Worker client-code guard must fail on inline script bodies, script tags without a literal same-origin source, non-module executable scripts, malformed or unpaired script tags, inline event-handler attributes, and `javascript:` URLs in Worker/view runtime files.
 - The affected guardrail path must pass only affected Worker/view runtime files to the Worker client-code guard.
 - The affected guardrail path must pass only affected JavaScript and TypeScript files to Oxlint.
 - The affected guardrail path must run JavaScript syntax checks only for affected JavaScript files.
@@ -270,10 +274,16 @@ The template needs a verification baseline that stays strict enough for end-to-e
 - When: the `quality-mutation` job runs
 - Then: it runs the full `npm run mutation` command at 100% runner concurrency instead of the incremental mutation command
 
-**Scenario: Contributor adds browser behavior to a Worker view**
+**Scenario: Contributor adds typed browser behavior to a Worker view**
+
+- Given: browser behavior lives in a typed client module served from the same origin
+- When: the Worker-rendered view references it through an empty external module script tag
+- Then: the Worker client-code guard accepts the reference
+
+**Scenario: Contributor adds untyped browser behavior to a Worker view**
 
 - Given: a Worker-rendered view needs browser-side behavior
-- When: the contributor adds inline executable browser code to `src/worker.ts` or `src/views/**/*.ts`
+- When: the contributor adds inline, remote, dynamic, malformed, or non-module executable browser code to `src/worker.ts` or `src/views/**/*.ts`
 - Then: the fast quality gate fails and points them toward typed TypeScript modules instead
 
 **Scenario: Contributor pushes with a broken fast gate**

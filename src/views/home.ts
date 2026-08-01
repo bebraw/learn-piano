@@ -1,21 +1,45 @@
+import type { Exercise } from "../exercises/types";
+import { exercisePracticeHref, formatExerciseCategory, formatExerciseHand, formatExerciseNoteOrder } from "./exercise-presentation";
 import { escapeHtml } from "./shared";
 
-const appTitle = "vibe-template Worker";
-const appDescription = "A runnable Cloudflare Worker baseline with a route index, a health probe, and room for real feature work.";
+const appTitle = "Piano Practice";
+const appDescription = "A calm, local-first practice companion for focused exercises, useful feedback, and progress you can understand.";
 
-export function renderHomePage(routes: Array<{ path: string; purpose: string }>): string {
+export function renderHomePage(
+  routes: Array<{ path: string; purpose: string }>,
+  exercises: readonly Exercise[],
+  defaultExercise: Exercise,
+): string {
   const routeList = routes
+    .filter((route) => route.path !== "/" && route.path !== "/practice")
     .map(
       (route) =>
         `<li>
           <a class="group flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0" href="${escapeHtml(route.path)}">
             <div>
-              <code class="text-sm font-semibold tracking-[0.02em] text-app-accent-strong">${escapeHtml(route.path)}</code>
+              <span class="text-base font-semibold tracking-[-0.01em] text-app-accent-strong">${escapeHtml(route.path)}</span>
               <p class="mt-2 max-w-2xl leading-7 text-app-text-soft">${escapeHtml(route.purpose)}</p>
             </div>
             <span class="pt-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-app-text-soft transition group-hover:text-app-accent">Open</span>
           </a>
         </li>`,
+    )
+    .join("");
+  const exerciseList = exercises
+    .map(
+      (exercise) => `<li>
+        <a class="group block py-5 first:pt-0 last:pb-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent/30" href="${escapeHtml(exercisePracticeHref(exercise))}">
+          <span class="flex items-start justify-between gap-4">
+            <span>
+              <span class="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-app-text-soft">${escapeHtml(formatExerciseCategory(exercise))} · ${escapeHtml(formatExerciseHand(exercise))}</span>
+              <span class="mt-1.5 block text-xl font-semibold tracking-[-0.025em] text-app-text">${escapeHtml(exercise.title)}</span>
+            </span>
+            <span class="shrink-0 pt-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-app-accent transition group-hover:text-app-accent-strong">${exercise.id === defaultExercise.id ? "Start here" : "Open"}</span>
+          </span>
+          <span class="mt-2 block text-sm leading-6 text-app-text-soft">${escapeHtml(exercise.instructions)}</span>
+          <span class="mt-2 block font-semibold tracking-[0.07em] text-app-accent-strong" aria-label="Note order: ${escapeHtml(formatExerciseNoteOrder(exercise))}">${escapeHtml(formatExerciseNoteOrder(exercise))}</span>
+        </a>
+      </li>`,
     )
     .join("");
 
@@ -34,35 +58,30 @@ export function renderHomePage(routes: Array<{ path: string; purpose: string }>)
     <main id="main" class="mx-auto w-[min(46rem,calc(100vw-2rem))] py-12 sm:py-16">
       <article class="space-y-10">
         <section>
-          <p class="mb-4 text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-app-accent">Starter Surface</p>
-          <h1 class="max-w-[10ch] text-5xl leading-[0.92] font-semibold tracking-[-0.055em] sm:text-7xl">${escapeHtml(appTitle)}</h1>
+          <p class="mb-4 text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-app-accent">Today at the piano</p>
+          <h1 class="max-w-[9ch] text-5xl leading-[0.92] font-semibold tracking-[-0.055em] sm:text-7xl">${escapeHtml(appTitle)}</h1>
           <p class="mt-5 max-w-2xl text-lg leading-8 text-app-text-soft">${escapeHtml(appDescription)}</p>
-        </section>
-        <section class="rounded-[1.6rem] border border-app-line/90 bg-app-surface/90 p-3 shadow-panel">
-          <a class="group flex items-center justify-between gap-4 rounded-[1.2rem] border border-app-line/80 bg-white/78 px-5 py-4 transition hover:border-app-accent/35 hover:bg-app-accent-ghost focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent/40" href="/api/health">
-            <div>
-              <p class="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-app-text-soft">Primary Check</p>
-              <p class="mt-2 text-xl font-semibold tracking-[-0.03em] text-app-text">/api/health</p>
-            </div>
-            <span class="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-app-accent transition group-hover:text-app-accent-strong">Open JSON</span>
-          </a>
-          <p class="px-2 pt-3 text-sm leading-6 text-app-text-soft">Use the health probe to confirm the Worker is live, then replace this stub with the feature you actually want to ship.</p>
         </section>
         <section class="border-y border-app-line/90 py-4">
           <div class="mb-4 flex items-end justify-between gap-4">
-            <h2 class="text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-app-text-soft">Route Index</h2>
-            <p class="text-sm text-app-text-soft">Shipped with the starter</p>
+            <h2 class="text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-app-text-soft">Choose an exercise</h2>
+            <p class="text-sm text-app-text-soft">${exercises.length} untimed studies</p>
           </div>
-          <ul class="divide-y divide-app-line/90">${routeList}</ul>
+          <ul class="divide-y divide-app-line/90">${exerciseList}</ul>
+          <p class="border-t border-app-line/90 pt-4 text-sm leading-6 text-app-text-soft">Play on the built-in practice keys or connect a supported desktop MIDI keyboard. There is no timer and no score.</p>
         </section>
         <section class="space-y-4">
           <div class="border-t border-app-line pt-4">
-            <p class="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-app-text-soft">What ships</p>
-            <p class="mt-2 leading-7 text-app-text-soft">Server-rendered HTML, generated Tailwind CSS, and a JSON health endpoint. Enough surface area to run tests immediately without carrying a heavy starter shell.</p>
+            <p class="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-app-text-soft">Where this can lead</p>
+            <p class="mt-2 leading-7 text-app-text-soft">Notes and reading, rhythm and coordination, patterns and technique, and lawful repertoire pathways toward progressive music, Sibelius, and game music.</p>
           </div>
           <div class="border-t border-app-line pt-4">
-            <p class="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-app-text-soft">What to replace</p>
-            <p class="mt-2 leading-7 text-app-text-soft">Swap the route index and starter copy for your real feature work, then update the relevant spec and keep the quality gate green.</p>
+            <p class="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-app-text-soft">A useful boundary</p>
+            <p class="mt-2 leading-7 text-app-text-soft">This companion can observe MIDI notes and help organize practice. It cannot see physical technique and does not replace a qualified piano teacher.</p>
+          </div>
+          <div class="border-t border-app-line pt-4">
+            <p class="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-app-text-soft">For tooling</p>
+            <ul class="divide-y divide-app-line/90">${routeList}</ul>
           </div>
         </section>
       </article>

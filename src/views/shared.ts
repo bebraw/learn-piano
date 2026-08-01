@@ -4,8 +4,9 @@ export function htmlResponse(body: string, status = 200): Response {
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store",
-      "content-security-policy": "default-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
-      "permissions-policy": "camera=(), geolocation=(), microphone=()",
+      "content-security-policy":
+        "default-src 'self'; script-src 'self'; style-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
+      "permissions-policy": "camera=(), geolocation=(), microphone=(), midi=(self)",
       "referrer-policy": "strict-origin-when-cross-origin",
       "x-content-type-options": "nosniff",
     },

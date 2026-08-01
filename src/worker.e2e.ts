@@ -1,13 +1,18 @@
 import { expect, test } from "@playwright/test";
+import { exerciseLibrary } from "./exercises/library/index.js";
 
-test("renders the worker home page", async ({ page }) => {
+test("renders the piano practice home page", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { level: 1, name: "vibe-template Worker" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Piano Practice" })).toBeVisible();
   await expect(
-    page.getByText("A runnable Cloudflare Worker baseline with a route index, a health probe, and room for real feature work."),
+    page.getByText("A calm, local-first practice companion for focused exercises, useful feedback, and progress you can understand."),
   ).toBeVisible();
-  await expect(page.getByRole("heading", { level: 2, name: "Route Index" })).toBeVisible();
+  await expect(page.getByText("Choose an exercise")).toBeVisible();
+  await expect(page.locator('a[href^="/practice?exercise="]')).toHaveCount(exerciseLibrary.length);
+  for (const exercise of exerciseLibrary) {
+    await expect(page.getByRole("link", { name: new RegExp(exercise.title) })).toBeVisible();
+  }
   await expect(page.locator('a[href="/api/health"]').first()).toBeVisible();
 });
 
@@ -17,8 +22,8 @@ test("serves the health endpoint", async ({ request }) => {
   expect(response.ok()).toBe(true);
   await expect(response.json()).resolves.toEqual({
     ok: true,
-    name: "vibe-template-worker",
-    routes: ["/", "/api/health"],
+    name: "learn-piano-worker",
+    routes: ["/", "/practice", "/api/health"],
   });
 });
 
@@ -27,5 +32,10 @@ test("serves the generated stylesheet", async ({ request }) => {
 
   expect(response.ok()).toBe(true);
   expect(response.headers()["content-type"]).toContain("text/css");
-  await expect(response.text()).resolves.toContain("--color-app-canvas:#f3eee6");
+  expect(response.headers()["cache-control"]).toBe("no-store");
+  expect(response.headers()["x-content-type-options"]).toBe("nosniff");
+
+  const stylesheet = await response.text();
+  expect(stylesheet).toContain("--color-app-canvas:#f3eee6");
+  expect(stylesheet).toContain(".piano-key");
 });

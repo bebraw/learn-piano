@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "noEmit": false,
+    "noEmitOnError": true,
+    "outDir": "./.generated/browser",
+    "rootDir": "./src",
+    "sourceMap": false,
+    "types": []
+  },
+  "files": ["src/client/main.ts"],
+  "include": []
+}

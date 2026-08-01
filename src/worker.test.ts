@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { defaultExercise, exerciseLibrary } from "./exercises/library";
+import { exercisePracticeHref } from "./views/exercise-presentation";
 import worker, { handleRequest } from "./worker";
 import { ensureGeneratedStylesheet } from "./test-support";
 
 ensureGeneratedStylesheet();
 
 describe("worker", () => {
-  it("renders the stub home page", async () => {
+  it("renders the piano practice home page", async () => {
     const response = await handleRequest(new Request("http://example.com/"));
 
     expect(response.status).toBe(200);
@@ -15,8 +17,44 @@ describe("worker", () => {
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
 
     const body = await response.text();
-    expect(body).toContain("vibe-template Worker");
+    expect(body).toContain("Piano Practice");
+    expect(body).toContain(exercisePracticeHref(defaultExercise));
+    expect(body).toContain(`${exerciseLibrary.length} untimed studies`);
     expect(body).toContain("/api/health");
+  });
+
+  it("renders canonical practice instructions before enhancement", async () => {
+    const response = await handleRequest(new Request("http://example.com/practice"));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("Play C-D-E-F-G in ascending order with your right hand.");
+    expect(body).toContain('type="module" src="/client/main.js"');
+    expect(body).toContain('data-note-number="60"');
+  });
+
+  it("selects a canonical exercise from the query string", async () => {
+    const selectedExercise = exerciseLibrary[1]!;
+    const response = await handleRequest(new Request(`http://example.com${exercisePracticeHref(selectedExercise)}`));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain(selectedExercise.instructions);
+    expect(body).toContain(`data-exercise-id="${selectedExercise.id}"`);
+    expect(body).toContain('aria-current="page"');
+  });
+
+  it("returns not found for an unknown, empty, or ambiguous exercise id", async () => {
+    const unknown = await handleRequest(new Request("http://example.com/practice?exercise=not-in-the-library"));
+    const empty = await handleRequest(new Request("http://example.com/practice?exercise="));
+    const duplicate = await handleRequest(
+      new Request(`http://example.com/practice?exercise=${defaultExercise.id}&exercise=${exerciseLibrary[1]!.id}`),
+    );
+
+    expect(unknown.status).toBe(404);
+    expect(await unknown.text()).toContain("exercise=not-in-the-library");
+    expect(empty.status).toBe(404);
+    expect(duplicate.status).toBe(404);
   });
 
   it("returns a JSON health response", async () => {
@@ -26,8 +64,8 @@ describe("worker", () => {
     expect(response.headers.get("content-type")).toContain("application/json");
     await expect(response.json()).resolves.toEqual({
       ok: true,
-      name: "vibe-template-worker",
-      routes: ["/", "/api/health"],
+      name: "learn-piano-worker",
+      routes: ["/", "/practice", "/api/health"],
     });
   });
 

@@ -21,9 +21,10 @@ ADRs are grouped by lifecycle status:
 
 ## Proposed ADRs
 
-| ADR                                       | Status   | Summary                            |
-| ----------------------------------------- | -------- | ---------------------------------- |
-| [ADR-000](./proposed/ADR-000-template.md) | Proposed | Template for drafting future ADRs. |
+| ADR                                                                     | Status   | Summary                                                                           |
+| ----------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------- |
+| [ADR-000](./proposed/ADR-000-template.md)                               | Proposed | Template for drafting future ADRs.                                                |
+| [ADR-051](./proposed/ADR-051-add-a-thin-ipad-coremidi-wrapper-later.md) | Proposed | Add a thin WKWebView and CoreMIDI integration wrapper when iPad MIDI work begins. |
 
 ## Accepted ADRs
 
@@ -79,6 +80,12 @@ No accepted-only ADRs are currently pending implementation.
 | [ADR-044](./implemented/ADR-044-vendor-engineering-quality-skills.md)                  | Implemented | Vendor focused correctness, test, and debug skills as a reusable capability kit.                  |
 | [ADR-045](./implemented/ADR-045-adopt-type-aware-fallow-diagnostics.md)                | Implemented | Use Fallow's stable type-aware evidence and expose its interactive codebase map.                  |
 | [ADR-046](./implemented/ADR-046-scope-local-agent-ci-to-workflow-sensitive-changes.md) | Implemented | Require local Agent CI for workflow-sensitive changes and explicit full readiness checks.         |
+| [ADR-047](./implemented/ADR-047-use-cloudflare-mcp-as-the-platform-knowledge-layer.md) | Implemented | Use Cloudflare MCP for current platform knowledge while retaining focused local skills.           |
+| [ADR-048](./implemented/ADR-048-use-a-platform-neutral-midi-input-boundary.md)         | Implemented | Isolate Web MIDI, test input, and future native MIDI behind one normalized input port.            |
+| [ADR-049](./implemented/ADR-049-persist-attempts-locally-behind-a-repository.md)       | Implemented | Store versioned attempt summaries locally behind a replaceable repository boundary.               |
+| [ADR-050](./implemented/ADR-050-keep-live-evaluation-deterministic.md)                 | Implemented | Keep live exercise evaluation deterministic, offline, and replayable.                             |
+| [ADR-052](./implemented/ADR-052-retain-lightweight-server-rendered-ui.md)              | Implemented | Retain the Worker-rendered shell and enhance it with small typed client modules.                  |
+| [ADR-053](./implemented/ADR-053-use-a-versioned-canonical-exercise-representation.md)  | Implemented | Share one versioned exercise representation across views, evaluation, and persistence.            |
 
 ## Creating A New ADR
 

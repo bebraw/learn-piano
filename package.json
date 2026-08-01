@@ -1,5 +1,5 @@
 {
-  "name": "vibe-template",
+  "name": "learn-piano",
   "private": true,
   "packageManager": "npm@11.17.0",
   "engines": {
@@ -13,7 +13,9 @@
     }
   },
   "scripts": {
-    "build:css": "mkdir -p ./.generated && tailwindcss -i ./src/tailwind-input.css -o ./.generated/styles.css --minify",
+    "build": "npm run build:css && npm run build:client",
+    "build:client": "node ./node_modules/typescript-7/bin/tsc -p ./tsconfig.client.json",
+    "build:css": "mkdir -p ./.generated/browser && tailwindcss -i ./src/tailwind-input.css -o ./.generated/browser/styles.css --minify",
     "ci:local": "agent-ci run --quiet --json --pause-on-failure --workflow .github/workflows/ci.yml --prewarm-through .github/workflows/ci.yml:quality-fast:install",
     "ci:local:retry": "agent-ci retry",
     "deploy": "wrangler deploy",
@@ -41,7 +43,7 @@
     "test:affected": "node ./scripts/run-affected-tests.mjs",
     "test:coverage": "node ./scripts/run-coverage-gate.mjs",
     "test:tooling": "node --test scripts/*.test.mjs",
-    "typecheck": "node ./node_modules/typescript-7/bin/tsc --noEmit",
+    "typecheck": "node ./node_modules/typescript-7/bin/tsc --noEmit && node ./node_modules/typescript-7/bin/tsc -p ./tsconfig.client.json --noEmit",
     "worker:client-guard": "node ./scripts/assert-no-worker-client-scripts.mjs"
   },
   "devDependencies": {

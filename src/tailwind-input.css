@@ -9,8 +9,12 @@
   --color-app-accent-strong: #084839;
   --color-app-accent-ghost: rgb(11 106 82 / 0.08);
   --color-app-line: rgb(32 27 22 / 0.12);
+  --color-app-key: #fffdf8;
+  --color-app-key-edge: #d8d0c5;
+  --color-app-ink-faint: rgb(32 27 22 / 0.06);
 
   --shadow-panel: 0 20px 48px -38px rgb(32 27 22 / 0.24);
+  --shadow-key: 0 12px 18px -16px rgb(32 27 22 / 0.7), inset 0 -10px 18px rgb(32 27 22 / 0.035);
 }
 
 /*
@@ -39,5 +43,139 @@
   ::backdrop,
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
+  }
+
+  button,
+  select {
+    font: inherit;
+  }
+
+  button:disabled,
+  select:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+}
+
+@layer components {
+  .practice-keyboard {
+    grid-template-columns: repeat(auto-fit, minmax(3.25rem, 1fr));
+  }
+
+  .piano-key {
+    position: relative;
+    min-height: 10.5rem;
+    border: 1px solid var(--color-app-key-edge);
+    border-radius: 0.7rem 0.7rem 1.15rem 1.15rem;
+    background: var(--color-app-key);
+    box-shadow: var(--shadow-key);
+    color: var(--color-app-text-soft);
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      transform 160ms ease;
+  }
+
+  .piano-key::before {
+    position: absolute;
+    inset: 0.55rem 0.55rem auto;
+    height: 0.24rem;
+    border-radius: 999px;
+    background: transparent;
+    content: "";
+  }
+
+  .piano-key[data-note-state="expected"] {
+    border-color: rgb(11 106 82 / 0.58);
+    background: linear-gradient(180deg, var(--color-app-key) 22%, rgb(11 106 82 / 0.11) 100%);
+    box-shadow:
+      0 18px 26px -20px rgb(8 72 57 / 0.75),
+      inset 0 -10px 18px rgb(11 106 82 / 0.08);
+    color: var(--color-app-accent-strong);
+    transform: translateY(-0.18rem);
+  }
+
+  .piano-key[data-note-state="expected"]::before {
+    background: var(--color-app-accent);
+  }
+
+  .piano-key[data-note-state="accepted"] {
+    border-color: rgb(11 106 82 / 0.24);
+    background: rgb(255 253 248 / 0.62);
+    color: var(--color-app-accent);
+  }
+
+  .piano-key[aria-pressed="true"] {
+    border-color: var(--color-app-accent);
+    background: rgb(11 106 82 / 0.18);
+    box-shadow: inset 0 8px 16px rgb(8 72 57 / 0.12);
+    transform: translateY(0.18rem);
+  }
+
+  .piano-key:focus-visible {
+    outline: 3px solid rgb(11 106 82 / 0.3);
+    outline-offset: 3px;
+  }
+
+  .practice-control {
+    min-height: 2.85rem;
+    border: 1px solid var(--color-app-line);
+    border-radius: 0.85rem;
+    background: rgb(255 253 248 / 0.82);
+    color: var(--color-app-text);
+  }
+
+  .practice-control:focus-visible {
+    border-color: var(--color-app-accent);
+    outline: 3px solid rgb(11 106 82 / 0.16);
+    outline-offset: 2px;
+  }
+
+  .practice-button {
+    min-height: 2.85rem;
+    border-radius: 0.85rem;
+    background: var(--color-app-text);
+    color: var(--color-app-canvas);
+    transition:
+      background-color 160ms ease,
+      transform 160ms ease;
+  }
+
+  .practice-button:hover:not(:disabled) {
+    background: var(--color-app-accent-strong);
+  }
+
+  .practice-button:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .practice-button:focus-visible {
+    outline: 3px solid rgb(11 106 82 / 0.26);
+    outline-offset: 3px;
+  }
+
+  .practice-button-secondary {
+    border: 1px solid var(--color-app-line);
+    background: transparent;
+    color: var(--color-app-text);
+  }
+
+  .practice-button-secondary:hover:not(:disabled) {
+    border-color: rgb(11 106 82 / 0.4);
+    background: var(--color-app-accent-ghost);
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

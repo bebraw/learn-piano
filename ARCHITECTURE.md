@@ -17,6 +17,15 @@ Use this file for global constraints. Use feature specs under `specs/` for domai
 - Keep workflow writes explicit. New generated output, local state, cache, archive, or tool-artifact paths should be documented in the same change that introduces them.
 - Do not place executable browser code inline in Worker-rendered HTML. Client behavior should live in typed TypeScript modules before it is served to browsers.
 
+## Piano Practice Domain
+
+- Keep the Cloudflare Worker and server-rendered HTML as the document shell. Interactive practice behavior is progressive enhancement delivered through small, same-origin TypeScript modules compiled to browser ESM.
+- Keep musical behavior independent from platform APIs. Practice sessions consume the platform-neutral `MidiInputPort`; only adapters may depend on Web MIDI or a future native CoreMIDI bridge.
+- Treat validated, versioned exercise definitions as the canonical source for rendering, evaluation, fixtures, persistence identity, and future curriculum or notation consumers.
+- Keep live performance evaluation deterministic and local. The same canonical exercise and normalized MIDI sequence must always produce the same progress and feedback.
+- Keep completed-attempt history local-first behind `AttemptRepository`. Storage failure must not block or redefine musical completion.
+- Keep protected repertoire names as goal and competency metadata unless lawful source material is deliberately added with explicit rights metadata.
+
 ## Tooling Baseline
 
 - Local development and local CI target macOS as the supported host platform baseline.
@@ -42,6 +51,7 @@ Use this file for global constraints. Use feature specs under `specs/` for domai
 - Use `npm run quality:gate:deep` when local assertion-strength feedback is worth the additional mutation-testing cost.
 - `npm run diagnostics:codebase` is useful during review and refactoring, but passing or failing it is not a readiness baseline by itself.
 - Documentation-only changes should use the smallest relevant checks unless they alter executable instructions or workflow contracts.
+- Browser ESM and the generated stylesheet are public build artifacts under ignored `.generated/browser/`. Source modules remain under `src/`; generated browser files are never edited by hand.
 
 ## Capability Kits
 

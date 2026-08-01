@@ -4,78 +4,81 @@
 
 ### Context
 
-The template README is the first surface contributors see. It should identify the current starter app clearly near the top, explain how vendored ASDLC references relate to repo-specific docs, point contributors at the current runtime and verification commands, and keep screenshot refresh manual.
+The README is the first surface for a learner or contributor. It must identify the current Piano Practice product, explain the six-exercise beginner slice and its platform limits, provide accurate local commands and architecture orientation, and preserve the repository's documentation contract. The committed screenshot should stay representative without adding screenshot automation to routine development or CI.
 
 ### Architecture
 
 - **Primary document:** `README.md`
-- **Committed screenshot asset:** `docs/screenshots/home.png`
-- **Current workflow summary:** runtime, verification, source layout, and documentation contract notes in `README.md`
-- **Screenshot refresh path:** manual developer update
-- **Update model:** manual refresh when the starter UI changes materially
-- **Non-goal:** no screenshot capture in the automated development loop, CI, or remote workflows
+- **Committed screenshot:** `docs/screenshots/home.png`
+- **Product summary:** six-exercise selection, local-first practice behavior, feedback, per-exercise persistence, input choices, and explicit limitations
+- **Developer summary:** runtime, default and query-selected practice routes, source layout, generated assets, verification, and authoritative documentation locations
+- **Screenshot refresh:** a manual developer action after material UI changes
+- **Non-goal:** no local or remote screenshot workflow in the automated build, development loop, or CI
 
 ### Anti-Patterns
 
-- Do not reintroduce remote screenshot automation just to keep the README image current.
-- Do not reintroduce local screenshot scripts as part of the routine development loop.
-- Do not point the README at a missing or stale placeholder screenshot path.
-- Do not let the committed screenshot drift far from the current starter UI.
-- Do not make readers infer the app shape from source files alone before they understand the runtime baseline.
-- Do not imply that generated code becomes authoritative just because CI passes.
-- Do not let the README drift away from the actual commands, ports, or source layout used by the current template.
+- Do not describe the application as the old generic Worker stub or make readers infer the product from source files.
+- Do not claim Web MIDI or direct MIDI support on platforms where the runtime does not provide it reliably.
+- Do not imply that local browser history is cloud-synced, permanent, or an account-backed record.
+- Do not claim the application can assess physical technique or replace a teacher.
+- Do not point at stale commands, ports, generated paths, routes, package names, or source layout.
+- Do not imply that generated code becomes authoritative merely because CI passes.
+- Do not point at a missing or materially stale screenshot.
+- Do not reintroduce screenshot capture into routine automation without a superseding ADR.
 
 ## Contract
 
 ### Definition of Done
 
-- [ ] The README includes a working application screenshot reference.
-- [ ] The README identifies the starter as a Cloudflare Worker served with Wrangler near the top.
-- [ ] The README explains how vendored ASDLC guidance relates to repo-specific architecture, spec, and ADR documents.
-- [ ] The README reflects the current runtime and verification commands.
-- [ ] The screenshot asset is committed in the repo.
+- [ ] The README identifies Piano Practice as a local-first Cloudflare Worker application near the top.
+- [ ] It describes the six untimed right- and left-hand exercises, direct exercise selection, progressive enhancement, input options, per-exercise history, and feedback boundaries.
+- [ ] It states the desktop Web MIDI dependency and the proposed—not implemented—native iPad path.
+- [ ] Runtime, build, verification, route, and source-layout details match the repository.
+- [ ] It explains how vendored ASDLC guidance relates to repo-specific architecture, specs, and ADRs.
+- [ ] It references a committed screenshot that represents the current application.
 
 ### Regression Guardrails
 
-- `README.md` must reference a committed screenshot file that exists in the repo.
-- `README.md` should let a new reader understand the current app and rendering model before they start exploring the source tree.
-- `README.md` should describe the current documentation contract accurately, including that specs and ADRs remain authoritative over generated code.
-- `README.md` should continue to describe the current starter source layout and verification flow accurately.
-- `README.md` should describe the current runtime pin source accurately when the repo toolchain changes.
-- `README.md` should describe the supported host platform baseline accurately when local development constraints change.
-- `README.md` should point browser setup at the current pinned Playwright install script instead of an ad hoc command.
-- The screenshot should continue to represent the current starter app surface closely enough to be useful.
-- Screenshot support must remain manual unless a later ADR changes that rule.
+- `README.md` must reference the existing `docs/screenshots/home.png` asset.
+- A new reader must understand the current product and server-rendered/progressively enhanced model before exploring the source tree.
+- The README must identify `/practice` as the canonical default and `?exercise=<id>` as direct selection, including the `404` behavior for unknown IDs.
+- The current exercises must not be described as timed, scored, AI-evaluated, or cloud-backed.
+- Input support and iPad limitations must remain accurate when platform adapters change.
+- The documented build must identify `.generated/browser/` as ignored generated output.
+- Runtime pinning, macOS host scope, commands, ports, routes, and source layout must match current behavior.
+- Browser setup must use the pinned `npm run playwright:install` script.
+- Specs and ADRs must remain the durable source of truth over generated code.
+- Screenshot refresh must remain manual unless a later ADR changes that rule.
 
 ### Verification
 
-- **Screenshot refresh:** manual developer update when the starter UI changes materially
-- **Manual check:** verify the README image renders from `docs/screenshots/home.png`
-- **Repo check:** `git diff --check`
-- **Baseline check:** `npm run format:check`
+- **Screenshot refresh:** update `docs/screenshots/home.png` manually when the application changes materially.
+- **Manual check:** inspect the image and verify that it renders from the README path.
+- **Repository checks:** `git diff --check` and `npm run format:check`.
+- **Behavior check:** compare documented commands, routes, and file paths with `package.json`, `wrangler.jsonc`, and the source tree.
 
 ### Scenarios
 
-**Scenario: Reader opens the README**
+**Scenario: Learner opens the README**
 
-- Given: the repo is viewed locally or on Git hosting
-- When: the reader starts at the top of the document
-- Then: they can tell quickly that the starter is a Cloudflare Worker served with Wrangler and centered on server-rendered HTML
+- Given: the repository is viewed locally or on Git hosting
+- When: the learner reads the opening sections
+- Then: they understand the six exercises available now, how selection, input, and per-exercise history work, and what the application cannot assess
 
-**Scenario: Contributor follows the README**
+**Scenario: Contributor runs the application**
 
-- Given: the current template baseline
-- When: the contributor reads the runtime, verification, and source layout sections
-- Then: the commands, ports, and file locations match the current repo behavior
+- Given: the current macOS development baseline
+- When: the contributor follows the setup and runtime instructions
+- Then: the commands, port, generated paths, and routes match the repository
 
 **Scenario: Contributor evaluates generated changes**
 
-- Given: a contributor or agent proposes code generated with AI assistance
-- When: they read the README documentation notes
-- Then: they understand that specs and ADRs remain the durable source of truth and that CI passing does not replace those documents
+- Given: a contributor or agent proposes AI-assisted code
+- When: they read the documentation contract
+- Then: they understand that architecture, specs, and ADRs remain authoritative and must evolve deliberately
 
-**Scenario: Starter UI changes materially**
+**Scenario: Application UI changes materially**
 
-- Given: the rendered application changes enough that the current screenshot is misleading
+- Given: the rendered application no longer resembles the committed screenshot
 - When: the change is completed
-- Then: the developer refreshes the committed README screenshot manually
+- Then: the developer manually refreshes and inspects `docs/screenshots/home.png`

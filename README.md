@@ -1,89 +1,86 @@
-# vibe-template
+# Piano Practice
 
-`vibe-template` currently ships as a Cloudflare Worker application served with Wrangler, implemented in JavaScript/TypeScript, and centered on server-rendered HTML with a small JSON API stub.
+Piano Practice is a personal, local-first browser application for focused piano exercises. The current vertical slice offers six untimed beginner studies: right- and left-hand C-position ascents and descents plus a step-and-skip pattern for each hand. It gives immediate deterministic feedback and remembers completed attempts in the current browser.
 
-This is a template for my vibecoding projects and it captures what I consider my best practices so I don't have to repeat them for each experiment.
+The application runs as a Cloudflare Worker through Wrangler. It renders useful HTML on the server, then progressively enhances the practice page with small typed browser modules. There is no client framework, account, cloud database, generative feedback loop, timer, score, or streak mechanic.
 
-The repo vendors ASDLC reference material in `.asdlc/` as local guidance instead of recreating it per project. Repo-specific truth lives in `ARCHITECTURE.md`, `specs/`, and `docs/adrs/`: generated code still needs to match those documents, and passing CI alone is not enough.
+![Piano Practice application](docs/screenshots/home.png)
 
-Local development in this repo targets macOS. Other platforms may need script and tooling adjustments before the baseline workflow works as documented.
+## Current Practice Slice
 
-## Documentation
+- Choose from six canonical exercises on the home or practice page, even when JavaScript or MIDI is unavailable.
+- Open `/practice` for the default right-hand ascent, or use `?exercise=<id>` to link directly to another exercise.
+- Use the five on-screen practice keys for a deterministic hardware-free flow.
+- On a supported desktop browser, select and connect a Web MIDI input.
+- See the next expected note, accepted notes, active notes, and calm feedback for correct, repeated, out-of-order, and wrong input.
+- Restart cleanly after a disconnect or whenever you want to begin again.
+- Keep compact completed-attempt history scoped to each exercise ID and revision in a versioned `localStorage` record. Incomplete and interrupted attempts are not saved.
 
-- Development setup and local CI: `docs/development.md`
-- Architecture decisions: `docs/adrs/README.md`
-- Feature and architecture specs: `specs/README.md`
-- Agent behavior and project rules: `AGENTS.md`
-- Project-local agent capabilities: `.codex/skills/`
-- Partial-upgrade capability kits: `.capabilities/`
-- Template maintenance update packs: `.template/updates/`
+MIDI can confirm note pitch and order for these exercises. It cannot verify which hand played, assess posture, tension, fingering, or touch, or replace a qualified piano teacher.
 
-## Runtime
+## Run Locally
 
-- Run `nvm use` before `npm install` or any other development command so your shell picks up the repo-pinned Node.js version from `.nvmrc` and stays close to the expected npm baseline.
-- Install dependencies with `npm install`.
-- `npm install` also configures the repo-managed `pre-push` hook so `git push` runs affected guardrails before code leaves your machine.
-- The exact project Node.js version is pinned in `package.json` and mirrored in `.nvmrc` for `nvm` users, and CI reads the `package.json` value directly.
-- npm is constrained to the supported npm 11 range in `package.json`; local development is expected to use `nvm use`, and CI uses the npm release bundled with the pinned Node setup as long as it satisfies that range.
-- Copy `.dev.vars.example` to `.dev.vars` before running projects that need local secrets.
-- Use repo-pinned CLI tools through `npx`, including `npx wrangler` for Cloudflare-based experiments.
-- Start the stub Worker with `npm run dev`, then open `http://127.0.0.1:8787`.
-- Rebuild the generated Tailwind stylesheet manually with `npm run build:css` when needed.
+Local development and local CI target macOS.
+
+1. Run `nvm use` to select the Node.js version pinned in `package.json` and mirrored in `.nvmrc`.
+2. Run `npm install`.
+3. Run `npm run dev`.
+4. Open `http://127.0.0.1:8787` or go directly to `http://127.0.0.1:8787/practice`.
+
+`npm run build` compiles Tailwind CSS and the typed browser entry point into ignored public assets under `.generated/browser/`. Wrangler runs this build automatically for local development and deployment.
+
+## Input Support
+
+The on-screen input is always the deterministic fallback and is also used by browser tests. Web MIDI is available only where the browser exposes the API and the learner grants access; real-device behavior still depends on the browser, operating system, and keyboard connection.
+
+Ordinary iPad Safari is not treated as a reliable direct MIDI runtime. The domain depends on a platform-neutral `MidiInputPort`, so a later thin WKWebView/CoreMIDI wrapper can supply the same normalized events without forking exercise or evaluation behavior. That native wrapper is proposed, not implemented.
+
+## Architecture
+
+- `src/worker.ts` is the Worker entry point and top-level router.
+- `src/views/` renders the home, practice, and fallback documents.
+- `src/client/` owns browser composition, session orchestration, DOM projection, and local persistence.
+- `src/midi/` defines the platform-neutral input contract plus Web MIDI and deterministic mock adapters.
+- `src/exercises/` contains the validated canonical exercise model and deterministic evaluator.
+- `src/api/` contains the JSON health endpoint used by tooling and smoke tests.
+- Colocated `*.test.ts` files cover domain and integration behavior; colocated `*.e2e.ts` files cover browser-visible flows.
+
+Each canonical exercise definition is the shared source for rendering, evaluation, fixtures, and persisted identity. Live evaluation is local and replayable: an identical exercise and normalized MIDI sequence always yields the same result.
+
+## Routes
+
+- `GET /` — application overview and six-exercise beginner library
+- `GET /practice` — the default right-hand C4-to-G4 ascent
+- `GET /practice?exercise=<id>` — a selected canonical exercise; unknown IDs return `404`
+- `GET /styles.css` and `GET /client/*.js` — generated same-origin browser assets
+- `GET /api/health` — stable JSON health response
 
 ## Verification
 
-- Run the fast local gate with `npm run quality:gate:fast` during normal iteration.
-- Run the baseline repo gate with `npm run quality:gate`.
-- Run the containerized local workflow with `npm run ci:local` when changing GitHub Actions, dependencies or installation behavior, build or container setup, browser CI setup, or when performing a full PR or release readiness check. It emits structured run, job, and step progress for agents, uses Agent CI parallelism with warm-cache serialization, and pauses failed runners for retry.
-- Run advisory codebase readability diagnostics with `npm run diagnostics:codebase`.
-- The repo-managed `pre-push` hook runs `npm run quality:affected` automatically after `npm install`.
-- If local Agent CI warns about `No such remote 'origin'`, set `GITHUB_REPO=owner/repo` in `.env.agent-ci`.
-- Retry a paused local CI run with `npm run ci:local:retry -- --name <runner-name>`.
-- Install the pinned Playwright browser with `npm run playwright:install`.
-- Run unit tests from colocated `src/**/*.test.ts` files with `npm test`.
-- Run browser tests from colocated `src/**/*.e2e.ts` files with `npm run e2e`.
-- Run mutation tests against runtime `src/**/*.ts` files with `npm run mutation`.
+- `npm run quality:gate:fast` — formatting, lint, types, browser-code guard, tooling tests, dependency audit, and unit coverage
+- `npm run quality:gate` — the baseline gate plus Playwright browser tests
+- `npm run ci:local` — the containerized GitHub Actions workflow for workflow-sensitive or full-readiness changes
+- `npm test` — colocated Vitest unit and integration tests
+- `npm run e2e` — Playwright browser tests
+- `npm run typecheck` — TypeScript 7 project checks
+- `npm run build` — stylesheet and browser ESM build
+- `npm run mutation` — full local mutation test run
 
-## Capability Kits
+The repo-managed pre-push hook runs affected-file guardrails after `npm install`. Install the pinned Playwright browser with `npm run playwright:install` when needed. See `docs/development.md` for the complete workflow, Agent CI setup, and write boundaries.
 
-Use `.capabilities/` when another project needs one template practice without adopting the whole starter. Each kit is a reviewable partial-upgrade guide with a README, manifest, package-manager recipe, copyable files, and validation checks.
+## Documentation Contract
 
-The `engineering-quality-skills` kit exposes focused correctness review, test review, and systematic debugging workflows to downstream coding agents without adding runtime dependencies.
+The repo vendors ASDLC reference material under `.asdlc/`. Repo-specific truth lives in `ARCHITECTURE.md`, `specs/`, and `docs/adrs/`: generated code still has to implement those documents, and passing CI alone is not sufficient.
 
-To apply a kit to another repo:
+- Development and local CI: `docs/development.md`
+- Architecture decisions: `docs/adrs/README.md`
+- Living feature specs: `specs/README.md`
+- Agent rules: `AGENTS.md`
+- Reusable capability kits: `.capabilities/`
+- Portable template maintenance packs: `.template/updates/`
 
-1. Pick the smallest matching kit from `.capabilities/README.md`.
-2. Read the kit README and `manifest.json`.
-3. Follow the target package-manager recipe under `recipes/`.
-4. Copy or merge files from `files/` without overwriting target-project conventions.
-5. Ask before applying optional adjacent setup such as creating a GitHub Actions workflow.
-6. Run the kit checks and the target repo's normal quality gate.
+The application screenshot is committed at `docs/screenshots/home.png` and refreshed manually after material UI changes; screenshot capture is not part of CI.
 
-For existing projects where the right kit set is unclear, start with the negotiation prompt in `.capabilities/README.md`. It asks an agent to inspect the target repo, present a checkbox-style capability pull plan, and wait for approval before editing files.
+## Next Slice
 
-## Template Update Packs
-
-Use `.template/updates/` to sync later maintenance changes into projects that already use this template or one of its capability kits. Each update pack has metadata, a short migration guide, and a focused patch to try before porting the change manually.
-
-For cross-repo agent work, tell the agent:
-
-> Look at `vibe-template/.template/updates/AGENT_SYNC.md` for latest template updates.
-
-## Starter App
-
-- `GET /` serves a minimal editorial Worker stub with a route index and a primary health-probe link.
-- `GET /styles.css` serves the generated Tailwind stylesheet.
-- `GET /api/health` serves a JSON health response for smoke tests and tooling.
-
-## Source Layout
-
-- `src/worker.ts` is the Worker entry point and top-level router.
-- `src/api/` holds API response modules such as the health endpoint.
-- `src/views/` holds HTML rendering modules for the starter UI.
-- Tests live next to the code they exercise under `src/`.
-
-## Application Screenshot
-
-![Starter app screenshot](docs/screenshots/home.png)
-
-Refresh this asset manually when the starter UI changes materially.
+The recommended next slice is a count-in, metronome, and explicit timing/tempo evaluation contract, followed by an original steady-pulse Rhythm and Coordination exercise. Notation libraries, protected repertoire content, cloud sync, and native iPad packaging remain separate decisions.
