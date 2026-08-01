@@ -1,0 +1,11 @@
+node_modules
+.cache
+.generated
+.npm
+.wrangler
+.asdlc
+.github/skills
+.codex/skills/**/references
+playwright-report
+reports
+test-results
