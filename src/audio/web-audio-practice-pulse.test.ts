@@ -21,6 +21,12 @@ const THREE_FOUR_AT_60: PracticePulseConfig = {
   beatsPerMeasure: 3,
 };
 
+const FIVE_FOUR_AT_60: PracticePulseConfig = {
+  tempoBpm: 60,
+  countIn: 5,
+  beatsPerMeasure: 5,
+};
+
 class FakeScheduledClick implements PracticePulseScheduledClick {
   stopCalls = 0;
 
@@ -227,6 +233,49 @@ describe("WebAudioPracticePulse", () => {
       { status: "running", countInBeat: null, currentBeat: 1 },
     ]);
     expect(context.scheduledCalls.map(({ accent }) => accent)).toEqual([true, false, false, true, false, false, true]);
+    port.dispose();
+  });
+
+  it("emits a five-beat count-in and accents each five-beat measure", async () => {
+    const context = new FakeAudioContext();
+    const timer = new ManualTimerBoundary();
+    const states: PracticePulseState[] = [];
+    const port = testPort(context, timer, FIVE_FOUR_AT_60);
+    port.onStateChange((state) => states.push(state));
+
+    await port.start();
+    const scheduler = timer.latest();
+    for (let second = 1; second <= 10; second += 1) {
+      advanceTo(context, scheduler, second);
+    }
+
+    const pulseStates = states.filter((state) => state.countInBeat !== null || state.currentBeat !== null);
+    expect(pulseStates.map(({ status, countInBeat, currentBeat }) => ({ status, countInBeat, currentBeat }))).toEqual([
+      { status: "counting-in", countInBeat: 1, currentBeat: null },
+      { status: "counting-in", countInBeat: 2, currentBeat: null },
+      { status: "counting-in", countInBeat: 3, currentBeat: null },
+      { status: "counting-in", countInBeat: 4, currentBeat: null },
+      { status: "counting-in", countInBeat: 5, currentBeat: null },
+      { status: "running", countInBeat: null, currentBeat: 1 },
+      { status: "running", countInBeat: null, currentBeat: 2 },
+      { status: "running", countInBeat: null, currentBeat: 3 },
+      { status: "running", countInBeat: null, currentBeat: 4 },
+      { status: "running", countInBeat: null, currentBeat: 5 },
+      { status: "running", countInBeat: null, currentBeat: 1 },
+    ]);
+    expect(context.scheduledCalls.map(({ accent }) => accent)).toEqual([
+      true,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      true,
+    ]);
     port.dispose();
   });
 

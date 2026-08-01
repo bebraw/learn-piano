@@ -76,8 +76,8 @@ describe("createHomePageView", () => {
       overview({
         completedStudyIdentities: [{ exerciseId: fiveNoteAscentExercise.id, exerciseRevision: fiveNoteAscentExercise.revision }],
         completedStudies: 1,
-        rightHand: { completed: 1, total: 12 },
-        leftHand: { completed: 0, total: 12 },
+        rightHand: { completed: 1, total: 13 },
+        leftHand: { completed: 0, total: 13 },
         completedToday: 2,
         mostRecent: { exercise: fiveNoteAscentExercise, attempt: attempt() },
         recommendation: {
@@ -88,11 +88,11 @@ describe("createHomePageView", () => {
       }),
     );
 
-    expect(page.status.textContent).toBe("Saved completion for 1 of 24 current studies.");
+    expect(page.status.textContent).toBe("Saved completion for 1 of 26 current studies.");
     expect(page.details.hidden).toBe(false);
-    expect(page.studyCount.textContent).toBe("1 of 24");
-    expect(page.rightCount.textContent).toBe("1 of 12");
-    expect(page.leftCount.textContent).toBe("0 of 12");
+    expect(page.studyCount.textContent).toBe("1 of 26");
+    expect(page.rightCount.textContent).toBe("1 of 13");
+    expect(page.leftCount.textContent).toBe("0 of 13");
     expect(page.todayCount.textContent).toBe("2");
     expect(page.recent.hidden).toBe(false);
     expect(page.recentTitle.textContent).toBe(fiveNoteAscentExercise.title);
@@ -141,10 +141,10 @@ describe("createHomePageView", () => {
       }),
     );
 
-    expect(page.status.textContent).toBe("Saved completion for 0 of 24 current studies.");
-    expect(page.studyCount.textContent).toBe("0 of 24");
-    expect(page.rightCount.textContent).toBe("0 of 12");
-    expect(page.leftCount.textContent).toBe("0 of 12");
+    expect(page.status.textContent).toBe("Saved completion for 0 of 26 current studies.");
+    expect(page.studyCount.textContent).toBe("0 of 26");
+    expect(page.rightCount.textContent).toBe("0 of 13");
+    expect(page.leftCount.textContent).toBe("0 of 13");
     expect(page.todayCount.textContent).toBe("0");
     expect(page.recent.hidden).toBe(true);
     expect(page.recommendation.hidden).toBe(false);
@@ -162,9 +162,9 @@ describe("createHomePageView", () => {
           { exerciseId: fiveNoteAscentExercise.id, exerciseRevision: fiveNoteAscentExercise.revision },
           { exerciseId: fiveNoteDescentRightHandExercise.id, exerciseRevision: fiveNoteDescentRightHandExercise.revision },
         ],
-        completedStudies: 24,
-        rightHand: { completed: 12, total: 12 },
-        leftHand: { completed: 12, total: 12 },
+        completedStudies: 26,
+        rightHand: { completed: 13, total: 13 },
+        leftHand: { completed: 13, total: 13 },
         recommendation: {
           kind: "review",
           exercise: fiveNoteAscentExercise,
@@ -277,11 +277,11 @@ function card(exerciseId: string): FakeCard {
 
 function overview(overrides: Partial<PracticeOverview> = {}): PracticeOverview {
   return {
-    totalStudies: 24,
+    totalStudies: 26,
     completedStudyIdentities: [],
     completedStudies: 0,
-    rightHand: { completed: 0, total: 12 },
-    leftHand: { completed: 0, total: 12 },
+    rightHand: { completed: 0, total: 13 },
+    leftHand: { completed: 0, total: 13 },
     completedToday: 0,
     mostRecent: null,
     recommendation: null,

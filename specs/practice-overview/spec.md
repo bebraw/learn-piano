@@ -4,13 +4,14 @@
 
 ### Context
 
-The canonical library contains twenty-four short studies, but per-exercise history alone makes it difficult to understand the retained practice record as a whole. The home page needs one calm, local summary that helps the learner resume deliberately without turning completion records into grades, streaks, or mastery claims.
+The canonical library contains twenty-six short studies, thirteen per hand, but per-exercise history alone makes it difficult to understand the retained practice record as a whole. The home page needs one calm, local summary that helps the learner resume deliberately without turning completion records into grades, streaks, or mastery claims.
 
 ### Architecture
 
 - **Entry point:** The server-rendered `/` document contains the complete exercise library and a progressively enhanced `Your local practice` region.
 - **Persistence boundary:** The overview reads through `AttemptRepository`; it does not access or reshape the versioned `localStorage` envelope directly and introduces no new storage key or write path.
 - **Evidence boundary:** Only retained completed attempts matching a current canonical exercise ID and revision contribute. Unknown exercises, old revisions, malformed timestamps, incomplete sessions, and evicted records contribute nothing.
+- **Meter-study boundary:** A retained completion for either 5/4 pulse study contributes only exact-current-revision identity, recency, hand-summary, and today-count facts. The overview does not promote its five MIDI-relative gaps into audible phase, downbeat, click, measure, final-C, 5/4 grouping, accent, technique, consistency, or mastery evidence.
 - **Coverage summary:** Each current study contributes at most one saved-study completion. Every retained matching attempt completed on the learner's current local calendar day contributes to the today count.
 - **Hand summary:** A current study contributes to the right- or left-hand total when its canonical events assign that hand; an event assigned to both contributes to both hand summaries. Coverage for each hand remains unique by study.
 - **Recent summary:** The newest valid matching attempt supplies the most-recent study and local completion time. Canonical library order resolves equal timestamps.
@@ -38,7 +39,7 @@ The canonical library contains twenty-four short studies, but per-exercise histo
 
 ### Definition of Done
 
-- [ ] `/` server-renders the complete twenty-four-study library and a useful no-JavaScript overview fallback.
+- [ ] `/` server-renders the complete twenty-six-study library and a useful no-JavaScript overview fallback.
 - [ ] Readable history renders saved current-study coverage, unique right- and left-hand coverage, today's retained completion count, and the newest matching study when present.
 - [ ] Every card whose canonical ID and revision has retained completion evidence displays `Completion saved`; no other card receives a completion or negative-state claim.
 - [ ] One deterministic advisory next-study or review action uses the existing current-revision recommendation contract and leaves every library card available.
@@ -70,7 +71,7 @@ The canonical library contains twenty-four short studies, but per-exercise histo
 
 - Given: browser history is readable and contributes no attempt matching a current exercise revision
 - When: the home enhancement loads
-- Then: it reports zero of twenty-four saved current studies, hides the most-recent row, shows no completion badges, and suggests the first prerequisite-free study without implying a reset or failure
+- Then: it reports zero of twenty-six saved current studies, hides the most-recent row, shows no completion badges, and suggests the first prerequisite-free study without implying a reset or failure
 
 **Scenario: Summarize repeated practice honestly**
 

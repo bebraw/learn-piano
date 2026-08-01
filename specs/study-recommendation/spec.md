@@ -4,7 +4,7 @@
 
 ### Context
 
-The learner has twenty-four short exercises—twelve per hand, eight untimed, and sixteen timed—across pitch, pattern, ordered chord-tone, steady broken-chord, 3/4 broken-chord loop, repeated-note, mixed-pattern, offbeat-onset, hand, steady-pulse, and onset-subdivision work. The exercise library already declares prerequisites, and completed attempts already carry stable exercise IDs and revisions in local history. The practice completion flow and home overview should use that evidence to suggest one understandable next study instead of advancing by a circular UI position, while preserving the learner's freedom to choose any exercise.
+The learner has twenty-six short exercises—thirteen per hand, eight untimed, and eighteen timed—across pitch, pattern, ordered chord-tone, steady broken-chord, 3/4 broken-chord loop, 5/4 pulse, repeated-note, mixed-pattern, offbeat-onset, hand, steady-pulse, and onset-subdivision work. The timed set contains fourteen 4/4 studies, two 3/4 studies, and two 5/4 studies; ten use the integer steady-pulse grid. The exercise library already declares prerequisites, and completed attempts already carry stable exercise IDs and revisions in local history. The practice completion flow and home overview should use that evidence to suggest one understandable next study instead of advancing by a circular UI position, while preserving the learner's freedom to choose any exercise.
 
 A recommendation is practice guidance, not an evaluator result, unlock, grade, or mastery claim. The first implementation therefore uses only completion identity and recency. Pitch-error counts, timing classifications, tempo, velocity, and inferred physical technique do not affect this version.
 
@@ -25,6 +25,8 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - A steady broken-chord completion contributes recommendation identity and recency only. The exercise evaluator may retain its eight ordered pitches and seven MIDI-relative gaps, but recommendation does not infer audible phase or measure alignment, duration, release, legato, rests, articulation, dynamics or velocity quality, fingering, declared-hand use, relaxation, harmony recognition, staff reading, consistency, or mastery from them.
 - `three-four-broken-chord-c-major-right-hand` and `three-four-broken-chord-c-major-left-hand` are each eligible after their matching steady broken-chord study has exact-current-revision completion evidence; that matching study is the sole prerequisite.
 - A 3/4 broken-chord completion contributes recommendation identity and recency only. The evaluator may retain its seven ordered pitches and six MIDI-relative whole-beat gaps, but recommendation does not infer audible phase, downbeat, click or measure alignment, 3/4 counting or grouping, learner accent or dynamics, duration, fingering, declared-hand use, harmony recognition, staff reading, consistency, or mastery from them.
+- `five-four-pulse-c-major-right-hand` and `five-four-pulse-c-major-left-hand` are each eligible after their matching-hand 3/4 broken-chord study has exact-current-revision completion evidence; that matching study is the sole prerequisite, opposite-hand evidence does not satisfy it, and both 5/4 studies remain freely selectable without it. Each uses C-D-E-F-G-C at offsets 0–5 and carries, in order, `rhythm-and-coordination.five-four-meter`, `rhythm-and-coordination.steady-quarter-notes`, `rhythm-and-coordination.hands-separately`, `notes-and-reading.keyboard-geography`, and `patterns-and-technique.five-finger-patterns`.
+- A 5/4 pulse completion contributes recommendation identity and recency only. The evaluator may retain its six ordered pitches and five MIDI-relative whole-beat gaps, but recommendation does not infer 5/4 understanding, counting or grouping, audible phase, downbeat, click or measure alignment, learner accent or dynamics, duration, release, articulation, fingering, declared-hand use, staff reading, physical technique, consistency, or mastery from them. The canonical meter, five-beat count-in, five visible pulse positions, audio wrap, and instruction remain guidance rather than recommendation evidence.
 - When every current exercise has exact-revision completion evidence, the service recommends the least recently practiced exercise. Equal recency is resolved by canonical library order.
 - When readable history contains no current-revision completions, the service recommends the first prerequisite-free exercise in canonical library order.
 - The practice completion view and enhanced home overview explain why the study was suggested and always keep the complete exercise library available as the fallback and override.
@@ -84,6 +86,7 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 
 ### Definition of Done
 
+- [ ] The current recommendation library contains twenty-six exercises—thirteen per hand, eight untimed, and eighteen timed—with the timed set distributed as fourteen in 4/4, two in 3/4, and two in 5/4; ten timed studies use the integer steady-pulse grid.
 - [ ] The current canonical library produces one deterministic recommendation from the same exact-revision history input.
 - [ ] Every prerequisite reference resolves and every cycle is rejected before recommendation.
 - [ ] Eligible uncompleted direct dependents are preferred, followed by eligible uncompleted exercises in canonical library order.
@@ -91,6 +94,7 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - [ ] Each offbeat candidate requires exact-current-revision evidence only for its matching mixed-pattern prerequisite and remains freely selectable without it.
 - [ ] Each steady broken-chord candidate declares its matching ordered chord-tone prerequisite before its matching straight steady-quarter prerequisite and requires exact-current-revision evidence for both; neither prerequisite alone makes it eligible, and the study remains freely selectable without them.
 - [ ] Each 3/4 broken-chord candidate requires exact-current-revision evidence only for its matching steady broken-chord prerequisite and remains freely selectable without it.
+- [ ] `five-four-pulse-c-major-right-hand` and `five-four-pulse-c-major-left-hand` each require exact-current-revision evidence only for the matching-hand 3/4 broken-chord prerequisite, reject opposite-hand evidence, become eligible direct dependents when that one prerequisite completes, and remain freely selectable without it.
 - [ ] Empty readable history selects the first prerequisite-free exercise.
 - [ ] When every current exercise has matching completion evidence, the least recently practiced exercise is selected with canonical-order tie-breaking.
 - [ ] A just-completed in-memory attempt may inform the immediate suggestion before save, and successful persistence refreshes the retained-history result.
@@ -105,6 +109,7 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - Direct-dependent preference must not bypass any additional prerequisite on the candidate.
 - A steady broken-chord candidate must not become an eligible direct dependent until both its matching ordered chord-tone and straight steady-quarter prerequisites are satisfied; their declaration order must remain stable.
 - A 3/4 broken-chord candidate becomes an eligible direct dependent only from its matching steady broken-chord completion; the opposite-hand study or another timed completion must not satisfy it.
+- A 5/4 pulse candidate becomes an eligible direct dependent only from its matching-hand 3/4 broken-chord completion; the opposite-hand 3/4 study or another timed completion must not satisfy it, and missing evidence must never hide or lock the candidate.
 - Canonical library order is the only candidate and equal-recency tie-break; changing DOM presentation order must not change results.
 - Recommendations must remain deterministic for identical library, history, just-completed exercise, and in-memory completion inputs.
 - A recommendation must never modify evaluation, history records, curriculum metadata, or exercise availability.
@@ -115,10 +120,10 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 
 ### Verification
 
-- **Graph tests:** Accept the current library; reject missing prerequisite IDs, self-cycles, and multi-node cycles without returning a partial recommendation.
-- **Rule tests:** Cover direct dependent, an unmet additional prerequisite, ordered chord-tone eligibility from its sole step-and-skip prerequisite, repeated-note eligibility from its sole ascending even-eighth prerequisite, mixed-pattern eligibility only after both matching prerequisites, offbeat eligibility from its sole matching mixed-pattern prerequisite, steady broken-chord eligibility only after both matching prerequisites in canonical declaration order, steady broken-chord direct-dependent selection after the second prerequisite is completed, 3/4 broken-chord eligibility and direct-dependent selection from its sole matching steady broken-chord prerequisite, eligible non-dependent fallback, canonical-order tie-break, empty history, all-completed review, and equal recency.
+- **Graph tests:** Accept the current twenty-six-exercise library and verify its thirteen-per-hand, eight-untimed, eighteen-timed, 14-in-4/4, 2-in-3/4, 2-in-5/4, and 10-steady-pulse distributions; reject missing prerequisite IDs, self-cycles, and multi-node cycles without returning a partial recommendation.
+- **Rule tests:** Cover direct dependent, an unmet additional prerequisite, ordered chord-tone eligibility from its sole step-and-skip prerequisite, repeated-note eligibility from its sole ascending even-eighth prerequisite, mixed-pattern eligibility only after both matching prerequisites, offbeat eligibility from its sole matching mixed-pattern prerequisite, steady broken-chord eligibility only after both matching prerequisites in canonical declaration order, steady broken-chord direct-dependent selection after the second prerequisite is completed, 3/4 broken-chord eligibility and direct-dependent selection from its sole matching steady broken-chord prerequisite, 5/4 eligibility and direct-dependent selection from its sole matching-hand 3/4 prerequisite, opposite-hand rejection, eligible non-dependent fallback, canonical-order tie-break, empty history, all-completed review, and equal recency.
 - **Evidence tests:** Cover current versus old revision, duplicate completions, unknown exercise history, bounded-history disappearance, and a just-completed transient record.
-- **Exclusion tests:** Changing error counts, timing classifications, tempo, and input kind on otherwise equivalent completed records does not change the recommendation; steady or 3/4 broken-chord pitch and timing evidence does not create phase, downbeat, meter grouping, accent, measure, note-length, articulation, dynamics, physical-technique, harmony, reading, consistency, or mastery signals.
+- **Exclusion tests:** Changing error counts, timing classifications, tempo, and input kind on otherwise equivalent completed records does not change the recommendation; steady, 3/4, or 5/4 pitch and timing evidence does not create phase, downbeat, click, meter understanding or counting, grouping, accent, measure, note-length, release, articulation, dynamics, physical-technique, harmony, reading, consistency, or mastery signals.
 - **Controller tests:** Recommendation loads independently of practice, recalculates optimistically on completion, refreshes after save, and preserves the in-session suggestion while surfacing save failure honestly.
 - **View tests:** Loading, available reasons, current-study review, unavailable fallback, and unrestricted chooser states render with calm accessible text.
 - **Browser tests:** Completing the default with empty retained history suggests its first eligible direct dependent from the new in-memory completion; manual selection remains available; reload reflects only successfully retained evidence.
@@ -190,6 +195,12 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - Given: `steady-quarter-broken-chord-c-major-right-hand` has exact-current-revision completion evidence and `three-four-broken-chord-c-major-right-hand` is uncompleted
 - When: recommendation considers the 3/4 broken-chord study
 - Then: it is eligible as a direct dependent from that sole matching-hand prerequisite, remains freely selectable without it, and receives no audible-phase, downbeat, meter-grouping, accent, measure, duration, fingering, hand-use, harmony-recognition, staff-reading, consistency, readiness, or mastery claim
+
+**Scenario: Suggest a 5/4 pulse study after matching 3/4 guidance**
+
+- Given: `three-four-broken-chord-c-major-right-hand` has exact-current-revision completion evidence and `five-four-pulse-c-major-right-hand` is uncompleted
+- When: recommendation considers the right-hand 5/4 pulse study
+- Then: it is eligible as a direct dependent from that sole matching-hand prerequisite, remains freely selectable without it, rejects the left-hand 3/4 completion as prerequisite evidence, and receives no 5/4-understanding, counting, grouping, audible-phase, downbeat, click, measure-alignment, accent, dynamics, duration, release, articulation, fingering, hand-use, staff-reading, physical-technique, consistency, readiness, or mastery claim
 
 **Scenario: Fall back to another eligible study**
 

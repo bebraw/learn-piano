@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fiveNoteDescentLeftHandExercise } from "../exercises/library/beginner-five-note-exercises.js";
 import { evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises.js";
+import { fiveFourPulseRightHandExercise } from "../exercises/library/five-four-pulse-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-eighth-pattern-exercises.js";
 import { offbeatStepSkipRightHandExercise } from "../exercises/library/offbeat-step-skip-exercises.js";
@@ -117,6 +118,18 @@ describe("renderStaffPitchGuide", () => {
     expect(html).toContain("Pitch order · One note per beat");
     expect(html.match(/data-staff-note/g)).toHaveLength(7);
     for (const event of threeFourBrokenChordRightHandExercise.expectedEvents) {
+      expect(html).toContain(`data-event-id="${event.id}"`);
+    }
+    expect(html).not.toContain("No fixed rhythm");
+    expect(html).not.toContain("Even eighth-note onsets");
+  });
+
+  it("keeps the returning C as a sixth 5/4 pulse occurrence", () => {
+    const html = renderStaffPitchGuide(fiveFourPulseRightHandExercise);
+
+    expect(html).toContain("Pitch order · One note per beat");
+    expect(html.match(/data-staff-note/g)).toHaveLength(6);
+    for (const event of fiveFourPulseRightHandExercise.expectedEvents) {
       expect(html).toContain(`data-event-id="${event.id}"`);
     }
     expect(html).not.toContain("No fixed rhythm");

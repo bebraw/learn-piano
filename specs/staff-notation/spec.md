@@ -4,7 +4,7 @@
 
 ### Context
 
-The current practice stage names every expected pitch and shows its piano key, but the learner also wants gradual exposure to staff reading. All twenty-four current exercises use a small, single-hand, natural-note range, so they can share a useful pitch-position guide without adopting a general score engine or pretending that the application can assess whether the learner actually read it.
+The current practice stage names every expected pitch and shows its piano key, but the learner also wants gradual exposure to staff reading. All twenty-six current exercises use a small, single-hand, natural-note range, so they can share a useful pitch-position guide without adopting a general score engine or pretending that the application can assess whether the learner actually read it.
 
 The first notation surface must preserve the server-rendered, progressively enhanced application model and the canonical exercise boundary. It must not invent note duration, rhythmic value, or a second exercise identity merely to draw the current pitches.
 
@@ -14,12 +14,13 @@ The first notation surface must preserve the server-rendered, progressively enha
 - The supported subset is deliberately narrow: single-hand exercises containing the current natural notes C4-G4 for right-hand treble display or C3-G3 for left-hand bass display.
 - The guide shows five staff lines, the appropriate clef, ordered pitch markers, and any ledger line required by the supported range.
 - Pitch markers represent vertical staff position and canonical event order only. They have no stem, beam, rest, articulation, duration, velocity, fingering, or performance-timing semantics.
-- Timed staff metadata may name the separate onset contract. The six regular eighth-grid studies use `Pitch order · Even eighth-note onsets`; the offbeat pair uses `Pitch order · Downbeat then offbeat onsets`; and the eight steady-quarter studies use `Steady pulse` with `Pitch order · One note per beat`. That text does not turn the pitch markers or their horizontal spacing into written rhythmic or meter notation.
+- Timed staff metadata may name the separate onset contract. The six regular eighth-grid studies use `Pitch order · Even eighth-note onsets`; the offbeat pair uses `Pitch order · Downbeat then offbeat onsets`; and the ten steady-quarter studies use `Steady pulse` with `Pitch order · One note per beat`. That text does not turn the pitch markers or their horizontal spacing into written rhythmic or meter notation.
 - The selected exercise's existing semantic note sequence remains adjacent to the SVG as the accessible and unsupported-content fallback.
 - Progressive enhancement marks accepted, next, and remaining canonical events in the guide from the same evaluator progress that drives the textual next-note cue and keyboard.
 - The ordered C-major chord-tone pair renders five markers for C-E-G-E-C. Repeated C and E occurrences retain separate expected-event IDs and horizontal positions even though they share staff pitch positions and physical keyboard controls.
 - The `steady-quarter-broken-chord-c-major-right-hand` and `steady-quarter-broken-chord-c-major-left-hand` studies each render eight markers for C-E-G-E-C-E-G-E over five C-G physical controls. Every repeated occurrence retains its own expected-event ID and horizontal position. The equal presentation spacing remains pitch order only and does not encode its canonical offsets `0` through `7` as written beats or two written measures.
 - The `three-four-broken-chord-c-major-right-hand` and `three-four-broken-chord-c-major-left-hand` studies each render seven markers for C-E-G-C-E-G-C over five C-G physical controls. Every repeated occurrence retains its own expected-event ID and horizontal position. The equal presentation spacing remains pitch order only and does not encode offsets `0` through `6`, 3/4 meter, written beats, barlines, or accents.
+- The `five-four-pulse-c-major-right-hand` and `five-four-pulse-c-major-left-hand` studies each render six markers for C-D-E-F-G-C over five C-G physical controls. Both C occurrences retain their own expected-event ID and horizontal position. The equal presentation spacing remains pitch order only and does not encode offsets `0` through `5`, 5/4 meter, the five-beat count-in, written beats, barlines, pulse, grouping, or accents. The exact pitch-free task `After the five-beat count-in, place one note on each beat. Count 1 2 3 4 5, 1.` remains separate from the guide.
 - The mixed-pattern pair renders eight markers for C-E-D-D-F-G-E-C. Adjacent D occurrences and returning E and C occurrences retain separate expected-event IDs and horizontal positions while sharing five physical keyboard controls.
 - The offbeat pair renders five markers for C-E-D-F-G over five physical controls. Their equal horizontal spacing remains pitch-order presentation and does not draw the canonical gaps at numbered beats 2, 3, and 4.
 - For a validated supported guide, enhanced reading focus may visually suppress staff pitch labels and the surrounding note-name answers while retaining occurrence-based staff progress and semantic equivalents. Guided server rendering remains the default.
@@ -56,10 +57,11 @@ The first notation surface must preserve the server-rendered, progressively enha
 
 - A descending or step-and-skip exercise retains canonical event order horizontally even though vertical pitch position moves independently.
 - Middle C in the supported right-hand range receives its ledger line; no other ledger line is fabricated.
-- A repeated pitch in the current ordered chord-tone, steady broken-chord, 3/4 broken-chord, repeated-note, or mixed-pattern pair retains separate markers because canonical event IDs, not MIDI note number alone, identify positions in the sequence. Adjacent equal-pitch markers share a vertical position but remain independently accepted, expected, or remaining.
+- A repeated pitch in the current ordered chord-tone, steady broken-chord, 3/4 broken-chord, 5/4 pulse, repeated-note, or mixed-pattern pair retains separate markers because canonical event IDs, not MIDI note number alone, identify positions in the sequence. Adjacent equal-pitch markers share a vertical position but remain independently accepted, expected, or remaining.
 - C-E-G-E-C remains five equally presentation-spaced, individual pitch markers. Shared pitch positions do not stack markers into chords or add simultaneity, duration, voicing, or harmony-assessment meaning.
 - C-E-G-E-C-E-G-E remains eight equally presentation-spaced, individual pitch markers over five physical controls. The guide does not show or prove audible phase, measure alignment, duration, release, legato, rests, articulation, dynamics, velocity, fingering, hand use, relaxation, harmony recognition, staff reading, consistency, or mastery.
 - C-E-G-C-E-G-C remains seven equally presentation-spaced, individual pitch markers over five physical controls. The guide does not draw or prove 3/4 meter, beat grouping, a beat-1 accent, audible phase, downbeat or measure alignment, duration, release, legato, rests, dynamics, fingering, hand use, harmony recognition, staff reading, consistency, or mastery.
+- C-D-E-F-G-C remains six equally presentation-spaced, individual pitch markers over five physical controls. The guide does not draw or prove 5/4 meter, the five-beat count-in, beat grouping, a beat-1 accent, audible phase, downbeat, click, pulse, or measure alignment, duration, release, legato, rests, dynamics, fingering, declared-hand use, keyboard geography, five-finger technique, staff reading, consistency, or mastery.
 - If exercise data falls outside the supported subset, the renderer returns the explicit unsupported result and the page continues with semantic text rather than partial or misleading notation.
 - Timed exercise progress may update the same pitch markers, but beat offsets and timing feedback do not change their pitch-only meaning.
 - Fractional beat offsets do not alter marker spacing, create beams, imply held duration or key release, or introduce rests between markers. Missing numbered-beat targets in the offbeat pair remain canonical onset gaps, not rendered or assessed silence.
@@ -85,6 +87,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 - [ ] Each ordered chord-tone study renders five occurrence-based markers for C-E-G-E-C while the keyboard separately reuses one C control and one E control from the same canonical data.
 - [ ] Each steady broken-chord study renders eight occurrence-based markers for C-E-G-E-C-E-G-E while the keyboard separately reuses five C-G controls, and displays `Steady pulse` with `Pitch order · One note per beat` outside the pitch-only guide.
 - [ ] Each 3/4 broken-chord study renders seven occurrence-based markers for C-E-G-C-E-G-C while the keyboard separately reuses five C-G controls, and displays `Steady pulse`, `Pitch order · One note per beat`, and separate pitch-free three-beat count guidance outside the pitch-only guide.
+- [ ] Each 5/4 pulse study renders six occurrence-based markers for C-D-E-F-G-C while the keyboard separately reuses five C-G controls, and displays `Steady pulse`, `Pitch order · One note per beat`, and the exact pitch-free task `After the five-beat count-in, place one note on each beat. Count 1 2 3 4 5, 1.` outside the pitch-only guide.
 - [ ] Each repeated-note study renders five occurrence-based markers for C-C-D-D-E while the keyboard separately reuses one C, D, and E control from the same canonical data.
 - [ ] Each mixed-pattern study renders eight occurrence-based markers for C-E-D-D-F-G-E-C while the keyboard separately reuses one C, D, E, F, and G control from the same canonical data.
 - [ ] Each offbeat study renders five C-E-D-F-G markers over five C-position controls, uses `Pitch order · Downbeat then offbeat onsets`, and leaves its timing gaps to separate pitch-free guidance and evaluation.
@@ -112,7 +115,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 ### Verification
 
 - **Unit tests:** Natural-note pitch-to-staff mapping, treble and bass selection for the supported subset, middle-C ledger-line placement, canonical horizontal order, repeated-pitch occurrence identity, and explicit unsupported results.
-- **View tests:** Server HTML contains the complete SVG guide and semantic note sequence for right-hand, left-hand, descending, step-and-skip, ordered chord-tone, steady broken-chord, 3/4 broken-chord, repeated-note, mixed-pattern, offbeat, and timed exercises.
+- **View tests:** Server HTML contains the complete SVG guide and semantic note sequence for right-hand, left-hand, descending, step-and-skip, ordered chord-tone, steady broken-chord, 3/4 broken-chord, 5/4 pulse, repeated-note, mixed-pattern, offbeat, and timed exercises.
 - **Client tests:** Accepted, next, remaining, restart, interrupted, and completed projections update the matching canonical marker without changing evaluator state; reading focus hides labels but preserves the same progress and semantic hooks.
 - **Browser tests:** Without JavaScript the guide and text fallback remain guided; enhanced supported guides can hide and restore visual labels while retaining accessibility and progress; desktop, iPad, and narrow layouts do not overflow; a mock-input completion advances marker state consistently with keyboard and text.
 - **Documentation checks:** README, practice-session, exercise-format, and curriculum wording retain the pitch-only and no-mastery boundaries.
@@ -161,6 +164,12 @@ The first notation surface must preserve the server-rendered, progressively enha
 - When: its treble guide and timed metadata are rendered and progress advances across all seven events
 - Then: seven separate markers retain occurrence-specific state over five C-G physical controls, the labels read `Steady pulse` and `Pitch order · One note per beat`, and marker spacing encodes neither 3/4, beat grouping, accents, written beats, nor measures
 
+**Scenario: Preserve 5/4 occurrences without drawing meter**
+
+- Given: `five-four-pulse-c-major-right-hand` contains C4-D4-E4-F4-G4-C4 at canonical offsets `0` through `5`
+- When: its treble guide and timed metadata are rendered and progress advances across all six events
+- Then: six separate markers retain occurrence-specific state over five C-G physical controls, the labels read `Steady pulse` and `Pitch order · One note per beat`, the exact task `After the five-beat count-in, place one note on each beat. Count 1 2 3 4 5, 1.` remains outside the guide, and marker spacing encodes neither 5/4, count-in, beat grouping, pulse, accents, written beats, nor measures
+
 **Scenario: Preserve adjacent repeated-note occurrences**
 
 - Given: `repeated-note-eighths-c-major-right-hand` contains C4-C4-D4-D4-E4 as five expected-event IDs
@@ -175,7 +184,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 
 **Scenario: Keep timed meaning separate**
 
-- Given: a steady-quarter exercise, including an eight-event broken-chord study or seven-event 3/4 loop, displays its pitch guide
+- Given: a steady-quarter exercise, including an eight-event broken-chord study, seven-event 3/4 loop, or six-event 5/4 pulse study, displays its pitch guide
 - When: the learner starts the count-in and plays the exercise
 - Then: the guide continues to represent pitch and order only while canonical timing metadata, the pulse service, and the MIDI-interval evaluator independently own meter guidance and timing evidence under ADR-060
 

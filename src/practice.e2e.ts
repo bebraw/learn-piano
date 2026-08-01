@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { defaultExercise, exerciseLibrary } from "./exercises/library/index.js";
 import { formatMidiNote } from "./exercises/evaluator.js";
 import { evenEighthsRightHandExercise } from "./exercises/library/even-eighth-exercises.js";
+import { fiveFourPulseRightHandExercise } from "./exercises/library/five-four-pulse-exercises.js";
 import { mixedEighthPatternRightHandExercise } from "./exercises/library/mixed-eighth-pattern-exercises.js";
 import { offbeatStepSkipRightHandExercise } from "./exercises/library/offbeat-step-skip-exercises.js";
 import { orderedChordTonesRightHandExercise } from "./exercises/library/ordered-chord-tone-exercises.js";
@@ -545,6 +546,76 @@ test("completes and persists the seven-note broken chord in three-four", async (
     timing: { tempoBpm: 100, assessedIntervals: 6 },
   });
   expect((attempt?.timing?.onPulse ?? 0) + (attempt?.timing?.early ?? 0) + (attempt?.timing?.late ?? 0)).toBe(6);
+});
+
+test("completes and persists the six-note pulse in five-four", async ({ page }) => {
+  const exercise = fiveFourPulseRightHandExercise;
+  await page.goto(exercisePracticeHref(exercise));
+
+  await expect(page.getByRole("heading", { level: 1, name: exercise.title })).toBeVisible();
+  await expect(page.locator(".practice-meta span")).toHaveText(["Right hand", "Beginner", "60 BPM", "5/4"]);
+  await expect(page.locator("#pulse-status")).toHaveText("Ready at 60 BPM. Start the 5-beat count-in when you are settled.");
+  const instructions = page.locator(".practice-heading-copy");
+  const task = page.locator(".practice-score-task");
+  await expect(task).toHaveText("After the five-beat count-in, place one note on each beat. Count 1 2 3 4 5, 1.");
+  await expect(task).toBeHidden();
+  await expect(page.getByText("Pitch order · One note per beat")).toBeVisible();
+  const pulseBeats = page.locator("[data-pulse-beat]");
+  await expect(pulseBeats).toHaveCount(5);
+  const pulseBeatSizes = await pulseBeats.evaluateAll((beats) =>
+    beats.map((beat) => {
+      const { width, height } = beat.getBoundingClientRect();
+      return { width, height };
+    }),
+  );
+  expect(pulseBeatSizes.every(({ width, height }) => width > 0 && height > 0)).toBe(true);
+  expect(new Set(pulseBeatSizes.map(({ width, height }) => `${width}:${height}`)).size).toBe(1);
+  await expect(page.locator("[data-staff-note]")).toHaveCount(6);
+  await expect(page.locator("[data-practice-key]")).toHaveCount(5);
+
+  await page.getByRole("button", { name: "Reading focus" }).click();
+  await expect(instructions).toHaveCSS("position", "absolute");
+  await expect(instructions).toHaveCSS("width", "1px");
+  await expect(task).toBeVisible();
+
+  const staffNotes = exercise.expectedEvents.map((event) => page.locator(`#staff-note-${event.id}`));
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await page.locator("#pulse-tempo").selectOption("100");
+  await page.getByRole("button", { name: "Start pulse" }).click();
+  await expect(page.locator("#practice-stage")).toHaveAttribute("data-pulse-status", "running", { timeout: 5_000 });
+  await expect(page.locator("#pulse-beat-5")).toHaveAttribute("data-beat-state", "active", { timeout: 4_000 });
+  await expect(page.locator("#pulse-beat-1")).toHaveAttribute("data-beat-state", "active", { timeout: 1_500 });
+
+  for (const [index, event] of exercise.expectedEvents.entries()) {
+    await playNote(page, event.noteNumber);
+    await expect(staffNotes[index]!).toHaveAttribute("data-note-state", "accepted");
+  }
+
+  await expect(page.getByText("6 of 6 notes")).toBeVisible();
+  await expect(page.getByText("1 attempt completed today")).toBeVisible();
+
+  const attempt = await page.evaluate((storageKey) => {
+    const value = localStorage.getItem(storageKey);
+    return value === null
+      ? null
+      : (
+          JSON.parse(value) as {
+            attempts?: Array<{
+              exerciseId?: string;
+              exerciseRevision?: number;
+              inputKind?: string;
+              timing?: { tempoBpm?: number; assessedIntervals?: number; onPulse?: number; early?: number; late?: number };
+            }>;
+          }
+        ).attempts?.[0];
+  }, ATTEMPT_STORAGE_KEY);
+  expect(attempt).toMatchObject({
+    exerciseId: exercise.id,
+    exerciseRevision: exercise.revision,
+    inputKind: "mock",
+    timing: { tempoBpm: 100, assessedIntervals: 5 },
+  });
+  expect((attempt?.timing?.onPulse ?? 0) + (attempt?.timing?.early ?? 0) + (attempt?.timing?.late ?? 0)).toBe(5);
 });
 
 test("keeps offbeat count guidance visible in Reading Focus and persists completion", async ({ page }) => {

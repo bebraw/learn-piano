@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import type { CompletedAttemptRecord } from "../client/persistence/attempt-repository.js";
 import { STEP_SKIP_LEFT_HAND_EXERCISE_ID, STEP_SKIP_RIGHT_HAND_EXERCISE_ID } from "../exercises/library/beginner-five-note-exercises.js";
 import { EVEN_EIGHTHS_LEFT_HAND_EXERCISE_ID, EVEN_EIGHTHS_RIGHT_HAND_EXERCISE_ID } from "../exercises/library/even-eighth-exercises.js";
+import {
+  FIVE_FOUR_PULSE_LEFT_HAND_EXERCISE_ID,
+  FIVE_FOUR_PULSE_RIGHT_HAND_EXERCISE_ID,
+} from "../exercises/library/five-four-pulse-exercises.js";
 import { exerciseLibrary } from "../exercises/library/index.js";
 import {
   MIXED_EIGHTH_PATTERN_LEFT_HAND_EXERCISE_ID,
@@ -369,6 +373,44 @@ describe("recommendNextStudy", () => {
         reason: {
           kind: "direct-dependent",
           prerequisiteExerciseIds: [steadyBrokenChord.id],
+        },
+      });
+    },
+  );
+
+  it.each([
+    {
+      threeFourBrokenChordId: THREE_FOUR_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID,
+      oppositeThreeFourBrokenChordId: THREE_FOUR_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID,
+      fiveFourPulseId: FIVE_FOUR_PULSE_RIGHT_HAND_EXERCISE_ID,
+    },
+    {
+      threeFourBrokenChordId: THREE_FOUR_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID,
+      oppositeThreeFourBrokenChordId: THREE_FOUR_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID,
+      fiveFourPulseId: FIVE_FOUR_PULSE_LEFT_HAND_EXERCISE_ID,
+    },
+  ])(
+    "recommends $fiveFourPulseId only after its matching 3/4 broken-chord prerequisite",
+    ({ threeFourBrokenChordId, oppositeThreeFourBrokenChordId, fiveFourPulseId }) => {
+      const threeFourBrokenChord = requireLibraryExercise(threeFourBrokenChordId);
+      const oppositeThreeFourBrokenChord = requireLibraryExercise(oppositeThreeFourBrokenChordId);
+      const fiveFourPulse = requireLibraryExercise(fiveFourPulseId);
+
+      expect(
+        recommendNextStudy(
+          exerciseLibrary,
+          [attempt(oppositeThreeFourBrokenChord, "2026-08-01T08:00:00.000Z")],
+          oppositeThreeFourBrokenChord.id,
+        )?.exercise,
+      ).not.toBe(fiveFourPulse);
+      expect(
+        recommendNextStudy(exerciseLibrary, [attempt(threeFourBrokenChord, "2026-08-01T08:05:00.000Z")], threeFourBrokenChord.id),
+      ).toEqual({
+        kind: "new-study",
+        exercise: fiveFourPulse,
+        reason: {
+          kind: "direct-dependent",
+          prerequisiteExerciseIds: [threeFourBrokenChord.id],
         },
       });
     },

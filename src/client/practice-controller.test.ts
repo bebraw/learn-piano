@@ -7,6 +7,7 @@ import type {
   PracticePulseUnsubscribe,
 } from "../audio/practice-pulse-port.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
+import { fiveFourPulseRightHandExercise } from "../exercises/library/five-four-pulse-exercises.js";
 import { exerciseLibrary } from "../exercises/library/index.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import { threeFourBrokenChordRightHandExercise } from "../exercises/library/three-four-broken-chord-exercises.js";
@@ -529,6 +530,25 @@ describe("PracticeController", () => {
     );
 
     expect(pulseConfig).toEqual({ tempoBpm: 60, countIn: 2, beatsPerMeasure: 3 });
+    controller.dispose();
+  });
+
+  it("forwards the canonical five-beat count-in and 5/4 measure", () => {
+    let pulseConfig: PracticePulseConfig | null = null;
+    const controller = new PracticeController(
+      fiveFourPulseRightHandExercise,
+      { mock: new MockMidiInputPort(), "web-midi": new MockMidiInputPort(), "native-midi": new MockMidiInputPort() },
+      new MemoryAttemptRepository(),
+      new RecordingView(),
+      {
+        createPulse: (config) => {
+          pulseConfig = config;
+          return new ControllablePracticePulse(config);
+        },
+      },
+    );
+
+    expect(pulseConfig).toEqual({ tempoBpm: 60, countIn: 5, beatsPerMeasure: 5 });
     controller.dispose();
   });
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { defaultExercise, exerciseLibrary } from "./exercises/library";
+import { fiveFourPulseRightHandExercise } from "./exercises/library/five-four-pulse-exercises.js";
 import { mixedEighthPatternRightHandExercise } from "./exercises/library/mixed-eighth-pattern-exercises";
 import { offbeatStepSkipRightHandExercise } from "./exercises/library/offbeat-step-skip-exercises";
 import { steadyQuarterStepSkipRightHandExercise } from "./exercises/library/steady-quarter-exercises";
@@ -31,11 +32,11 @@ describe("worker", () => {
     expect(body).toContain("Enable JavaScript to read completions saved in this browser.");
     expect(body).toContain("data-home-root");
     expect(body).toContain('type="module" src="/client/main.js"');
-    expect(exerciseLibrary).toHaveLength(24);
+    expect(exerciseLibrary).toHaveLength(26);
     expect(body.match(/class="folio-card group"/g)).toHaveLength(exerciseLibrary.length);
     expect(body.match(/data-completion-badge hidden/g)).toHaveLength(exerciseLibrary.length);
-    expect(body.match(/data-mode="timed"/g)).toHaveLength(16);
-    expect(body.match(/Steady pulse · 60 BPM/g)).toHaveLength(8);
+    expect(body.match(/data-mode="timed"/g)).toHaveLength(18);
+    expect(body.match(/Steady pulse · 60 BPM/g)).toHaveLength(10);
     expect(body).toContain("/api/health");
   });
 
@@ -132,6 +133,24 @@ describe("worker", () => {
     expect(body).toContain("60 BPM · 3/4 · Three-beat count-in before your first note.");
     expect(body.match(/data-staff-note/g)).toHaveLength(7);
     expect(body.match(/data-practice-key/g)).toHaveLength(5);
+    expect(body.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).not.toContain("hidden");
+  });
+
+  it("server-renders the selected 5/4 pulse as six occurrences over five keys", async () => {
+    const response = await handleRequest(new Request(`http://example.com${exercisePracticeHref(fiveFourPulseRightHandExercise)}`));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain(fiveFourPulseRightHandExercise.instructions);
+    expect(body).toContain(`data-exercise-id="${fiveFourPulseRightHandExercise.id}"`);
+    expect(body).toContain('aria-label="Pitch order: C4 · D4 · E4 · F4 · G4 · C4"');
+    expect(body).toContain("After the five-beat count-in, place one note on each beat. Count 1 2 3 4 5, 1.");
+    expect(body).toContain("Pitch order · One note per beat");
+    expect(body).toContain("Steady pulse · 60 BPM");
+    expect(body).toContain("60 BPM · 5/4 · Five-beat count-in before your first note.");
+    expect(body.match(/data-staff-note/g)).toHaveLength(6);
+    expect(body.match(/data-practice-key/g)).toHaveLength(5);
+    expect(body.match(/data-pulse-beat/g)).toHaveLength(5);
     expect(body.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).not.toContain("hidden");
   });
 

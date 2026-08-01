@@ -4,13 +4,13 @@
 
 ### Context
 
-The README is the first surface for a learner or contributor. It must identify the current Piano Practice product, explain the twenty-four-exercise beginner slice and its ordered chord-tone, steady broken-chord, 3/4 broken-chord, repeated-note, mixed-pattern, and offbeat-onset evidence boundaries, pitch-only staff guide, transient reading-focus presentation, timing and platform limits, provide accurate local commands and architecture orientation, and preserve the repository's documentation contract. The committed screenshot should stay representative without adding screenshot automation to routine development or CI.
+The README is the first surface for a learner or contributor. It must identify the current Piano Practice product, explain the twenty-six-exercise beginner slice and its ordered chord-tone, steady broken-chord, 3/4 broken-chord, 5/4 pulse, repeated-note, mixed-pattern, and offbeat-onset evidence boundaries, pitch-only staff guide, transient reading-focus presentation, timing and platform limits, provide accurate local commands and architecture orientation, and preserve the repository's documentation contract. The committed screenshot should stay representative without adding screenshot automation to routine development or CI.
 
 ### Architecture
 
 - **Primary document:** `README.md`
 - **Committed screenshot:** `docs/screenshots/home.png`
-- **Product summary:** twenty-four-exercise selection, server-rendered treble and bass pitch guides, learner-controlled transient reading focus, ordered C-E-G-E-C chord-tone preparation, steady C-E-G-E-C-E-G-E broken-chord onsets, C-E-G-C-E-G-C broken-chord loops with 3/4 guidance, C-C-D-D-E repeated-note onsets, C-E-D-D-F-G-E-C mixed-pattern onsets, C-E-D-F-G offbeat-onset preparation, local-first practice behavior, exact-current-revision home coverage, bounded quarter-note and fractional-position onset feedback, per-exercise persistence, input choices, and explicit limitations
+- **Product summary:** twenty-six-exercise selection, server-rendered treble and bass pitch guides, learner-controlled transient reading focus, ordered C-E-G-E-C chord-tone preparation, steady C-E-G-E-C-E-G-E broken-chord onsets, C-E-G-C-E-G-C broken-chord loops with 3/4 guidance, C-D-E-F-G-C pulse work with 5/4 guidance, C-C-D-D-E repeated-note onsets, C-E-D-D-F-G-E-C mixed-pattern onsets, C-E-D-F-G offbeat-onset preparation, local-first practice behavior, exact-current-revision home coverage, bounded quarter-note and fractional-position onset feedback, per-exercise persistence, input choices, and explicit limitations
 - **Developer summary:** runtime, default and query-selected practice routes, source layout, generated assets, verification, and authoritative documentation locations
 - **Screenshot refresh:** a manual developer action after material UI or catalog changes; screenshot capture remains outside the routine implementation and automated quality-gate loop
 - **Non-goal:** no local or remote screenshot workflow in the automated build, development loop, or CI
@@ -25,6 +25,7 @@ The README is the first surface for a learner or contributor. It must identify t
 - Do not describe reading focus as a saved preference, separate exercise, assessment, recommendation input, or proof of staff-reading mastery.
 - Do not describe the steady broken-chord pair as proof of audible phase or measure alignment, duration, release, legato, rests, articulation, dynamics or velocity quality, fingering or hand use, relaxation, harmony recognition, staff reading, consistency, or mastery.
 - Do not describe the 3/4 broken-chord pair as proof of audible phase, downbeat, click or measure alignment, 3/4 counting or grouping, learner accent or dynamics, duration, release, legato, rests, fingering or hand use, harmony recognition, staff reading, consistency, or mastery.
+- Do not describe the 5/4 pulse pair as proof of audible phase, downbeat, click, measure or final-C alignment, 5/4 counting or grouping, accents or dynamics, duration, release, articulation, fingering or hand use, staff reading, physical technique, consistency, or mastery.
 - Do not describe the offbeat pair as proof of audible downbeat alignment, between-click placement, rests, silence, duration, release, holding, accents, articulation, velocity quality, syncopation, fingering, hand use, reading, relaxation, consistency, or mastery.
 - Do not point at stale commands, ports, generated paths, routes, package names, or source layout.
 - Do not imply that generated code becomes authoritative merely because CI passes.
@@ -36,15 +37,17 @@ The README is the first surface for a learner or contributor. It must identify t
 ### Definition of Done
 
 - [ ] The README identifies Piano Practice as a local-first Cloudflare Worker application near the top.
-- [ ] It describes all twenty-four right- and left-hand exercises, including the ordered chord-tone, steady broken-chord, 3/4 broken-chord, repeated-note, mixed-pattern, and offbeat pairs, the two straight and two step-and-skip steady-quarter studies, and the ascending even-eighth pair, plus direct exercise selection, progressive enhancement, exact-current-revision home coverage, input options, per-exercise history, and feedback boundaries.
+- [ ] It describes all twenty-six right- and left-hand exercises, including the ordered chord-tone, steady broken-chord, 3/4 broken-chord, 5/4 pulse, repeated-note, mixed-pattern, and offbeat pairs, the two straight and two step-and-skip steady-quarter studies, and the ascending even-eighth pair, plus direct exercise selection, progressive enhancement, exact-current-revision home coverage, input options, per-exercise history, and feedback boundaries.
 - [ ] It explains that the home overview shows retained saved-study, hand, today, recent-study, and advisory recommendation facts without percentages, streaks, grades, locks, permanence, or mastery claims, and that storage failure leaves the complete library available.
 - [ ] It explains that C-E-G-E-C remains five ordered individual-note events, reuses C and E physical controls, and provides no simultaneous chord, voicing, or harmony-recognition evidence.
-- [ ] It states the exact catalog split: twelve studies per hand, eight untimed and sixteen timed; the timed set contains eight steady-quarter, six regular eighth-grid, and two offbeat studies, while the latter eight retain fractional onset positions and a ±0.1-beat window. Fourteen timed studies use 4/4 with four count-in beats, while the 3/4 pair uses three.
-- [ ] It explains that the ten five-event timed studies have four assessed MIDI-relative intervals, the two seven-event 3/4 studies have six, and the four eight-event timed studies—the mixed-pattern and steady broken-chord pairs—have seven.
+- [ ] It states the exact catalog split: thirteen studies per hand, eight untimed and eighteen timed; the timed set contains ten steady-pulse, six regular eighth-grid, and two offbeat studies, while the latter eight retain fractional onset positions and a ±0.1-beat window. Fourteen timed studies use 4/4 with four count-in beats, the 3/4 pair uses three, and the 5/4 pair uses five.
+- [ ] It explains the complete event distribution: eighteen five-event studies, two six-event 5/4 studies, two seven-event 3/4 studies, and four eight-event studies. Of the timed set, the ten five-event studies have four assessed MIDI-relative intervals, the 5/4 pair has five, the 3/4 pair has six, and the four eight-event studies—the mixed-pattern and steady broken-chord pairs—have seven.
 - [ ] It names `steady-quarter-broken-chord-c-major-right-hand` and `steady-quarter-broken-chord-c-major-left-hand` and explains that each uses C-E-G-E-C-E-G-E at offsets `0` through `7`, displays `Steady pulse` and `Pitch order · One note per beat`, and renders eight staff/event markers over five C-G physical controls.
 - [ ] It explains that steady broken-chord completion proves only eight ordered pitches and seven MIDI-relative timing gaps, not audible phase or measure alignment, duration, release, legato, rests, articulation, dynamics or velocity quality, fingering or declared-hand use, relaxation, harmony recognition, staff reading, consistency, or mastery.
 - [ ] It names `three-four-broken-chord-c-major-right-hand` and `three-four-broken-chord-c-major-left-hand` and explains that each uses C-E-G-C-E-G-C at offsets `0` through `6`, declares 3/4 with three count-in beats, displays `Steady pulse` and `Pitch order · One note per beat`, retains the pitch-free `1 2 3, 1 2 3, 1` task, and renders seven staff/event markers over five C-G physical controls.
 - [ ] It explains that 3/4 broken-chord completion proves only seven ordered pitches and six MIDI-relative whole-beat timing gaps, not audible phase, downbeat, click or measure alignment, 3/4 counting or grouping, learner accent or dynamics, duration, release, legato, rests, fingering or declared-hand use, harmony recognition, staff reading, consistency, or mastery.
+- [ ] It names `five-four-pulse-c-major-right-hand` and `five-four-pulse-c-major-left-hand` and explains that each uses C-D-E-F-G-C at offsets `0` through `5`, declares 5/4 with five count-in beats and five visible beat indicators, displays `Steady pulse` and `Pitch order · One note per beat`, retains the pitch-free `1 2 3 4 5, 1` task, and renders six staff/event markers over five C-G physical controls.
+- [ ] It explains that 5/4 pulse completion proves only six ordered pitches and five MIDI-relative whole-beat timing gaps after the ungraded first C, not audible phase, downbeat, click, measure or final-C alignment, 5/4 counting or grouping, accents or dynamics, duration, release, articulation, fingering or declared-hand use, staff reading, physical technique, consistency, or mastery.
 - [ ] It explains that mixed-pattern completion proves only C-E-D-D-F-G-E-C pitch order and onset placement, not duration, release, articulation, fingering, declared-hand use, relaxation, reading, consistency, rests, notation, simultaneity, or physical technique.
 - [ ] It explains that offbeat completion proves only C-E-D-F-G pitch order and four later MIDI-relative timing gaps. Because the first C is ungraded and audio is not the evaluation clock, it proves no audible phase, rests, silence, duration, release, holding, accents, articulation, velocity quality, syncopation, fingering, declared-hand use, reading, relaxation, consistency, or mastery.
 - [ ] It explains that every current exercise has a supported server-rendered treble or bass pitch guide with semantic note text, no duration semantics, and no staff-reading mastery inference.
@@ -59,7 +62,7 @@ The README is the first surface for a learner or contributor. It must identify t
 - `README.md` must reference the existing `docs/screenshots/home.png` asset.
 - A new reader must understand the current product and server-rendered/progressively enhanced model before exploring the source tree.
 - The README must identify `/practice` as the canonical default and `?exercise=<id>` as direct selection, including the `404` behavior for unknown IDs.
-- The eight untimed exercises must remain distinct from the sixteen timed exercises; none may be described as percentage-scored, AI-evaluated, or cloud-backed.
+- The eight untimed exercises must remain distinct from the eighteen timed exercises; none may be described as percentage-scored, AI-evaluated, or cloud-backed.
 - Learner-facing timing language must say “on time” while documenting `onPulse` and `on-pulse` only as compatibility names where technical detail is relevant.
 - The current pitch guide must not be described as a complete score, a duration model, or evidence that the learner read the staff.
 - Reading focus must remain distinct from the fully guided server default and must not be described as persisted, assessed, or available for unsupported notation.
@@ -76,7 +79,7 @@ The README is the first surface for a learner or contributor. It must identify t
 - **Manual check:** inspect the image and verify that it renders from the README path.
 - **Repository checks:** `git diff --check` and `npm run format:check`.
 - **Behavior check:** compare documented commands, routes, and file paths with `package.json`, `wrangler.jsonc`, and the source tree.
-- **Feature check:** compare exercise counts, 4/4 and 3/4 meter guidance, steady-quarter, regular-eighth, and offbeat rhythm presentation, pitch-guide subset, reading-focus availability/lifetime/evidence boundary, timing-derived pulse behavior under ADR-060, MIDI/audio evaluator boundaries, and exclusions with the relevant living specs and implemented ADRs.
+- **Feature check:** compare exercise counts, 4/4, 3/4, and 5/4 meter guidance, steady-quarter, regular-eighth, and offbeat rhythm presentation, pitch-guide subset, reading-focus availability/lifetime/evidence boundary, timing-derived pulse behavior under ADR-060, MIDI/audio evaluator boundaries, and exclusions with the relevant living specs and implemented ADRs.
 
 ### Scenarios
 
@@ -84,7 +87,7 @@ The README is the first surface for a learner or contributor. It must identify t
 
 - Given: the repository is viewed locally or on Git hosting
 - When: the learner reads the opening sections
-- Then: they understand the twenty-four exercises available now, including the ordered but non-simultaneous chord-tone pair, eight-event steady broken-chord pair, seven-event 3/4 broken-chord pair, onset-only repeated-note pair, eight-event mixed-pattern pair, and MIDI-relative offbeat pair, how the staff pitch guide, transient reading focus, timing-derived meter guidance, quarter-pulse and fractional-position onset timing, selection, input, and per-exercise history work, and what the application cannot assess
+- Then: they understand the twenty-six exercises available now, including the ordered but non-simultaneous chord-tone pair, eight-event steady broken-chord pair, seven-event 3/4 broken-chord pair, six-event 5/4 pulse pair, onset-only repeated-note pair, eight-event mixed-pattern pair, and MIDI-relative offbeat pair, how the staff pitch guide, transient reading focus, timing-derived meter guidance, quarter-pulse and fractional-position onset timing, selection, input, and per-exercise history work, and what the application cannot assess
 
 **Scenario: Contributor runs the application**
 

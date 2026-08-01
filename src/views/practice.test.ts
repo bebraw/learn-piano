@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defaultExercise, exerciseLibrary } from "../exercises/library/index.js";
 import { stepSkipRightHandExercise } from "../exercises/library/beginner-five-note-exercises.js";
 import { evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises.js";
+import { fiveFourPulseRightHandExercise } from "../exercises/library/five-four-pulse-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-eighth-pattern-exercises.js";
 import { offbeatStepSkipRightHandExercise } from "../exercises/library/offbeat-step-skip-exercises.js";
@@ -69,7 +70,7 @@ describe("renderPracticePage", () => {
     expect(html).toContain('<option value="60" selected>60 BPM</option>');
     expect(html.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).toContain("hidden");
     expect(html).not.toContain("The next expected key stays lit.");
-    expect(exerciseLibrary).toHaveLength(24);
+    expect(exerciseLibrary).toHaveLength(26);
   });
 
   it("derives the rendered sequence and physical key order from the supplied exercise", () => {
@@ -254,6 +255,21 @@ describe("renderPracticePage", () => {
     expect(html.match(/data-pulse-beat/g)).toHaveLength(3);
     expect(html).toContain('id="pulse-beat-3"');
     expect(html).not.toContain('id="pulse-beat-4"');
+  });
+
+  it("renders the canonical five-beat study without retaining a four-beat assumption", () => {
+    const html = renderPracticePage(fiveFourPulseRightHandExercise, exerciseLibrary);
+
+    expect(html).toContain(fiveFourPulseRightHandExercise.instructions);
+    expect(html).toContain('aria-label="Pitch order: C4 · D4 · E4 · F4 · G4 · C4"');
+    expect(html).toContain("60 BPM · 5/4 · Five-beat count-in before your first note.");
+    expect(html).toContain("After the five-beat count-in, place one note on each beat. Count 1 2 3 4 5, 1.");
+    expect(html).toContain("<span>60 BPM</span><span>5/4</span>");
+    expect(html.match(/data-pulse-beat/g)).toHaveLength(5);
+    expect(html).toContain('id="pulse-beat-5"');
+    expect(html).not.toContain('id="pulse-beat-6"');
+    expect(html.match(/data-staff-note/g)).toHaveLength(6);
+    expect(html.match(/data-practice-key/g)).toHaveLength(5);
   });
 
   it("explains the eighth-note grid and distinguishes it in the exercise catalog", () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises.js";
+import { fiveFourPulseRightHandExercise } from "../exercises/library/five-four-pulse-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-eighth-pattern-exercises.js";
 import { offbeatStepSkipRightHandExercise } from "../exercises/library/offbeat-step-skip-exercises.js";
@@ -101,6 +102,13 @@ describe("exercise presentation", () => {
       practiceTask: "After the three-beat count-in, place one note on each beat. Count 1 2 3, 1 2 3, 1.",
       staffLabel: "Pitch order · One note per beat",
     });
+    expect(getExerciseRhythmPresentation(fiveFourPulseRightHandExercise)).toMatchObject({
+      kind: "steady-quarter",
+      label: "Steady pulse",
+      practiceTask: "After the five-beat count-in, place one note on each beat. Count 1 2 3 4 5, 1.",
+      staffLabel: "Pitch order · One note per beat",
+    });
+    expect(formatExerciseTimingLabel(fiveFourPulseRightHandExercise, true)).toBe("Steady pulse · 60 BPM · 5/4");
     expect(getExerciseRhythmPresentation(threeFourWithTwoBeatCountIn)).toMatchObject({
       kind: "steady-quarter",
       label: "Steady pulse",
@@ -134,6 +142,7 @@ describe("exercise presentation", () => {
         steadyQuarterRightHandExercise,
         steadyBrokenChordRightHandExercise,
         threeFourBrokenChordRightHandExercise,
+        fiveFourPulseRightHandExercise,
         evenEighthsRightHandExercise,
         offbeatStepSkipRightHandExercise,
         genericTimed,
