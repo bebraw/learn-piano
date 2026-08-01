@@ -33,6 +33,26 @@ describe("LocalStorageAttemptRepository", () => {
     expect(attempts).toEqual([nativeAttempt]);
   });
 
+  it("round-trips an optional internally consistent timing summary", async () => {
+    const storage = new MemoryStorage();
+    const timedAttempt = createAttempt({
+      id: "timed-attempt",
+      timing: {
+        tempoBpm: 60,
+        assessedIntervals: 4,
+        onPulse: 2,
+        early: 1,
+        late: 1,
+        meanAbsoluteErrorMs: 87.5,
+      },
+    });
+    const repository = new LocalStorageAttemptRepository(storage);
+
+    await repository.save(timedAttempt);
+
+    await expect(repository.list(timedAttempt.exerciseId, timedAttempt.exerciseRevision)).resolves.toEqual([timedAttempt]);
+  });
+
   it("keeps one record when the same completion is saved more than once", async () => {
     const repository = new LocalStorageAttemptRepository(new MemoryStorage());
 
@@ -85,6 +105,19 @@ describe("LocalStorageAttemptRepository", () => {
     await expect(repository.list(firstAttempt.exerciseId, 1)).resolves.toEqual([newer]);
     expect(() => new LocalStorageAttemptRepository(storage, "attempts", 0)).toThrow(RangeError);
     await expect(repository.save({ ...firstAttempt, exerciseRevision: 0 })).rejects.toThrow(TypeError);
+    await expect(
+      repository.save({
+        ...firstAttempt,
+        timing: {
+          tempoBpm: 60,
+          assessedIntervals: 2,
+          onPulse: 2,
+          early: 1,
+          late: 0,
+          meanAbsoluteErrorMs: 25,
+        },
+      }),
+    ).rejects.toThrow(TypeError);
   });
 
   it("surfaces storage access and quota failures to the controller boundary", async () => {

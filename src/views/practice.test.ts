@@ -27,8 +27,19 @@ describe("renderPracticePage", () => {
     expect(html).toContain("Choose an exercise");
     expect(html).toContain(`<span class="study-count">${exerciseLibrary.length}</span>`);
     expect(html).toContain('id="practice-stage" class="practice-stage" data-session-status="ready"');
+    expect(html).toContain('data-pulse-status="idle"');
     expect(html).toContain('id="next-exercise"');
     expect(html).toContain('aria-current="page"');
+    expect(html).toContain('id="pulse-controls"');
+    expect(html).toContain('id="pulse-status"');
+    expect(html).toContain('id="pulse-tempo"');
+    expect(html).toContain('id="start-pulse" type="button" disabled');
+    expect(html).toContain('id="stop-pulse" type="button" disabled');
+    expect(html.match(/id="pulse-beat-[1-4]" data-beat-state="idle"/g)).toHaveLength(4);
+    expect(html.match(/<option value="(?:40|50|60|70|80|90|100)"/g)).toHaveLength(7);
+    expect(html).toContain('<option value="60" selected>60 BPM</option>');
+    expect(html.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).toContain("hidden");
+    expect(exerciseLibrary).toHaveLength(8);
   });
 
   it("derives the rendered sequence and physical key order from the supplied exercise", () => {
@@ -69,6 +80,23 @@ describe("renderPracticePage", () => {
       expect(linkStart, `missing catalog link for ${exercise.id}`).toBeGreaterThanOrEqual(0);
       expect(linkMarkup.includes('aria-current="page"'), exercise.id).toBe(exercise.id === selectedExercise.id);
     }
+  });
+
+  it("renders useful steady-pulse facts and controls for a timed exercise", () => {
+    const timedExercise = exerciseLibrary.find((exercise) => exercise.evaluationMode === "timed-ordered-notes");
+    expect(timedExercise).toBeDefined();
+
+    const html = renderPracticePage(timedExercise!, exerciseLibrary);
+    const pulseControls = html.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0];
+
+    expect(pulseControls).toBeDefined();
+    expect(pulseControls).not.toContain("hidden");
+    expect(html).toContain("60 BPM · 4/4 · Four-beat count-in before your first note.");
+    expect(html).toContain("After the count-in, place one note on each beat.");
+    expect(html).toContain("Steady pulse · 60 BPM");
+    expect(html).toContain("<span>60 BPM</span><span>4/4</span>");
+    expect(html.match(/<select[^>]*id="pulse-tempo"[^>]*>/)?.[0]).toContain("disabled");
+    expect(html).not.toContain('id="pulse-status" role="status"');
   });
 
   it("rejects an empty exercise instead of rendering false completion", () => {

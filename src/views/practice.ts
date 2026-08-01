@@ -19,6 +19,12 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
   const handLabel = formatExerciseHand(exercise);
   const categoryLabel = formatExerciseCategory(exercise);
   const difficultyLabel = formatExerciseDifficulty(exercise);
+  const timing = getExerciseTiming(exercise);
+  const tempoOptions = renderTempoOptions(timing?.defaultBpm ?? 60);
+  const timingStatus =
+    timing === null
+      ? "This study does not use a pulse guide."
+      : `${timing.defaultBpm} BPM · ${timing.beatsPerMeasure}/${timing.beatUnit} · Four-beat count-in before your first note.`;
   const orderedEvents = [...exercise.expectedEvents].sort((left, right) => left.noteNumber - right.noteNumber);
   const pianoKeys = orderedEvents
     .map((event, index) => {
@@ -78,13 +84,17 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
         <div class="practice-meta" aria-label="Exercise details">
           <span>${escapeHtml(handLabel)}</span>
           <span>${escapeHtml(difficultyLabel)}</span>
-          <span>Untimed</span>
+          ${
+            timing === null
+              ? "<span>Untimed</span>"
+              : `<span>${timing.defaultBpm} BPM</span><span>${timing.beatsPerMeasure}/${timing.beatUnit}</span>`
+          }
         </div>
       </header>
 
       <div class="practice-layout">
         <div class="practice-workspace">
-          <section id="practice-stage" class="practice-stage" data-session-status="ready" aria-labelledby="stage-heading">
+          <section id="practice-stage" class="practice-stage" data-session-status="ready" data-pulse-status="idle" aria-labelledby="stage-heading">
             <div class="practice-stage-toolbar">
               <div>
                 <p class="app-eyebrow app-eyebrow-inverse" id="stage-heading">Live study</p>
@@ -101,9 +111,43 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
 
             <div class="practice-score">
               <p class="practice-score-label">Your phrase</p>
-              <p class="practice-score-task">Play each note once in order. The next expected key stays lit.</p>
+              <p class="practice-score-task">${
+                timing === null
+                  ? "Play each note once in order. The next expected key stays lit."
+                  : "After the count-in, place one note on each beat. The next expected key stays lit."
+              }</p>
               <p class="practice-score-sequence" aria-label="Expected notes: ${escapeHtml(noteSequence)}">${escapeHtml(noteSequence)}</p>
             </div>
+
+            <section
+              id="pulse-controls"
+              class="pulse-controls"
+              aria-labelledby="pulse-heading"
+              ${timing === null ? "hidden" : ""}
+            >
+              <div class="pulse-summary">
+                <div class="pulse-beats" aria-hidden="true">
+                  <span id="pulse-beat-1" data-beat-state="idle"></span>
+                  <span id="pulse-beat-2" data-beat-state="idle"></span>
+                  <span id="pulse-beat-3" data-beat-state="idle"></span>
+                  <span id="pulse-beat-4" data-beat-state="idle"></span>
+                </div>
+                <div>
+                  <p class="app-eyebrow" id="pulse-heading">Steady pulse</p>
+                  <p class="pulse-status" id="pulse-status">${escapeHtml(timingStatus)}</p>
+                </div>
+              </div>
+              <div class="pulse-actions">
+                <label class="tempo-control" for="pulse-tempo">
+                  <span>Tempo</span>
+                  <select class="practice-control" id="pulse-tempo" aria-describedby="pulse-status" disabled>
+                    ${tempoOptions}
+                  </select>
+                </label>
+                <button class="app-button app-button-dark" id="start-pulse" type="button" disabled>Start pulse</button>
+                <button class="app-button app-button-outline" id="stop-pulse" type="button" disabled>Stop pulse</button>
+              </div>
+            </section>
 
             <div class="keyboard-case">
               <div class="keyboard-case-topline">
@@ -200,6 +244,7 @@ function renderExerciseCatalog(selectedExercise: Exercise, exerciseLibrary: read
           <span class="min-w-0">
             <span class="study-link-title">${escapeHtml(exercise.title)}</span>
             <span class="study-link-notes" aria-label="Note order: ${escapeHtml(formatExerciseNoteOrder(exercise))}">${escapeHtml(formatExerciseNoteOrder(exercise))}</span>
+            <span class="study-link-mode">${escapeHtml(formatExerciseTimingLabel(exercise))}</span>
           </span>
         </a>
       </li>`;
@@ -220,4 +265,25 @@ function renderExerciseCatalog(selectedExercise: Exercise, exerciseLibrary: read
 
 function hasSharpBetween(noteNumber: number, nextNoteNumber: number): boolean {
   return nextNoteNumber - noteNumber === 2 && [0, 2, 5, 7, 9].includes(noteNumber % 12);
+}
+
+function getExerciseTiming(exercise: Exercise): NonNullable<Exercise["timing"]> | null {
+  if (exercise.evaluationMode === "untimed-ordered-notes") {
+    return null;
+  }
+  if (exercise.timing === undefined) {
+    throw new Error(`Timed exercise ${exercise.id} requires timing metadata`);
+  }
+  return exercise.timing;
+}
+
+function formatExerciseTimingLabel(exercise: Exercise): string {
+  const timing = getExerciseTiming(exercise);
+  return timing === null ? "Untimed" : `Steady pulse · ${timing.defaultBpm} BPM`;
+}
+
+function renderTempoOptions(defaultBpm: number): string {
+  return [40, 50, 60, 70, 80, 90, 100]
+    .map((bpm) => `<option value="${bpm}"${bpm === defaultBpm ? " selected" : ""}>${bpm} BPM</option>`)
+    .join("");
 }

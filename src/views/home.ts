@@ -26,10 +26,12 @@ export function renderHomePage(
     .map((exercise, index) => {
       const handLabel = formatExerciseHand(exercise);
       const selected = exercise.id === defaultExercise.id;
+      const timingLabel = formatExerciseTiming(exercise);
       return `<li>
         <a
           class="folio-card group"
           data-hand="${handLabel === "Left hand" ? "left" : "right"}"
+          data-mode="${exercise.evaluationMode === "timed-ordered-notes" ? "timed" : "untimed"}"
           href="${escapeHtml(exercisePracticeHref(exercise))}"
         >
           <span class="folio-card-index">${String(index + 1).padStart(2, "0")}</span>
@@ -38,6 +40,7 @@ export function renderHomePage(
             <span class="folio-card-title">${escapeHtml(exercise.title)}</span>
             <span class="folio-card-copy">${escapeHtml(exercise.instructions)}</span>
             <span class="folio-card-sequence" aria-label="Note order: ${escapeHtml(formatExerciseNoteOrder(exercise))}">${escapeHtml(formatExerciseNoteOrder(exercise))}</span>
+            <span class="folio-card-timing">${escapeHtml(timingLabel)}</span>
           </span>
           <span class="folio-card-action">${selected ? "Start here" : `${exercise.expectedEvents.length} notes`}<span aria-hidden="true">↗</span></span>
         </a>
@@ -87,7 +90,7 @@ export function renderHomePage(
           <div class="hero-score-footer">
             <span>${defaultExercise.expectedEvents.length} notes</span>
             <span>Beginner</span>
-            <span>Untimed</span>
+            <span>${escapeHtml(formatExerciseTiming(defaultExercise))}</span>
           </div>
         </div>
       </section>
@@ -98,7 +101,7 @@ export function renderHomePage(
             <p class="app-eyebrow">Exercise folio</p>
             <h2 id="library-heading" class="section-title">Choose your next study</h2>
           </div>
-          <p class="section-heading-copy">Six short patterns for both hands. Each one keeps its own local practice history.</p>
+          <p class="section-heading-copy">${exercises.length} short patterns for both hands, including steady-pulse studies. Each one keeps its own local practice history.</p>
         </div>
         <ul class="folio-grid">${exerciseList}</ul>
       </section>
@@ -128,4 +131,16 @@ export function renderHomePage(
     </footer>
   </body>
 </html>`;
+}
+
+function formatExerciseTiming(exercise: Exercise): string {
+  if (exercise.evaluationMode === "untimed-ordered-notes") {
+    return "Untimed";
+  }
+
+  const timing = exercise.timing;
+  if (timing === undefined) {
+    throw new Error(`Timed exercise ${exercise.id} requires timing metadata`);
+  }
+  return `Steady pulse · ${timing.defaultBpm} BPM · ${timing.beatsPerMeasure}/${timing.beatUnit}`;
 }

@@ -86,6 +86,7 @@ No accepted-only ADRs are currently pending implementation.
 | [ADR-051](./implemented/ADR-051-use-a-thin-direct-ipad-coremidi-wrapper.md)            | Implemented | Host the shared web app in a direct WKWebView shell and adapt CoreMIDI behind `MidiInputPort`.    |
 | [ADR-052](./implemented/ADR-052-retain-lightweight-server-rendered-ui.md)              | Implemented | Retain the Worker-rendered shell and enhance it with small typed client modules.                  |
 | [ADR-053](./implemented/ADR-053-use-a-versioned-canonical-exercise-representation.md)  | Implemented | Share one versioned exercise representation across views, evaluation, and persistence.            |
+| [ADR-054](./implemented/ADR-054-anchor-timing-to-midi-intervals.md)                    | Implemented | Anchor steady-pulse timing to accepted-note MIDI intervals while Web Audio remains guidance-only. |
 
 ## Creating A New ADR
 

@@ -6,19 +6,19 @@
 
 The learner wants practical technique, reading, rhythm, coordination, harmony, and motivating music without a game-like progression or a rigid conservatory sequence. The curriculum therefore describes four parallel tracks and the competencies that bridge beginner exercises toward long-term repertoire interests. It guides exercise metadata and future recommendations while leaving pacing and choice with the learner.
 
-### Current First-Slice Scope
+### Current Scope
 
 - The curriculum is a documented domain model and metadata vocabulary, not a fully implemented planner or adaptive recommendation engine.
-- The six canonical beginner exercises cover right- and left-hand C-position ascents and descents plus a C-E-D-F-G step-and-skip pattern for each hand.
-- Ascents and descents support keyboard geography and five-finger-pattern work; step-and-skip variants add interval recognition and focused coordination-pattern practice. Left- and right-hand variants remain hands-separate work.
-- Every current exercise is untimed. Completion is evidence only for pitch order; the hand assignment is instructional and not verified by MIDI. A result does not establish pulse, evenness, dynamics, staff reading, fingering quality, or physical technique.
+- The eight canonical beginner exercises cover right- and left-hand C-position ascents and descents, a C-E-D-F-G step-and-skip pattern for each hand, and one C-D-E-F-G steady-quarter study for each hand.
+- Ascents and descents support keyboard geography and five-finger-pattern work; step-and-skip variants add interval recognition and focused coordination-pattern practice. The steady-quarter variants add bounded evidence for a 4/4 quarter-note pulse from 40–100 BPM. Every variant remains hands-separate work.
+- The six original exercises are untimed and provide evidence only for pitch order. The two steady-quarter completions add MIDI onset-interval evidence after the first correct note anchors timing, using a ±0.2-beat tolerance. Hand assignment remains instructional and is not verified by MIDI; no result establishes note duration, velocity quality, dynamics, staff reading, fingering quality, or physical technique.
 - Named artists, protected pieces, and game themes are represented only as future repertoire-goal metadata and competency pathways.
 - No copyrighted score, MIDI transcription, recording, lyrics, or substantial melodic reproduction is bundled by this slice.
 
 ### Future Scope
 
 - A deterministic recommender may use completed attempts, declared prerequisites, recent difficulty, and learner choice to suggest one appropriate next exercise.
-- Later slices may add original or lawfully sourced content for timing, count-in, scales, chords, arpeggios, syncopation, odd meters, hand independence, phrasing, and pedal coordination.
+- Later slices may add original or lawfully sourced content for duration, velocity, rests, eighth notes, chords, arpeggios, syncopation, odd meters, hands-together independence, adaptive tempo, phrasing, and pedal coordination.
 - Public-domain, licensed, and user-imported material may be added only with explicit source and rights metadata. MusicXML, notation frameworks, cloud sync, and AI coaching require separate decisions.
 
 ### Architecture
@@ -54,7 +54,7 @@ This track develops pulse and coordination through:
 - hands together
 - later progression through 3/4, 6/8, 5/4, and 7/4
 
-The current library offers both hands separately, but timing, metronome behavior, and hands-together coordination remain future work. Untimed completion must not be interpreted as rhythm mastery.
+The two current steady-quarter studies offer hands-separate C-D-E-F-G in 4/4 with a four-beat count-in, quarter-note click, and selectable 40–100 BPM tempo. Their first accepted correct note anchors timing; four later correct-note MIDI timestamp deltas provide on-pulse, early, or late evidence against canonical quarter-beat gaps. Pitch errors do not move the anchor, and Web Audio guides rather than scores. Completion supports only this short steady-quarter competency, not duration, velocity, rests, eighth notes, syncopation, hands together, adaptive tempo, or general rhythm mastery.
 
 ### Track 3: Patterns and Technique
 
@@ -67,7 +67,7 @@ This broader technique track develops:
 - arpeggios
 - evenness and controlled dynamics
 
-The current library contributes short right- and left-hand five-finger ascents, descents, and step-and-skip patterns. These establish small pattern choices without claiming the timing, velocity, or movement evidence required for broader technique assessment.
+The current library contributes short right- and left-hand five-finger ascents, descents, step-and-skip patterns, and steady-quarter variants. These establish small pattern choices and bounded quarter-pulse evidence without claiming the duration, velocity, movement, or sustained consistency required for broader technique assessment.
 
 Hanon-style patterns are optional tools for coordination, even timing, hand synchronization, controlled velocity, relaxed movement, and gradual tempo development. They do not define the whole curriculum. Progressions should favor short, focused variants such as right hand untimed, left hand untimed, hands separately with pulse, hands together slowly, even-velocity mode, quiet controlled mode, transposition, and evidence of consistent hand-leading or volume imbalance.
 
@@ -102,6 +102,7 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 - A repertoire goal without lawful exercise content remains visible as a goal but cannot be launched as an exercise.
 - A learner may choose a harder or personally motivating node; the system can show prerequisites without blocking access unless a later safety or content constraint is documented.
 - An untimed exercise result cannot satisfy a timing-specific, velocity-specific, pedaling, staff-reading, or hands-together competency.
+- A steady-quarter result can support only its declared hands-separate pulse competency at the selected tempo. It cannot satisfy duration, velocity, subdivision, syncopation, hands-together, adaptive-tempo, or physical-technique competencies.
 
 ### Anti-Patterns
 
@@ -119,7 +120,8 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 ### Definition of Done
 
 - [ ] Four parallel tracks and their initial competencies are documented.
-- [ ] The six current exercises are mapped only to keyboard-geography, interval, hands-separate guidance, and pattern competencies they actually exercise, without claiming the evaluator verifies hand use.
+- [ ] The eight current exercises are mapped only to keyboard-geography, interval, hands-separate guidance, pattern, and steady-quarter competencies they actually exercise, without claiming the evaluator verifies hand use.
+- [ ] The two steady-quarter studies require their matching untimed ascents and contribute bounded 4/4 quarter-pulse evidence at the selected 40–100 BPM tempo.
 - [ ] Hanon-style work remains a selective part of Patterns and Technique with explicit health and scope limitations.
 - [ ] Long-term repertoire interests are represented as competency pathways and metadata only.
 - [ ] Curriculum and exercise references use stable canonical IDs.
@@ -132,6 +134,7 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 
 - Notes and Reading, Rhythm and Coordination, Patterns and Technique, and Repertoire Pathways must remain parallel available tracks.
 - The six untimed exercises must not confer verified hand use, timing, dynamics, staff-reading, pedal, fingering, or physical-technique mastery.
+- The two timed studies must not confer verified hand use, note duration, velocity, rests, subdivisions, syncopation, hands-together coordination, adaptive-tempo, or broad rhythm mastery.
 - Hanon-style exercises must never become a compulsory whole-curriculum routine.
 - Named repertoire goals must not imply bundled or launchable protected content.
 - Every launchable curriculum exercise must resolve to a validated canonical exercise and lawful source metadata.
@@ -141,9 +144,9 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 
 ### Verification
 
-- **Current documentation checks:** Review the track vocabulary, six-exercise mappings, Hanon position, repertoire competency pathways, and explicit first-slice exclusions.
+- **Current documentation checks:** Review the track vocabulary, eight-exercise mappings, steady-quarter evidence boundary, Hanon position, repertoire competency pathways, and explicit current exclusions.
 - **Future model tests:** Validate IDs, exercise references, prerequisites, cycles, multi-track membership, rights eligibility, and deterministic recommendation tie-breaking.
-- **Behavior tests:** Prove that an untimed completion updates only supported competencies and that missing history or eligible content has a neutral fallback.
+- **Behavior tests:** Prove that untimed completion updates only supported pitch/pattern competencies, timed completion adds only bounded steady-quarter evidence, and missing history or eligible content has a neutral fallback.
 - **Coverage target:** When curriculum code exists, all validation failures and recommendation branches remain exercised directly rather than through UI snapshots.
 
 ### Scenarios
@@ -153,6 +156,12 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 - Given: the learner completes the pitch order for an untimed ascent, descent, or step-and-skip exercise
 - When: curriculum evidence is derived from the attempt
 - Then: it may support the exercise's keyboard-geography, interval, or pattern competency, but the evaluator does not verify the instructed hand and the result proves no rhythm, dynamics, staff reading, pedaling, fingering, or physical-technique mastery
+
+**Scenario: Record bounded steady-pulse evidence**
+
+- Given: the learner completes a steady-quarter study at a selected tempo from 40 through 100 BPM
+- When: its timing summary is mapped to curriculum evidence
+- Then: it may support the declared hands-separate steady-quarter competency with on-pulse, early, and late interval evidence, but it does not prove hand use, duration, velocity, subdivisions, syncopation, hands-together playing, adaptive-tempo control, or general rhythm mastery
 
 **Scenario: Move between parallel tracks**
 

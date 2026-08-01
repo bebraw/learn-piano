@@ -24,6 +24,7 @@ Use this file for global constraints. Use feature specs under `specs/` for domai
 - Keep musical behavior independent from platform APIs. Practice sessions consume the platform-neutral `MidiInputPort`; only adapters may depend on Web MIDI or the native CoreMIDI bridge. The iPad wrapper must host the same web domain rather than duplicate exercises, evaluation, sessions, or persistence in Swift.
 - Treat validated, versioned exercise definitions as the canonical source for rendering, evaluation, fixtures, persistence identity, and future curriculum or notation consumers.
 - Keep live performance evaluation deterministic and local. The same canonical exercise and normalized MIDI sequence must always produce the same progress and feedback.
+- For timed exercises, derive expected intervals from canonical beat offsets and the attempt's fixed tempo, anchor them to the first accepted correct note's normalized MIDI timestamp, and keep later pitch errors from moving that anchor. Web Audio count-ins and clicks are guidance only and must never become the evaluation clock.
 - Keep completed-attempt history local-first behind `AttemptRepository`. Storage failure must not block or redefine musical completion.
 - Keep protected repertoire names as goal and competency metadata unless lawful source material is deliberately added with explicit rights metadata.
 

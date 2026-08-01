@@ -1,3 +1,4 @@
+import type { PracticePulseConfig, PracticePulsePort, PracticePulseState } from "../audio/practice-pulse-port.js";
 import { createEvaluationState, evaluateMidiEvent, type EvaluationFeedback, type EvaluationState } from "../exercises/evaluator.js";
 import type { Exercise } from "../exercises/types.js";
 import type { MidiInputPort } from "../midi/midi-input-port.js";
@@ -14,6 +15,8 @@ export interface PracticeSnapshot {
   readonly inputs: readonly MidiInputDevice[];
   readonly connection: MidiConnectionState;
   readonly sessionStatus: PracticeSessionStatus;
+  readonly tempoBpm: number | null;
+  readonly pulse: PracticePulseState | null;
   readonly evaluation: EvaluationState;
   readonly feedback: EvaluationFeedback | null;
   readonly activeNoteNumbers: readonly number[];
@@ -30,6 +33,7 @@ export interface PracticeControllerOptions {
   readonly now?: () => Date;
   readonly monotonicNow?: () => number;
   readonly createAttemptId?: () => string;
+  readonly createPulse?: (config: PracticePulseConfig) => PracticePulsePort;
 }
 
 const EMPTY_HISTORY: PracticeHistorySummary = {
@@ -42,11 +46,15 @@ export class PracticeController {
   private readonly now: () => Date;
   private readonly monotonicNow: () => number;
   private readonly createAttemptId: () => string;
+  private readonly createPulse: ((config: PracticePulseConfig) => PracticePulsePort) | undefined;
   private inputKind: AttemptInputKind = "mock";
   private activePort: MidiInputPort;
   private inputs: readonly MidiInputDevice[] = [];
   private connection: MidiConnectionState;
   private sessionStatus: PracticeSessionStatus = "ready";
+  private tempoBpm: number | null;
+  private pulse: PracticePulsePort | null = null;
+  private pulseState: PracticePulseState | null = null;
   private evaluation: EvaluationState;
   private feedback: EvaluationFeedback | null = null;
   private activeNoteNumbers = new Set<number>();
@@ -60,6 +68,7 @@ export class PracticeController {
   private inputOperationEpoch = 0;
   private removeEventListener: (() => void) | null = null;
   private removeStateListener: (() => void) | null = null;
+  private removePulseStateListener: (() => void) | null = null;
   private persistenceWork: Promise<void> = Promise.resolve();
   private disposed = false;
 
@@ -73,14 +82,18 @@ export class PracticeController {
     this.now = options.now ?? (() => new Date());
     this.monotonicNow = options.monotonicNow ?? defaultMonotonicNow;
     this.createAttemptId = options.createAttemptId ?? (() => globalThis.crypto.randomUUID());
+    this.createPulse = options.createPulse;
     this.activePort = ports.mock;
     this.connection = this.activePort.getState();
-    this.evaluation = createEvaluationState(exercise);
+    this.tempoBpm = exercise.timing?.defaultBpm ?? null;
+    this.evaluation = createEvaluationState(exercise, this.tempoBpm ?? undefined);
+    this.replacePulse();
   }
 
   public async initialize(): Promise<void> {
     this.assertActive();
     this.subscribeToActivePort();
+    this.subscribeToPulse();
     this.render();
 
     await Promise.all([this.refreshInputs(), this.loadHistory()]);
@@ -94,6 +107,8 @@ export class PracticeController {
       inputs: [...this.inputs],
       connection: { ...this.connection },
       sessionStatus: this.sessionStatus,
+      tempoBpm: this.tempoBpm,
+      pulse: this.pulseState === null ? null : { ...this.pulseState },
       evaluation: this.evaluation,
       feedback: this.feedback,
       activeNoteNumbers: [...this.activeNoteNumbers],
@@ -113,6 +128,7 @@ export class PracticeController {
 
     const operationEpoch = ++this.inputOperationEpoch;
     this.interruptInProgressAttempt();
+    this.pulse?.stop();
     this.unsubscribeFromActivePort();
     this.activePort.disconnect();
     this.inputKind = kind;
@@ -177,18 +193,61 @@ export class PracticeController {
   public disconnect(): void {
     this.assertActive();
     this.inputOperationEpoch += 1;
+    this.pulse?.stop();
     this.activePort.disconnect();
+  }
+
+  public setTempo(tempoBpm: number): void {
+    this.assertActive();
+    if (this.exercise.timing === undefined) {
+      throw new Error("This exercise does not use a practice tempo");
+    }
+    if (this.sessionStatus !== "ready" || (this.pulseState?.status !== "stopped" && this.pulseState?.status !== "error")) {
+      throw new Error("Restart before changing the practice tempo");
+    }
+
+    this.evaluation = createEvaluationState(this.exercise, tempoBpm);
+    this.tempoBpm = tempoBpm;
+    this.feedback = null;
+    this.persistenceMessage = null;
+    this.replacePulse();
+    this.render();
+  }
+
+  public async startPulse(): Promise<boolean> {
+    this.assertActive();
+    const pulse = this.pulse;
+    if (pulse === null || this.connection.status !== "connected" || this.sessionStatus !== "ready") {
+      return false;
+    }
+
+    await pulse.start();
+    if (this.disposed || pulse !== this.pulse) {
+      return false;
+    }
+
+    this.pulseState = pulse.getState();
+    this.render();
+    return this.pulseState.status === "starting" || this.pulseState.status === "counting-in" || this.pulseState.status === "running";
+  }
+
+  public stopPulse(): void {
+    this.assertActive();
+    this.pulse?.stop();
+    this.interruptInProgressAttempt();
+    this.render();
   }
 
   public restart(): void {
     this.assertActive();
     this.eventTimestampFloor = Math.max(this.latestEventTimestamp ?? Number.NEGATIVE_INFINITY, this.monotonicNow());
-    this.evaluation = createEvaluationState(this.exercise);
+    this.evaluation = createEvaluationState(this.exercise, this.tempoBpm ?? undefined);
     this.feedback = null;
     this.sessionStatus = "ready";
     this.attemptStartedAt = null;
     this.activeNoteNumbers.clear();
     this.persistenceMessage = null;
+    this.pulse?.stop();
     this.render();
   }
 
@@ -204,6 +263,8 @@ export class PracticeController {
     this.disposed = true;
     this.inputOperationEpoch += 1;
     this.unsubscribeFromActivePort();
+    this.unsubscribeFromPulse();
+    this.pulse?.dispose();
     for (const port of new Set(Object.values(this.ports))) {
       port.dispose();
     }
@@ -224,6 +285,52 @@ export class PracticeController {
     this.removeStateListener?.();
     this.removeEventListener = null;
     this.removeStateListener = null;
+  }
+
+  private subscribeToPulse(): void {
+    const pulse = this.pulse;
+    if (pulse === null || this.removePulseStateListener !== null) {
+      return;
+    }
+
+    this.removePulseStateListener = pulse.onStateChange((state) => {
+      if (!this.disposed && pulse === this.pulse) {
+        this.pulseState = state;
+        if (state.status === "error") {
+          this.interruptInProgressAttempt();
+        }
+        this.render();
+      }
+    });
+  }
+
+  private unsubscribeFromPulse(): void {
+    this.removePulseStateListener?.();
+    this.removePulseStateListener = null;
+  }
+
+  private replacePulse(): void {
+    const timing = this.exercise.timing;
+    const tempoBpm = this.tempoBpm;
+    const wasSubscribed = this.removePulseStateListener !== null;
+    this.unsubscribeFromPulse();
+    this.pulse?.dispose();
+    this.pulse = null;
+    this.pulseState = null;
+
+    if (timing === undefined || tempoBpm === null || this.createPulse === undefined) {
+      return;
+    }
+
+    this.pulse = this.createPulse({
+      tempoBpm,
+      countIn: timing.countInBeats,
+      beatsPerMeasure: timing.beatsPerMeasure,
+    });
+    this.pulseState = this.pulse.getState();
+    if (wasSubscribed) {
+      this.subscribeToPulse();
+    }
   }
 
   private handleMidiEvent(event: NormalizedMidiEvent): void {
@@ -248,6 +355,11 @@ export class PracticeController {
       return;
     }
 
+    if (this.exercise.evaluationMode === "timed-ordered-notes" && this.pulseState?.status !== "running") {
+      this.render();
+      return;
+    }
+
     if (event.type === "note-on" && this.sessionStatus === "ready") {
       this.sessionStatus = "in-progress";
       this.attemptStartedAt = this.now();
@@ -259,6 +371,7 @@ export class PracticeController {
 
     if (transition.completedNow) {
       this.sessionStatus = "completed";
+      this.pulse?.stop();
       this.queueCompletedAttempt();
     }
 
@@ -279,6 +392,7 @@ export class PracticeController {
     if (inputSourceChanged) {
       this.activeNoteNumbers.clear();
       this.interruptInProgressAttempt();
+      this.pulse?.stop();
     }
     this.render();
   }
@@ -300,6 +414,7 @@ export class PracticeController {
     }
 
     const completedAt = this.now();
+    const timing = this.evaluation.completionSummary?.timing;
     const record: CompletedAttemptRecord = {
       schemaVersion: 1,
       id: this.createAttemptId(),
@@ -314,6 +429,18 @@ export class PracticeController {
         repeated: this.evaluation.counts.repeated,
         wrong: this.evaluation.counts.wrong,
       },
+      ...(timing === undefined
+        ? {}
+        : {
+            timing: {
+              tempoBpm: timing.tempoBpm,
+              assessedIntervals: timing.assessedIntervals,
+              onPulse: timing.onPulse,
+              early: timing.early,
+              late: timing.late,
+              meanAbsoluteErrorMs: timing.meanAbsoluteErrorMs,
+            },
+          }),
     };
 
     this.attemptStartedAt = null;

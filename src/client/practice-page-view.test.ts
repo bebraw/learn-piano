@@ -1,14 +1,27 @@
 import { describe, expect, it } from "vitest";
+import type { PracticePulseState, PracticePulseStatus } from "../audio/practice-pulse-port.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
+import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import { createEvaluationState, evaluateMidiEvent } from "../exercises/evaluator.js";
+import type { Exercise } from "../exercises/types.js";
 import type { MidiConnectionState } from "../midi/types.js";
 import { createPracticePageView, type PracticePageElements } from "./practice-page-view.js";
 import type { PracticeSnapshot } from "./practice-controller.js";
 
 class FakeElement {
   public hidden = true;
-  public textContent: string | null = "";
   public readonly attributes = new Map<string, string>();
+  public textContentWrites = 0;
+  private currentTextContent: string | null = "";
+
+  public get textContent(): string | null {
+    return this.currentTextContent;
+  }
+
+  public set textContent(value: string | null) {
+    this.textContentWrites += 1;
+    this.currentTextContent = value;
+  }
 
   public getAttribute(name: string): string | null {
     return this.attributes.get(name) ?? null;
@@ -32,6 +45,13 @@ class FakeKey extends FakeControl {
   public readonly dataset: Record<string, string | undefined> = {};
 }
 
+type FakePracticePageElements = PracticePageElements & {
+  readonly connectionStatus: FakeElement;
+  readonly feedbackMessage: FakeElement;
+  readonly persistenceMessage: FakeElement;
+  readonly historyDetail: FakeElement;
+};
+
 describe("createPracticePageView", () => {
   it("renders ready mock input, canonical progress, and empty history", () => {
     const { elements, keys } = createElements();
@@ -46,13 +66,210 @@ describe("createPracticePageView", () => {
     expect(elements.connectionStatus.textContent).toBe("Choose an input and connect.");
     expect(elements.connectionStatus.getAttribute("data-status")).toBe("idle");
     expect(elements.practiceStage.getAttribute("data-session-status")).toBe("ready");
+    expect(elements.practiceStage.getAttribute("data-pulse-status")).toBe("untimed");
     expect(elements.feedbackMessage.getAttribute("data-session-status")).toBe("ready");
+    expect(elements.pulseControls.hidden).toBe(true);
+    expect(elements.pulseTempo.disabled).toBe(true);
+    expect(elements.startPulseButton.disabled).toBe(true);
+    expect(elements.stopPulseButton.disabled).toBe(true);
+    expect(elements.pulseBeats.every((beat) => beat.getAttribute("data-beat-state") === "idle")).toBe(true);
     expect(elements.nextExerciseLink.hidden).toBe(true);
     expect(elements.nextNote.textContent).toBe("C4");
     expect(elements.progressText.textContent).toBe("0 of 5 notes");
     expect(elements.historyCount.textContent).toBe("0 attempts completed today");
     expect(keys[0]?.dataset.noteState).toBe("expected");
     expect(keys[0]?.disabled).toBe(true);
+  });
+
+  it("keeps a stopped timed study gated until an input is connected and the pulse starts", () => {
+    const { elements, keys } = createElements(steadyQuarterRightHandExercise);
+    const view = createPracticePageView(elements);
+
+    view.render(timedSnapshot());
+
+    expect(elements.pulseControls.hidden).toBe(false);
+    expect(elements.pulseTempo.value).toBe("60");
+    expect(elements.pulseTempo.disabled).toBe(false);
+    expect(elements.startPulseButton.disabled).toBe(true);
+    expect(elements.stopPulseButton.disabled).toBe(true);
+    expect(elements.pulseStatus.textContent).toBe("Ready at 60 BPM. Start the 4-beat count-in when you are settled.");
+    expect(elements.practiceStage.getAttribute("data-pulse-status")).toBe("stopped");
+    expect(keys.every((key) => key.disabled)).toBe(true);
+
+    view.render(timedSnapshot({ connection: connection("connected", "mock-midi-input") }));
+
+    expect(elements.startPulseButton.disabled).toBe(false);
+    expect(keys.every((key) => key.disabled)).toBe(true);
+    expect(elements.keyboardHelp.textContent).toContain("Start the count-in");
+  });
+
+  it("projects count-in and running beats without adding per-beat ARIA announcements", () => {
+    const { elements, keys } = createElements(steadyQuarterRightHandExercise);
+    const view = createPracticePageView(elements);
+    const connected = connection("connected", "mock-midi-input");
+
+    view.render(
+      timedSnapshot({
+        connection: connected,
+        pulse: pulse("starting"),
+      }),
+    );
+    expect(elements.pulseStatus.textContent).toBe("The 4-beat count-in is starting.");
+    expect(elements.startPulseButton.disabled).toBe(true);
+    expect(elements.stopPulseButton.disabled).toBe(false);
+    expect(elements.keyboardHelp.textContent).toContain("pulse is starting");
+    expect(elements.pulseBeats.every((beat) => beat.getAttribute("data-beat-state") === "idle")).toBe(true);
+
+    view.render(
+      timedSnapshot({
+        connection: connected,
+        pulse: pulse("counting-in", { countInBeat: 2 }),
+      }),
+    );
+
+    const countInFeedback = elements.feedbackMessage.textContent;
+    expect(elements.pulseStatus.textContent).toBe("Count-in 2 of 4.");
+    expect(elements.pulseTempo.disabled).toBe(true);
+    expect(elements.startPulseButton.disabled).toBe(true);
+    expect(elements.stopPulseButton.disabled).toBe(false);
+    expect(elements.pulseBeats[1]?.getAttribute("data-beat-state")).toBe("active");
+    expect(elements.pulseBeats.every((beat) => beat.getAttribute("aria-label") === null)).toBe(true);
+    expect(keys.every((key) => key.disabled)).toBe(true);
+    const liveRegionWriteCounts = {
+      connection: elements.connectionStatus.textContentWrites,
+      feedback: elements.feedbackMessage.textContentWrites,
+      persistence: elements.persistenceMessage.textContentWrites,
+      history: elements.historyDetail.textContentWrites,
+    };
+
+    view.render(
+      timedSnapshot({
+        connection: connected,
+        pulse: pulse("counting-in", { countInBeat: 3 }),
+      }),
+    );
+    expect(elements.feedbackMessage.textContent).toBe(countInFeedback);
+    expect(elements.pulseBeats[2]?.getAttribute("data-beat-state")).toBe("active");
+    expect({
+      connection: elements.connectionStatus.textContentWrites,
+      feedback: elements.feedbackMessage.textContentWrites,
+      persistence: elements.persistenceMessage.textContentWrites,
+      history: elements.historyDetail.textContentWrites,
+    }).toEqual(liveRegionWriteCounts);
+
+    view.render(
+      timedSnapshot({
+        connection: connected,
+        pulse: pulse("running", { currentBeat: 3 }),
+      }),
+    );
+
+    expect(elements.practiceStage.getAttribute("data-pulse-status")).toBe("running");
+    expect(elements.pulseStatus.textContent).toBe("Pulse running at 60 BPM. Keep the notes even and unhurried.");
+    expect(elements.pulseBeats[2]?.getAttribute("data-beat-state")).toBe("active");
+    expect(keys.every((key) => !key.disabled)).toBe(true);
+  });
+
+  it("surfaces pulse errors calmly and permits a connected ready study to retry", () => {
+    const { elements, keys } = createElements(steadyQuarterRightHandExercise);
+
+    createPracticePageView(elements).render(
+      timedSnapshot({
+        connection: connection("connected", "mock-midi-input"),
+        pulse: pulse("error", { errorMessage: "Audio playback is still suspended." }),
+      }),
+    );
+
+    expect(elements.practiceStage.getAttribute("data-pulse-status")).toBe("error");
+    expect(elements.pulseStatus.textContent).toBe("Audio playback is still suspended.");
+    expect(elements.feedbackMessage.textContent).toBe("Audio playback is still suspended. Your note progress is unchanged.");
+    expect(elements.pulseTempo.disabled).toBe(false);
+    expect(elements.startPulseButton.disabled).toBe(false);
+    expect(elements.stopPulseButton.disabled).toBe(true);
+    expect(keys.every((key) => key.disabled)).toBe(true);
+
+    createPracticePageView(elements).render(
+      timedSnapshot({
+        connection: connection("connected", "mock-midi-input"),
+        sessionStatus: "interrupted",
+        pulse: pulse("error", { errorMessage: "The click stopped unexpectedly." }),
+      }),
+    );
+    expect(elements.feedbackMessage.textContent).toContain("The click stopped unexpectedly.");
+    expect(elements.pulseTempo.disabled).toBe(true);
+    expect(elements.startPulseButton.disabled).toBe(true);
+  });
+
+  it("includes MIDI-relative timing in feedback, completion, and recent history", () => {
+    const { elements } = createElements(steadyQuarterRightHandExercise);
+    const view = createPracticePageView(elements);
+    const connected = connection("connected", "mock-midi-input");
+    const initial = createEvaluationState(steadyQuarterRightHandExercise, 60);
+    const firstTransition = evaluateMidiEvent(steadyQuarterRightHandExercise, initial, {
+      type: "note-on",
+      channel: 1,
+      noteNumber: 60,
+      velocity: 72,
+      timestamp: 1_000,
+    });
+
+    view.render(
+      timedSnapshot({
+        connection: connected,
+        sessionStatus: "in-progress",
+        pulse: pulse("running", { currentBeat: 1 }),
+        evaluation: firstTransition.state,
+        feedback: firstTransition.feedback,
+      }),
+    );
+    expect(elements.feedbackMessage.textContent).toBe("Correct: C4. Pulse timing starts here. D4 is next.");
+
+    let evaluation = firstTransition.state;
+    for (const [index, event] of steadyQuarterRightHandExercise.expectedEvents.slice(1).entries()) {
+      evaluation = evaluateMidiEvent(steadyQuarterRightHandExercise, evaluation, {
+        type: "note-on",
+        channel: 1,
+        noteNumber: event.noteNumber,
+        velocity: 72,
+        timestamp: 2_000 + index * 1_000,
+      }).state;
+    }
+
+    view.render(
+      timedSnapshot({
+        connection: connected,
+        sessionStatus: "completed",
+        evaluation,
+        history: {
+          completedToday: 1,
+          totalCompleted: 1,
+          mostRecent: {
+            schemaVersion: 1,
+            id: "timed-attempt",
+            exerciseId: steadyQuarterRightHandExercise.id,
+            exerciseRevision: steadyQuarterRightHandExercise.revision,
+            startedAt: "2026-08-01T08:00:00.000Z",
+            completedAt: "2026-08-01T08:01:00.000Z",
+            inputKind: "mock",
+            status: "completed",
+            errorCounts: { outOfOrder: 0, repeated: 0, wrong: 0 },
+            timing: {
+              tempoBpm: 60,
+              assessedIntervals: 4,
+              onPulse: 4,
+              early: 0,
+              late: 0,
+              meanAbsoluteErrorMs: 0,
+            },
+          },
+        },
+      }),
+    );
+
+    expect(elements.feedbackMessage.textContent).toBe("The sequence was correct. All 4 intervals stayed on the pulse at 60 BPM.");
+    expect(elements.pulseStatus.textContent).toBe("Pulse stopped. Study complete at 60 BPM.");
+    expect(elements.historyDetail.textContent).toContain("At 60 BPM, 4 of 4 intervals stayed on the pulse.");
+    expect(elements.nextExerciseLink.hidden).toBe(false);
   });
 
   it("enables on-screen keys and advances calm feedback after a correct note", () => {
@@ -86,6 +303,22 @@ describe("createPracticePageView", () => {
     expect(keys[0]?.dataset.noteState).toBe("accepted");
     expect(keys[0]?.attributes.get("aria-pressed")).toBe("true");
     expect(keys.every((key) => !key.disabled)).toBe(true);
+  });
+
+  it("asks for only a restart when a connected learner stops an active study", () => {
+    const { elements } = createElements(steadyQuarterRightHandExercise);
+
+    createPracticePageView(elements).render(
+      timedSnapshot({
+        connection: connection("connected", "mock-midi-input"),
+        sessionStatus: "interrupted",
+        pulse: pulse("stopped"),
+      }),
+    );
+
+    expect(elements.feedbackMessage.textContent).toBe("This attempt was interrupted. Restart from C4.");
+    expect(elements.keyboardHelp.textContent).toBe("Restart before playing this study again.");
+    expect(elements.pulseStatus.textContent).toBe("Pulse stopped. Restart the study to try again at 60 BPM.");
   });
 
   it("renders interruption, unsupported input, completion, and unavailable history states", () => {
@@ -186,9 +419,12 @@ describe("createPracticePageView", () => {
   });
 });
 
-function createElements(): { readonly elements: PracticePageElements; readonly keys: FakeKey[] } {
+function createElements(exercise: Exercise = fiveNoteAscentExercise): {
+  readonly elements: FakePracticePageElements;
+  readonly keys: FakeKey[];
+} {
   const enhancements = [new FakeElement(), new FakeElement()];
-  const keys = fiveNoteAscentExercise.expectedEvents.map(() => new FakeKey());
+  const keys = exercise.expectedEvents.map(() => new FakeKey());
   return {
     keys,
     elements: {
@@ -201,6 +437,12 @@ function createElements(): { readonly elements: PracticePageElements; readonly k
       disconnectButton: new FakeControl(),
       restartButton: new FakeControl(),
       practiceStage: new FakeElement(),
+      pulseControls: new FakeElement(),
+      pulseStatus: new FakeElement(),
+      pulseTempo: new FakeSelect(),
+      startPulseButton: new FakeControl(),
+      stopPulseButton: new FakeControl(),
+      pulseBeats: [new FakeElement(), new FakeElement(), new FakeElement(), new FakeElement()],
       connectionStatus: new FakeElement(),
       nextNote: new FakeElement(),
       progressText: new FakeElement(),
@@ -210,12 +452,33 @@ function createElements(): { readonly elements: PracticePageElements; readonly k
       historyDetail: new FakeElement(),
       keyboardHelp: new FakeElement(),
       nextExerciseLink: new FakeElement(),
-      keys: fiveNoteAscentExercise.expectedEvents.map((event, index) => ({
+      keys: exercise.expectedEvents.map((event, index) => ({
         eventId: event.id,
         noteNumber: event.noteNumber,
         element: keys[index]!,
       })),
     },
+  };
+}
+
+function timedSnapshot(overrides: Partial<PracticeSnapshot> = {}): PracticeSnapshot {
+  return snapshot({
+    exercise: steadyQuarterRightHandExercise,
+    tempoBpm: 60,
+    pulse: pulse("stopped"),
+    evaluation: createEvaluationState(steadyQuarterRightHandExercise, 60),
+    ...overrides,
+  });
+}
+
+function pulse(status: PracticePulseStatus, overrides: Partial<PracticePulseState> = {}): PracticePulseState {
+  return {
+    status,
+    tempoBpm: 60,
+    currentBeat: null,
+    countInBeat: null,
+    errorMessage: null,
+    ...overrides,
   };
 }
 
@@ -226,6 +489,8 @@ function snapshot(overrides: Partial<PracticeSnapshot> = {}): PracticeSnapshot {
     inputs: [{ id: "mock-midi-input", label: "Practice keys" }],
     connection: connection("idle"),
     sessionStatus: "ready",
+    tempoBpm: null,
+    pulse: null,
     evaluation: createEvaluationState(fiveNoteAscentExercise),
     feedback: null,
     activeNoteNumbers: [],

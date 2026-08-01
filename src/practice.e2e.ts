@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { defaultExercise, exerciseLibrary } from "./exercises/library/index.js";
 import { formatMidiNote } from "./exercises/evaluator.js";
+import { steadyQuarterRightHandExercise } from "./exercises/library/steady-quarter-exercises.js";
 import { ATTEMPT_STORAGE_KEY } from "./client/persistence/attempt-repository.js";
 import { exercisePracticeHref } from "./views/exercise-presentation.js";
 
@@ -66,6 +67,44 @@ test("completes a selected exercise and reloads its persisted history through mo
   await expect(page.getByRole("heading", { level: 1, name: selectedExercise.title })).toBeVisible();
   await expect(page.getByText("1 attempt completed today")).toBeVisible();
   await expect(page.getByText(/Most recent completion:/)).toBeVisible();
+});
+
+test("counts in a timed study and persists its MIDI-relative pulse summary", async ({ page }) => {
+  await page.goto(exercisePracticeHref(steadyQuarterRightHandExercise));
+
+  const firstEvent = steadyQuarterRightHandExercise.expectedEvents[0];
+  if (firstEvent === undefined) {
+    throw new Error("The steady-quarter study requires a first event");
+  }
+  const stage = page.locator("#practice-stage");
+  const firstKey = page.locator(`[data-note-number="${firstEvent.noteNumber}"]`);
+  await expect(page.locator("#pulse-controls")).toBeVisible();
+  await expect(page.locator("#pulse-tempo")).toHaveValue("60");
+  await expect(page.getByRole("button", { name: "Start pulse" })).toBeDisabled();
+
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await page.locator("#pulse-tempo").selectOption("100");
+  await expect(page.locator("#pulse-status")).toContainText("Ready at 100 BPM");
+
+  await page.getByRole("button", { name: "Start pulse" }).click();
+  await expect(stage).toHaveAttribute("data-pulse-status", /starting|counting-in/);
+  await expect(firstKey).toBeDisabled();
+  await expect(stage).toHaveAttribute("data-pulse-status", "running", { timeout: 5_000 });
+  await expect(firstKey).toBeEnabled();
+
+  for (const event of steadyQuarterRightHandExercise.expectedEvents) {
+    await playNote(page, event.noteNumber);
+  }
+
+  await expect(page.locator("#feedback-message")).toContainText(/intervals stayed on the pulse at 100 BPM/);
+  await expect(page.getByText("1 attempt completed today")).toBeVisible();
+
+  const timing = await page.evaluate((storageKey) => {
+    const value = localStorage.getItem(storageKey);
+    return value === null ? null : (JSON.parse(value) as { attempts?: Array<{ timing?: Record<string, number> }> }).attempts?.[0]?.timing;
+  }, ATTEMPT_STORAGE_KEY);
+  expect(timing).toMatchObject({ tempoBpm: 100, assessedIntervals: 4 });
+  expect((timing?.onPulse ?? 0) + (timing?.early ?? 0) + (timing?.late ?? 0)).toBe(4);
 });
 
 test("uses the injected iPad bridge through the shared practice flow", async ({ page }) => {

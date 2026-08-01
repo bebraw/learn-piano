@@ -8,6 +8,7 @@ import {
   STEP_SKIP_RIGHT_HAND_EXERCISE_ID,
 } from "./beginner-five-note-exercises.js";
 import { DEFAULT_EXERCISE_ID, defaultExercise, exerciseLibrary, findExerciseById } from "./index.js";
+import { STEADY_QUARTER_LEFT_HAND_EXERCISE_ID, STEADY_QUARTER_RIGHT_HAND_EXERCISE_ID } from "./steady-quarter-exercises.js";
 
 const EXPECTED_SEQUENCES = new Map<string, readonly number[]>([
   ["five-note-ascent-c-major-right-hand", [60, 62, 64, 65, 67]],
@@ -16,6 +17,8 @@ const EXPECTED_SEQUENCES = new Map<string, readonly number[]>([
   [FIVE_NOTE_DESCENT_LEFT_HAND_EXERCISE_ID, [55, 53, 52, 50, 48]],
   [STEP_SKIP_RIGHT_HAND_EXERCISE_ID, [60, 64, 62, 65, 67]],
   [STEP_SKIP_LEFT_HAND_EXERCISE_ID, [48, 52, 50, 53, 55]],
+  [STEADY_QUARTER_RIGHT_HAND_EXERCISE_ID, [60, 62, 64, 65, 67]],
+  [STEADY_QUARTER_LEFT_HAND_EXERCISE_ID, [48, 50, 52, 53, 55]],
 ]);
 
 const EXPECTED_FINGERINGS = new Map<string, string>([
@@ -25,12 +28,14 @@ const EXPECTED_FINGERINGS = new Map<string, string>([
   [FIVE_NOTE_DESCENT_LEFT_HAND_EXERCISE_ID, "1-2-3-4-5"],
   [STEP_SKIP_RIGHT_HAND_EXERCISE_ID, "1-3-2-4-5"],
   [STEP_SKIP_LEFT_HAND_EXERCISE_ID, "5-3-4-2-1"],
+  [STEADY_QUARTER_RIGHT_HAND_EXERCISE_ID, "1-2-3-4-5"],
+  [STEADY_QUARTER_LEFT_HAND_EXERCISE_ID, "5-4-3-2-1"],
 ]);
 
 describe("beginner exercise library", () => {
-  it("exposes six stable identities with the original ascent as default", () => {
+  it("exposes eight stable identities with the original ascent as default", () => {
     expect(exerciseLibrary.map(({ id, revision }) => [id, revision])).toEqual([...EXPECTED_SEQUENCES.keys()].map((id) => [id, 1]));
-    expect(new Set(exerciseLibrary.map(({ id }) => id))).toHaveLength(6);
+    expect(new Set(exerciseLibrary.map(({ id }) => id))).toHaveLength(8);
     expect(DEFAULT_EXERCISE_ID).toBe("five-note-ascent-c-major-right-hand");
     expect(defaultExercise.id).toBe(DEFAULT_EXERCISE_ID);
     expect(findExerciseById(DEFAULT_EXERCISE_ID)).toBe(defaultExercise);
@@ -44,7 +49,7 @@ describe("beginner exercise library", () => {
     expect(findExerciseById("missing-exercise")).toBeNull();
   });
 
-  it("keeps every document valid, original, beginner-level, and untimed", () => {
+  it("keeps every document valid, original, beginner-level, and explicitly evaluated", () => {
     expect(() => parseExerciseLibrary(exerciseLibrary)).not.toThrow();
 
     for (const exercise of exerciseLibrary) {
@@ -52,13 +57,13 @@ describe("beginner exercise library", () => {
         schemaVersion: 1,
         revision: 1,
         difficulty: "beginner",
-        evaluationMode: "untimed-ordered-notes",
         source: {
           kind: "original",
           attribution: "Original exercise created for learn-piano",
         },
         repertoireGoalTags: [],
       });
+      expect(["untimed-ordered-notes", "timed-ordered-notes"]).toContain(exercise.evaluationMode);
     }
   });
 
@@ -86,7 +91,7 @@ describe("beginner exercise library", () => {
 
   it("covers both hands, ascending and descending motion, and step-skip patterns", () => {
     const leftHandExercises = exerciseLibrary.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "left"));
-    expect(leftHandExercises).toHaveLength(3);
+    expect(leftHandExercises).toHaveLength(4);
 
     expect(findExerciseById(FIVE_NOTE_DESCENT_RIGHT_HAND_EXERCISE_ID)?.expectedEvents.map(({ noteNumber }) => noteNumber)).toEqual([
       67, 65, 64, 62, 60,

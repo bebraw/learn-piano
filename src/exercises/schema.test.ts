@@ -7,6 +7,17 @@ interface MutableExpectedEvent {
   kind: string;
   noteNumber: number;
   hand: string;
+  beatOffset?: number;
+}
+
+interface MutableExerciseTiming {
+  defaultBpm: number;
+  minBpm: number;
+  maxBpm: number;
+  beatsPerMeasure: number;
+  beatUnit: number;
+  countInBeats: number;
+  timingWindowBeats: number;
 }
 
 interface MutableExerciseDocument {
@@ -16,6 +27,7 @@ interface MutableExerciseDocument {
   title: string;
   instructions: string;
   evaluationMode: string;
+  timing?: MutableExerciseTiming;
   difficulty: string;
   expectedEvents: MutableExpectedEvent[];
   source: { kind: string; attribution?: string; license?: string };
@@ -42,6 +54,23 @@ function createExerciseDocument(): MutableExerciseDocument {
     curriculumTags: ["notes-and-reading.keyboard-geography"],
     repertoireGoalTags: [],
   };
+}
+
+function createTimedExerciseDocument(): MutableExerciseDocument {
+  const document = createExerciseDocument();
+  document.evaluationMode = "timed-ordered-notes";
+  document.timing = {
+    defaultBpm: 60,
+    minBpm: 40,
+    maxBpm: 100,
+    beatsPerMeasure: 4,
+    beatUnit: 4,
+    countInBeats: 4,
+    timingWindowBeats: 0.2,
+  };
+  document.expectedEvents[0]!.beatOffset = 0;
+  document.expectedEvents[1]!.beatOffset = 1;
+  return document;
 }
 
 function expectInvalid(document: unknown, path: string): void {
@@ -84,6 +113,24 @@ describe("parseExercise", () => {
 
     expect(exercise.id).toBe("test-exercise");
     expect(exercise.expectedEvents.map(({ noteNumber }) => noteNumber)).toEqual([60, 62]);
+    expect(exercise.timing).toBeUndefined();
+    expect(exercise.expectedEvents.map(({ beatOffset }) => beatOffset)).toEqual([undefined, undefined]);
+  });
+
+  it("returns timing and beat offsets for a timed version-1 exercise", () => {
+    const exercise = parseExercise(createTimedExerciseDocument());
+
+    expect(exercise.evaluationMode).toBe("timed-ordered-notes");
+    expect(exercise.timing).toEqual({
+      defaultBpm: 60,
+      minBpm: 40,
+      maxBpm: 100,
+      beatsPerMeasure: 4,
+      beatUnit: 4,
+      countInBeats: 4,
+      timingWindowBeats: 0.2,
+    });
+    expect(exercise.expectedEvents.map(({ beatOffset }) => beatOffset)).toEqual([0, 1]);
   });
 
   it("rejects a non-object document", () => {
@@ -102,6 +149,73 @@ describe("parseExercise", () => {
     document.evaluationMode = "timed-notes";
 
     expectInvalid(document, "exercise.evaluationMode");
+  });
+
+  it("requires timing metadata and beat offsets for timed exercises", () => {
+    const document = createExerciseDocument();
+    document.evaluationMode = "timed-ordered-notes";
+
+    expectInvalid(document, "exercise.timing");
+    expectInvalid(document, "exercise.expectedEvents[0].beatOffset");
+    expectInvalid(document, "exercise.expectedEvents[1].beatOffset");
+  });
+
+  it("forbids timing metadata and beat offsets for untimed exercises", () => {
+    const document = createExerciseDocument();
+    document.timing = createTimedExerciseDocument().timing!;
+    document.expectedEvents[0]!.beatOffset = 0;
+
+    expectInvalid(document, "exercise.timing");
+    expectInvalid(document, "exercise.expectedEvents[0].beatOffset");
+  });
+
+  it.each([
+    ["defaultBpm", 0],
+    ["defaultBpm", 60.5],
+    ["minBpm", Number.NaN],
+    ["minBpm", 40.5],
+    ["maxBpm", Number.POSITIVE_INFINITY],
+    ["maxBpm", 100.5],
+    ["beatsPerMeasure", 3.5],
+    ["beatUnit", 0],
+    ["countInBeats", -1],
+    ["timingWindowBeats", -0.1],
+  ] as const)("rejects invalid timed metadata %s=%s", (field, value) => {
+    const document = createTimedExerciseDocument();
+    document.timing![field] = value;
+
+    expectInvalid(document, `exercise.timing.${field}`);
+  });
+
+  it("requires the default tempo to remain inside an ordered tempo range", () => {
+    const reversedRange = createTimedExerciseDocument();
+    reversedRange.timing!.minBpm = 110;
+    expectInvalid(reversedRange, "exercise.timing.minBpm");
+
+    const outOfRangeDefault = createTimedExerciseDocument();
+    outOfRangeDefault.timing!.defaultBpm = 120;
+    expectInvalid(outOfRangeDefault, "exercise.timing.defaultBpm");
+  });
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, -1])("rejects invalid timed beat offset %s", (beatOffset) => {
+    const document = createTimedExerciseDocument();
+    document.expectedEvents[1]!.beatOffset = beatOffset;
+
+    expectInvalid(document, "exercise.expectedEvents[1].beatOffset");
+  });
+
+  it("requires timed events to start at beat zero and increase strictly", () => {
+    const nonzeroStart = createTimedExerciseDocument();
+    nonzeroStart.expectedEvents[0]!.beatOffset = 0.5;
+    expectInvalid(nonzeroStart, "exercise.expectedEvents[0].beatOffset");
+
+    const repeatedBeat = createTimedExerciseDocument();
+    repeatedBeat.expectedEvents[1]!.beatOffset = 0;
+    expectInvalid(repeatedBeat, "exercise.expectedEvents[1].beatOffset");
+
+    const decreasingBeat = createTimedExerciseDocument();
+    decreasingBeat.expectedEvents.push({ id: "third-note", kind: "note", noteNumber: 64, hand: "right", beatOffset: 0.5 });
+    expectInvalid(decreasingBeat, "exercise.expectedEvents[2].beatOffset");
   });
 
   it("rejects missing exercise and event IDs", () => {

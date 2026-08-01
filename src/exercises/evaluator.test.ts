@@ -41,6 +41,7 @@ describe("createEvaluationState", () => {
       nextExpectedIndex: 0,
       acceptedEventIds: [],
       counts: { correct: 0, repeated: 0, outOfOrder: 0, wrong: 0 },
+      timing: null,
       completed: false,
       completionSummary: null,
     });

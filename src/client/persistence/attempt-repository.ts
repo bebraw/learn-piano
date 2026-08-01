@@ -6,6 +6,15 @@ export interface AttemptErrorCounts {
   readonly wrong: number;
 }
 
+export interface AttemptTimingSummary {
+  readonly tempoBpm: number;
+  readonly assessedIntervals: number;
+  readonly onPulse: number;
+  readonly early: number;
+  readonly late: number;
+  readonly meanAbsoluteErrorMs: number;
+}
+
 export type AttemptInputKind = "mock" | "web-midi" | "native-midi";
 
 export interface CompletedAttemptRecord {
@@ -18,6 +27,7 @@ export interface CompletedAttemptRecord {
   readonly inputKind: AttemptInputKind;
   readonly status: "completed";
   readonly errorCounts: AttemptErrorCounts;
+  readonly timing?: AttemptTimingSummary;
 }
 
 export interface AttemptRepository {

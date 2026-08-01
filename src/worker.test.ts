@@ -20,7 +20,9 @@ describe("worker", () => {
     expect(body).toContain("Piano Practice");
     expect(body).toContain(exercisePracticeHref(defaultExercise));
     expect(body).toContain("Choose your next study");
+    expect(exerciseLibrary).toHaveLength(8);
     expect(body.match(/class="folio-card group"/g)).toHaveLength(exerciseLibrary.length);
+    expect(body.match(/data-mode="timed"/g)).toHaveLength(2);
     expect(body).toContain("/api/health");
   });
 
@@ -32,6 +34,8 @@ describe("worker", () => {
     expect(body).toContain("Play C-D-E-F-G in ascending order with your right hand.");
     expect(body).toContain('type="module" src="/client/main.js"');
     expect(body).toContain('data-note-number="60"');
+    expect(body).toContain('id="pulse-controls"');
+    expect(body.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).toContain("hidden");
   });
 
   it("selects a canonical exercise from the query string", async () => {
@@ -43,6 +47,19 @@ describe("worker", () => {
     expect(body).toContain(selectedExercise.instructions);
     expect(body).toContain(`data-exercise-id="${selectedExercise.id}"`);
     expect(body).toContain('aria-current="page"');
+  });
+
+  it("renders steady-pulse controls and timing facts for a timed exercise", async () => {
+    const timedExercise = exerciseLibrary.find((exercise) => exercise.evaluationMode === "timed-ordered-notes");
+    expect(timedExercise).toBeDefined();
+
+    const response = await handleRequest(new Request(`http://example.com${exercisePracticeHref(timedExercise!)}`));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).not.toContain("hidden");
+    expect(body).toContain('id="pulse-tempo"');
+    expect(body).toContain("60 BPM · 4/4 · Four-beat count-in before your first note.");
   });
 
   it("returns not found for an unknown, empty, or ambiguous exercise id", async () => {

@@ -1,4 +1,5 @@
 import type { Exercise } from "../exercises/types.js";
+import { WebAudioPracticePulse } from "../audio/web-audio-practice-pulse.js";
 import { MockMidiInputPort } from "../midi/mock-midi-input-port.js";
 import { createNativeMidiBridgeFromHost, NativeMidiInputPort } from "../midi/native-midi-input-port.js";
 import { WebMidiInputPort } from "../midi/web-midi-input-port.js";
@@ -24,6 +25,7 @@ export async function bootstrapPracticePage(pageDocument: Document, browserWindo
     { mock: mockPort, "web-midi": new WebMidiInputPort(), "native-midi": nativePort },
     createBrowserAttemptRepository(browserWindow),
     createPracticePageView(elements),
+    { createPulse: (config) => new WebAudioPracticePulse(config) },
   );
 
   if (nativePort.capability === "supported") {
@@ -64,6 +66,17 @@ export async function bootstrapPracticePage(pageDocument: Document, browserWindo
     );
   });
   elements.restartButton.addEventListener("click", () => controller.restart());
+  elements.pulseTempo.addEventListener("change", () => {
+    try {
+      controller.setTempo(Number(elements.pulseTempo.value));
+    } catch {
+      elements.feedbackMessage.textContent = "Restart the study before changing its tempo.";
+    }
+  });
+  elements.startPulseButton.addEventListener("click", () => {
+    runAction(controller.startPulse(), elements.feedbackMessage);
+  });
+  elements.stopPulseButton.addEventListener("click", () => controller.stopPulse());
 
   for (const key of elements.keys) {
     key.element.addEventListener("click", () => {
@@ -94,6 +107,9 @@ function collectPageElements(
   readonly nativeInputOption: HTMLOptionElement;
   readonly pairBluetoothButton: HTMLButtonElement;
   readonly restartButton: HTMLButtonElement;
+  readonly pulseTempo: HTMLSelectElement;
+  readonly startPulseButton: HTMLButtonElement;
+  readonly stopPulseButton: HTMLButtonElement;
   readonly feedbackMessage: HTMLElement;
   readonly keys: readonly (PracticeKeyElement & { readonly element: HTMLButtonElement })[];
 } {
@@ -115,6 +131,12 @@ function collectPageElements(
     pairBluetoothButton: requireElement(pageDocument, "pair-bluetooth-midi", HTMLButtonElement),
     restartButton: requireElement(pageDocument, "restart-exercise", HTMLButtonElement),
     practiceStage: requireElement(pageDocument, "practice-stage", HTMLElement),
+    pulseControls: requireElement(pageDocument, "pulse-controls", HTMLElement),
+    pulseStatus: requireElement(pageDocument, "pulse-status", HTMLElement),
+    pulseTempo: requireElement(pageDocument, "pulse-tempo", HTMLSelectElement),
+    startPulseButton: requireElement(pageDocument, "start-pulse", HTMLButtonElement),
+    stopPulseButton: requireElement(pageDocument, "stop-pulse", HTMLButtonElement),
+    pulseBeats: [1, 2, 3, 4].map((beat) => requireElement(pageDocument, `pulse-beat-${beat}`, HTMLElement)),
     connectionStatus: requireElement(pageDocument, "connection-status", HTMLElement),
     nextNote: requireElement(pageDocument, "next-note", HTMLElement),
     progressText: requireElement(pageDocument, "progress-text", HTMLElement),

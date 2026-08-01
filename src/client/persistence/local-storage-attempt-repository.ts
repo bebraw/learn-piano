@@ -84,7 +84,8 @@ function isCompletedAttemptRecord(value: unknown): value is CompletedAttemptReco
     isIsoDate(value.completedAt) &&
     isAttemptInputKind(value.inputKind) &&
     value.status === "completed" &&
-    isErrorCounts(value.errorCounts)
+    isErrorCounts(value.errorCounts) &&
+    (value.timing === undefined || isTimingSummary(value.timing))
   );
 }
 
@@ -112,6 +113,24 @@ function isErrorCounts(value: unknown): value is CompletedAttemptRecord["errorCo
   return (
     isRecord(value) && isNonNegativeInteger(value.outOfOrder) && isNonNegativeInteger(value.repeated) && isNonNegativeInteger(value.wrong)
   );
+}
+
+function isTimingSummary(value: unknown): value is NonNullable<CompletedAttemptRecord["timing"]> {
+  if (
+    !isRecord(value) ||
+    !isPositiveInteger(value.tempoBpm) ||
+    !isNonNegativeInteger(value.assessedIntervals) ||
+    !isNonNegativeInteger(value.onPulse) ||
+    !isNonNegativeInteger(value.early) ||
+    !isNonNegativeInteger(value.late) ||
+    typeof value.meanAbsoluteErrorMs !== "number" ||
+    !Number.isFinite(value.meanAbsoluteErrorMs) ||
+    value.meanAbsoluteErrorMs < 0
+  ) {
+    return false;
+  }
+
+  return value.assessedIntervals === value.onPulse + value.early + value.late;
 }
 
 function compareNewestFirst(left: CompletedAttemptRecord, right: CompletedAttemptRecord): number {

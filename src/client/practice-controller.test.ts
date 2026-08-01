@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
+import type {
+  PracticePulseConfig,
+  PracticePulsePort,
+  PracticePulseState,
+  PracticePulseStateListener,
+  PracticePulseUnsubscribe,
+} from "../audio/practice-pulse-port.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
+import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import type { MidiInputPort } from "../midi/midi-input-port.js";
 import { MOCK_MIDI_INPUT_ID, MockMidiInputPort } from "../midi/mock-midi-input-port.js";
 import type {
@@ -119,6 +127,69 @@ class ControllableMidiInputPort implements MidiInputPort {
     this.state = { ...state };
     this.inputs = inputs;
     for (const listener of Array.from(this.stateListeners)) {
+      listener(this.getState());
+    }
+  }
+}
+
+class ControllablePracticePulse implements PracticePulsePort {
+  private readonly listeners = new Set<PracticePulseStateListener>();
+  private state: PracticePulseState;
+  public startCalls = 0;
+  public stopCalls = 0;
+  public disposed = false;
+  public startBehavior: (() => Promise<void>) | null = null;
+
+  public constructor(readonly config: PracticePulseConfig) {
+    this.state = {
+      status: "stopped",
+      tempoBpm: config.tempoBpm,
+      currentBeat: null,
+      countInBeat: null,
+      errorMessage: null,
+    };
+  }
+
+  public getState(): PracticePulseState {
+    return { ...this.state };
+  }
+
+  public async start(): Promise<void> {
+    this.startCalls += 1;
+    if (this.startBehavior !== null) {
+      await this.startBehavior();
+      return;
+    }
+    this.emit({ status: "counting-in", currentBeat: null, countInBeat: 1, errorMessage: null });
+  }
+
+  public stop(): void {
+    this.stopCalls += 1;
+    this.emit({ status: "stopped", currentBeat: null, countInBeat: null, errorMessage: null });
+  }
+
+  public onStateChange(listener: PracticePulseStateListener): PracticePulseUnsubscribe {
+    this.listeners.add(listener);
+    listener(this.getState());
+    return () => this.listeners.delete(listener);
+  }
+
+  public dispose(): void {
+    this.disposed = true;
+    this.listeners.clear();
+  }
+
+  public runAtBeat(currentBeat: number): void {
+    this.emit({ status: "running", currentBeat, countInBeat: null, errorMessage: null });
+  }
+
+  public fail(errorMessage: string): void {
+    this.emit({ status: "error", currentBeat: null, countInBeat: null, errorMessage });
+  }
+
+  private emit(state: Omit<PracticePulseState, "tempoBpm">): void {
+    this.state = { ...state, tempoBpm: this.config.tempoBpm };
+    for (const listener of Array.from(this.listeners)) {
       listener(this.getState());
     }
   }
@@ -271,6 +342,228 @@ describe("PracticeController", () => {
 
     expect(view.latest().sessionStatus).toBe("completed");
     expect(repository.records).toEqual([expect.objectContaining({ id: "native-attempt", inputKind: "native-midi" })]);
+  });
+
+  it("gates a timed exercise behind count-in and persists MIDI-relative timing evidence", async () => {
+    const input = { id: "timed-keyboard", label: "Timed keyboard" };
+    const port = new ControllableMidiInputPort([input]);
+    const repository = new MemoryAttemptRepository();
+    const view = new RecordingView();
+    let pulse: ControllablePracticePulse | null = null;
+    const controller = new PracticeController(
+      steadyQuarterRightHandExercise,
+      { mock: port, "web-midi": new MockMidiInputPort(), "native-midi": new MockMidiInputPort() },
+      repository,
+      view,
+      {
+        monotonicNow: () => 0,
+        createAttemptId: () => "timed-attempt",
+        createPulse: (config) => {
+          pulse = new ControllablePracticePulse(config);
+          return pulse;
+        },
+      },
+    );
+    await controller.initialize();
+    await controller.connect(input.id);
+
+    port.emitEvent({ type: "note-on", channel: 1, noteNumber: 60, velocity: 72, timestamp: 500 });
+    expect(view.latest().evaluation.nextExpectedIndex).toBe(0);
+
+    await expect(controller.startPulse()).resolves.toBe(true);
+    port.emitEvent({ type: "note-on", channel: 1, noteNumber: 60, velocity: 72, timestamp: 750 });
+    expect(view.latest().evaluation.nextExpectedIndex).toBe(0);
+
+    const activePulse = pulse as ControllablePracticePulse | null;
+    if (activePulse === null) {
+      throw new Error("Timed controller did not create a pulse");
+    }
+    activePulse.runAtBeat(1);
+    for (const [index, event] of steadyQuarterRightHandExercise.expectedEvents.entries()) {
+      port.emitEvent({ type: "note-on", channel: 1, noteNumber: event.noteNumber, velocity: 72, timestamp: 1_000 + index * 1_000 });
+    }
+    await controller.waitForPersistence();
+
+    expect(view.latest().sessionStatus).toBe("completed");
+    expect(view.latest().pulse?.status).toBe("stopped");
+    expect(repository.records).toEqual([
+      expect.objectContaining({
+        id: "timed-attempt",
+        timing: {
+          tempoBpm: 60,
+          assessedIntervals: 4,
+          onPulse: 4,
+          early: 0,
+          late: 0,
+          meanAbsoluteErrorMs: 0,
+        },
+      }),
+    ]);
+  });
+
+  it("rebuilds a ready timed attempt at a selected tempo and locks tempo after count-in", async () => {
+    const pulses: ControllablePracticePulse[] = [];
+    const controller = new PracticeController(
+      steadyQuarterRightHandExercise,
+      { mock: new MockMidiInputPort(), "web-midi": new MockMidiInputPort(), "native-midi": new MockMidiInputPort() },
+      new MemoryAttemptRepository(),
+      new RecordingView(),
+      {
+        createPulse: (config) => {
+          const pulse = new ControllablePracticePulse(config);
+          pulses.push(pulse);
+          return pulse;
+        },
+      },
+    );
+    await controller.initialize();
+
+    controller.setTempo(80);
+    expect(controller.getSnapshot()).toMatchObject({ tempoBpm: 80, evaluation: { timing: { tempoBpm: 80 } } });
+    expect(pulses.map(({ config }) => config.tempoBpm)).toEqual([60, 80]);
+    expect(pulses[0]?.disposed).toBe(true);
+    expect(() => controller.setTempo(101)).toThrow(RangeError);
+
+    await controller.connect(MOCK_MIDI_INPUT_ID);
+    await controller.startPulse();
+    expect(() => controller.setTempo(60)).toThrow(/Restart before changing/);
+  });
+
+  it("interrupts an active timed attempt when the learner stops the pulse", async () => {
+    const input = { id: "timed-keyboard", label: "Timed keyboard" };
+    const port = new ControllableMidiInputPort([input]);
+    let pulse: ControllablePracticePulse | null = null;
+    const controller = new PracticeController(
+      steadyQuarterRightHandExercise,
+      { mock: port, "web-midi": new MockMidiInputPort(), "native-midi": new MockMidiInputPort() },
+      new MemoryAttemptRepository(),
+      new RecordingView(),
+      {
+        createPulse: (config) => {
+          pulse = new ControllablePracticePulse(config);
+          return pulse;
+        },
+      },
+    );
+    await controller.initialize();
+    await controller.connect(input.id);
+    await controller.startPulse();
+    const activePulse = pulse as ControllablePracticePulse | null;
+    if (activePulse === null) {
+      throw new Error("Timed controller did not create a pulse");
+    }
+    activePulse.runAtBeat(1);
+    port.emitEvent({ type: "note-on", channel: 1, noteNumber: 60, velocity: 72, timestamp: 1_000 });
+
+    controller.stopPulse();
+
+    expect(controller.getSnapshot()).toMatchObject({ sessionStatus: "interrupted", pulse: { status: "stopped" } });
+  });
+
+  it("interrupts an active timed attempt when pulse scheduling fails", async () => {
+    const input = { id: "timed-keyboard", label: "Timed keyboard" };
+    const port = new ControllableMidiInputPort([input]);
+    let pulse: ControllablePracticePulse | null = null;
+    const controller = new PracticeController(
+      steadyQuarterRightHandExercise,
+      { mock: port, "web-midi": new MockMidiInputPort(), "native-midi": new MockMidiInputPort() },
+      new MemoryAttemptRepository(),
+      new RecordingView(),
+      {
+        createPulse: (config) => {
+          pulse = new ControllablePracticePulse(config);
+          return pulse;
+        },
+      },
+    );
+    await controller.initialize();
+    await controller.connect(input.id);
+    await controller.startPulse();
+    const activePulse = pulse as ControllablePracticePulse | null;
+    if (activePulse === null) {
+      throw new Error("Timed controller did not create a pulse");
+    }
+    activePulse.runAtBeat(1);
+    port.emitEvent({ type: "note-on", channel: 1, noteNumber: 60, velocity: 72, timestamp: 1_000 });
+
+    activePulse.fail("The audio device stopped.");
+
+    expect(controller.getSnapshot()).toMatchObject({
+      sessionStatus: "interrupted",
+      pulse: { status: "error", errorMessage: "The audio device stopped." },
+      evaluation: { nextExpectedIndex: 1, timing: { anchorTimestamp: 1_000 } },
+    });
+  });
+
+  it("stops timed guidance and resets its anchor after a disconnect and restart", async () => {
+    const input = { id: "timed-keyboard", label: "Timed keyboard" };
+    const port = new ControllableMidiInputPort([input]);
+    let pulse: ControllablePracticePulse | null = null;
+    const controller = new PracticeController(
+      steadyQuarterRightHandExercise,
+      { mock: port, "web-midi": new MockMidiInputPort(), "native-midi": new MockMidiInputPort() },
+      new MemoryAttemptRepository(),
+      new RecordingView(),
+      {
+        monotonicNow: () => 1_500,
+        createPulse: (config) => {
+          pulse = new ControllablePracticePulse(config);
+          return pulse;
+        },
+      },
+    );
+    await controller.initialize();
+    await controller.connect(input.id);
+    await controller.startPulse();
+    const activePulse = pulse as ControllablePracticePulse | null;
+    if (activePulse === null) {
+      throw new Error("Timed controller did not create a pulse");
+    }
+    activePulse.runAtBeat(1);
+    port.emitEvent({ type: "note-on", channel: 1, noteNumber: 60, velocity: 72, timestamp: 1_000 });
+
+    controller.disconnect();
+    expect(controller.getSnapshot()).toMatchObject({ sessionStatus: "interrupted", pulse: { status: "stopped" } });
+    expect(activePulse.stopCalls).toBeGreaterThan(0);
+
+    await controller.connect(input.id);
+    controller.restart();
+    expect(controller.getSnapshot()).toMatchObject({
+      sessionStatus: "ready",
+      pulse: { status: "stopped" },
+      evaluation: { nextExpectedIndex: 0, timing: { anchorTimestamp: null } },
+    });
+  });
+
+  it("does not render or report success when a pending pulse start outlives disposal", async () => {
+    const gate = deferred<void>();
+    const view = new RecordingView();
+    let pulse: ControllablePracticePulse | null = null;
+    const controller = new PracticeController(
+      steadyQuarterRightHandExercise,
+      { mock: new MockMidiInputPort(), "web-midi": new MockMidiInputPort(), "native-midi": new MockMidiInputPort() },
+      new MemoryAttemptRepository(),
+      view,
+      {
+        createPulse: (config) => {
+          const createdPulse = new ControllablePracticePulse(config);
+          createdPulse.startBehavior = () => gate.promise;
+          pulse = createdPulse;
+          return createdPulse;
+        },
+      },
+    );
+    await controller.initialize();
+    await controller.connect(MOCK_MIDI_INPUT_ID);
+
+    const pendingStart = controller.startPulse();
+    const renderCountBeforeDispose = view.snapshots.length;
+    controller.dispose();
+    gate.resolve(undefined);
+
+    await expect(pendingStart).resolves.toBe(false);
+    expect(view.snapshots).toHaveLength(renderCountBeforeDispose);
+    expect((pulse as ControllablePracticePulse | null)?.disposed).toBe(true);
   });
 
   it("discards a late refresh result after the learner switches input kinds", async () => {
