@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defaultExercise, exerciseLibrary } from "./exercises/library";
 import { mixedEighthPatternRightHandExercise } from "./exercises/library/mixed-eighth-pattern-exercises";
+import { offbeatStepSkipRightHandExercise } from "./exercises/library/offbeat-step-skip-exercises";
 import { steadyQuarterStepSkipRightHandExercise } from "./exercises/library/steady-quarter-exercises";
 import { orderedChordTonesRightHandExercise } from "./exercises/library/ordered-chord-tone-exercises";
 import { repeatedNotesRightHandExercise } from "./exercises/library/repeated-note-exercises";
@@ -24,9 +25,9 @@ describe("worker", () => {
     expect(body).toContain("Piano Practice");
     expect(body).toContain(exercisePracticeHref(defaultExercise));
     expect(body).toContain("Choose your next study");
-    expect(exerciseLibrary).toHaveLength(18);
+    expect(exerciseLibrary).toHaveLength(20);
     expect(body.match(/class="folio-card group"/g)).toHaveLength(exerciseLibrary.length);
-    expect(body.match(/data-mode="timed"/g)).toHaveLength(10);
+    expect(body.match(/data-mode="timed"/g)).toHaveLength(12);
     expect(body).toContain("/api/health");
   });
 
@@ -92,6 +93,19 @@ describe("worker", () => {
     expect(body.match(/data-staff-note/g)).toHaveLength(8);
     expect(body.match(/data-practice-key/g)).toHaveLength(5);
     expect(body).toContain("Count 1 &amp; 2 &amp; 3 &amp; 4 &amp;.");
+  });
+
+  it("renders a selected offbeat study with explicit onset guidance", async () => {
+    const response = await handleRequest(new Request(`http://example.com${exercisePracticeHref(offbeatStepSkipRightHandExercise)}`));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("After the four-beat count-in, play C on beat 1, then E-D-F-G");
+    expect(body).toContain('aria-label="Pitch order: C4 · E4 · D4 · F4 · G4"');
+    expect(body).toContain("Count 1 &amp; 2 &amp; 3 &amp; 4 &amp;.");
+    expect(body).toContain("Pitch order · Downbeat then offbeat onsets");
+    expect(body.match(/data-staff-note/g)).toHaveLength(5);
+    expect(body.match(/data-practice-key/g)).toHaveLength(5);
   });
 
   it("renders steady-pulse controls and timing facts for a timed exercise", async () => {

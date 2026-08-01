@@ -8,6 +8,10 @@ import {
   MIXED_EIGHTH_PATTERN_RIGHT_HAND_EXERCISE_ID,
 } from "../exercises/library/mixed-eighth-pattern-exercises.js";
 import {
+  OFFBEAT_STEP_SKIP_LEFT_HAND_EXERCISE_ID,
+  OFFBEAT_STEP_SKIP_RIGHT_HAND_EXERCISE_ID,
+} from "../exercises/library/offbeat-step-skip-exercises.js";
+import {
   ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
   ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
 } from "../exercises/library/ordered-chord-tone-exercises.js";
@@ -348,6 +352,38 @@ describe("recommendNextStudy", () => {
       },
     });
   });
+
+  it.each([
+    {
+      mixedPatternId: MIXED_EIGHTH_PATTERN_RIGHT_HAND_EXERCISE_ID,
+      oppositeMixedPatternId: MIXED_EIGHTH_PATTERN_LEFT_HAND_EXERCISE_ID,
+      offbeatId: OFFBEAT_STEP_SKIP_RIGHT_HAND_EXERCISE_ID,
+    },
+    {
+      mixedPatternId: MIXED_EIGHTH_PATTERN_LEFT_HAND_EXERCISE_ID,
+      oppositeMixedPatternId: MIXED_EIGHTH_PATTERN_RIGHT_HAND_EXERCISE_ID,
+      offbeatId: OFFBEAT_STEP_SKIP_LEFT_HAND_EXERCISE_ID,
+    },
+  ])(
+    "recommends $offbeatId only after its matching mixed-pattern prerequisite",
+    ({ mixedPatternId, oppositeMixedPatternId, offbeatId }) => {
+      const mixedPattern = requireLibraryExercise(mixedPatternId);
+      const oppositeMixedPattern = requireLibraryExercise(oppositeMixedPatternId);
+      const offbeat = requireLibraryExercise(offbeatId);
+
+      expect(
+        recommendNextStudy(exerciseLibrary, [attempt(oppositeMixedPattern, "2026-08-01T08:00:00.000Z")], oppositeMixedPattern.id)?.exercise,
+      ).not.toBe(offbeat);
+      expect(recommendNextStudy(exerciseLibrary, [attempt(mixedPattern, "2026-08-01T08:05:00.000Z")], mixedPattern.id)).toEqual({
+        kind: "new-study",
+        exercise: offbeat,
+        reason: {
+          kind: "direct-dependent",
+          prerequisiteExerciseIds: [mixedPattern.id],
+        },
+      });
+    },
+  );
 });
 
 function requireLibraryExercise(id: string): Exercise {

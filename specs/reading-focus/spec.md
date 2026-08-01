@@ -12,7 +12,7 @@ The guided practice page intentionally names the exercise sequence, labels staff
 - Typed client enhancement offers a `Reading focus` toggle only after the selected exercise's staff guide has passed the existing supported-subset validation. If the guide is absent or unsupported, guided presentation remains available and no focus toggle is offered.
 - Reading focus visually hides the selected exercise instructions and ordered sequence, the textual next pitch, visible staff and physical-key pitch labels, and the amber expected-key answer.
 - The same semantic text and ARIA labels remain available to assistive technology. Physical keys remain focusable and playable through the selected input path, and visible keyboard focus and pressed state remain distinct.
-- Occurrence-based accepted, expected, and remaining progress remains visible on the staff. Progress count, rhythm task, count-in, pulse state, timing controls and feedback, error correction, restart, completion, history, recommendation, and exercise chooser remain available.
+- Occurrence-based accepted, expected, and remaining progress remains visible on the staff. Progress count, pitch-free rhythm task, count-in, pulse state, timing controls and feedback, error correction, restart, completion, history, recommendation, and exercise chooser remain available. For the offbeat pair, this includes the first-note-on-1 instruction and complete `1 & 2 & 3 & 4 &` count.
 - Correct feedback in reading focus does not name either the accepted pitch or the next pitch. Wrong, repeated, and out-of-order feedback may name actual and expected pitches as an explicit correction. Guided feedback remains unchanged.
 - The learner may toggle the presentation before or during an attempt. The selected presentation survives restart within that page instance, but navigation, exercise selection, or reload restores the guided default.
 - The choice is not persisted, placed in the URL, or added to exercise, evaluation, attempt, history, recommendation, curriculum, analytics, or native-wrapper state.
@@ -29,6 +29,7 @@ The guided practice page intentionally names the exercise sequence, labels staff
 - **Availability boundary:** Client composition may expose the toggle only when the already-rendered staff guide matches the supported projection for the selected canonical exercise. It does not independently guess support from title, hand, pitch range, or DOM geometry.
 - **Presentation state:** The page instance owns a two-value guided/reading-focus presentation state. It is independent from session status, evaluator progress, pulse status, input connection, and persistence status.
 - **Visual suppression:** Presentation state changes classes or presentation attributes on existing content; it does not delete canonical copy, reorder events, mutate staff geometry, duplicate controls, or synthesize another exercise.
+- **Rhythm-guidance boundary:** Reading Focus may hide pitch-bearing exercise instructions but never the separate pitch-free rhythm task. The offbeat study therefore remains playable from its staff order plus the visible instruction to place the first note on 1 and the remaining notes on successive “and” counts.
 - **Accessible semantics:** Visually suppressed instructions, sequence meaning, pitches, and key states retain semantic or ARIA equivalents. Keyboard focus, pressed state, and control operability do not depend on the visible pitch label or amber expected-state styling.
 - **Progress boundary:** Evaluator state continues to drive occurrence-based staff progress and pitch-based keyboard state. Reading focus suppresses only the keyboard's visible expected-answer treatment; it does not change expected, remaining, accepted, idle, or pressed facts.
 - **Feedback projection:** The existing structured evaluator result remains authoritative. Reading-focus presentation removes pitch names and the next-pitch answer from correct feedback, while explicit error classifications may expose actual and expected pitches. Timing facts and completion summaries remain truthful.
@@ -52,6 +53,7 @@ The guided practice page intentionally names the exercise sequence, labels staff
 - An unsupported or missing staff guide leaves the guided page fully functional and does not expose a misleading reading-focus toggle.
 - Repeated-pitch events remain separate staff occurrences while one physical key is reused. Reading focus does not collapse progress or reveal the expected occurrence through keyboard colour.
 - A correct timed note may still report timing without a pitch name; a pitch error may name the actual and expected notes without changing the timing anchor.
+- The offbeat study's pitch-free full count remains visible even though its selected heading instructions and note-order text are suppressed. This presentation does not strengthen the evaluator's evidence: audible downbeat and between-click alignment remain unproved.
 - Completion and recommendation copy may name exercise titles, but must not claim the learner read the staff or mastered notation.
 
 ### Anti-Patterns
@@ -72,7 +74,7 @@ The guided practice page intentionally names the exercise sequence, labels staff
 - [ ] Every practice response remains a complete guided server-rendered document, and no-JavaScript practice remains unchanged.
 - [ ] Enhanced pages expose a learner-controlled guided/reading-focus toggle only for an exercise with a validated supported staff guide.
 - [ ] Reading focus visually suppresses selected-exercise instructions and sequence, next pitch, staff/key pitch labels, and the amber expected-key answer while retaining semantic and ARIA equivalents.
-- [ ] Physical-key focus, pressed state, operability, staff progress, numeric progress, count-in, rhythm guidance, timing behavior, and completion remain intact.
+- [ ] Physical-key focus, pressed state, operability, staff progress, numeric progress, count-in, pitch-free rhythm guidance, timing behavior, and completion remain intact; the offbeat pair retains its full `1 & 2 & 3 & 4 &` task.
 - [ ] Correct feedback reveals no current or next pitch in reading focus; explicit wrong, repeated, and out-of-order feedback may identify actual and expected pitches.
 - [ ] Toggling before or during an attempt never changes evaluator, session, pulse, persistence, history, or recommendation state.
 - [ ] Restart preserves the current presentation in-page, while navigation and reload restore guided presentation.
@@ -88,6 +90,7 @@ The guided practice page intentionally names the exercise sequence, labels staff
 - The expected-key domain state remains present even when its amber visual answer is suppressed.
 - Staff occurrence progress and physical-key aggregation continue to use canonical evaluator and event identity.
 - Correct feedback in reading focus cannot append a next-note answer indirectly through shared copy.
+- Pitch-bearing instructions may be visually suppressed, but a timed study's separate rhythm task must remain visible and must not leak the hidden pitch order.
 - Error correction may reveal notes only as the projection of existing evaluator facts and may not reset or skip progress.
 - Presentation state is page-local, survives only in-page restart, and never enters persistence or canonical identity.
 - The same normalized MIDI input produces the same evaluator result and completed-attempt record in guided and reading-focus presentations.
@@ -98,7 +101,7 @@ The guided practice page intentionally names the exercise sequence, labels staff
 - **Unit tests:** Presentation state defaults, support gating, correct/error feedback projection, mid-attempt state preservation, restart lifetime, and unsupported-guide behavior.
 - **View tests:** Guided server HTML contains every cue and accessible hook; enhanced reading-focus selectors target existing semantic content without creating alternate exercise data.
 - **Client tests:** Toggling changes only presentation, preserves evaluator/pulse/input snapshots, keeps physical-key focus and pressed state, retains staff progress, and does not write storage.
-- **Browser tests:** No-JavaScript remains guided; supported exercises can enter and leave reading focus before and during practice; visible cues disappear while accessible names remain; restart preserves focus; reload and exercise navigation restore guided; error correction is specific and correct feedback does not disclose the next pitch.
+- **Browser tests:** No-JavaScript remains guided; supported exercises can enter and leave reading focus before and during practice; visible cues disappear while accessible names remain; the offbeat study retains its pitch-free full count; restart preserves focus; reload and exercise navigation restore guided; error correction is specific and correct feedback does not disclose the next pitch.
 - **Documentation checks:** README, architecture, ADR, practice-session, staff-notation, curriculum, and Worker-shell wording agree on the transient presentation and no-mastery boundaries.
 
 ### Scenarios
@@ -114,6 +117,12 @@ The guided practice page intentionally names the exercise sequence, labels staff
 - Given: client enhancement has validated the selected exercise's supported staff guide
 - When: the learner chooses `Reading focus`
 - Then: the selected-exercise instructions and sequence, next pitch, visible staff/key labels, and amber expected-key answer are visually suppressed while staff progress, numeric progress, rhythm guidance, focus, pressed state, operability, and accessible equivalents remain
+
+**Scenario: Retain offbeat count guidance**
+
+- Given: `offbeat-step-skip-c-major-right-hand` is selected and its supported guide enables Reading Focus
+- When: the learner turns on Reading Focus
+- Then: pitch-bearing instructions and note-order answers are visually suppressed, while the pitch-free task still places the first note on 1, the remaining notes on successive “and” counts, and displays `1 & 2 & 3 & 4 &`
 
 **Scenario: Keep correct feedback from revealing the answer**
 

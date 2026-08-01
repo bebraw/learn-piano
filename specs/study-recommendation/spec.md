@@ -4,7 +4,7 @@
 
 ### Context
 
-The learner has eighteen short exercises across pitch, pattern, ordered chord-tone, repeated-note, mixed-pattern, hand, steady-pulse, and onset-subdivision work. The exercise library already declares prerequisites, and completed attempts already carry stable exercise IDs and revisions in local history. The practice flow should use that evidence to suggest one understandable next study instead of advancing by a circular UI position, while preserving the learner's freedom to choose any exercise.
+The learner has twenty short exercises across pitch, pattern, ordered chord-tone, repeated-note, mixed-pattern, offbeat-onset, hand, steady-pulse, and onset-subdivision work. The exercise library already declares prerequisites, and completed attempts already carry stable exercise IDs and revisions in local history. The practice flow should use that evidence to suggest one understandable next study instead of advancing by a circular UI position, while preserving the learner's freedom to choose any exercise.
 
 A recommendation is practice guidance, not an evaluator result, unlock, grade, or mastery claim. The first implementation therefore uses only completion identity and recency. Pitch-error counts, timing classifications, tempo, velocity, and inferred physical technique do not affect this version.
 
@@ -19,6 +19,7 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - Each ordered chord-tone study is eligible after its matching untimed step-and-skip study has exact-current-revision completion evidence; that matching study is its sole prerequisite.
 - Each repeated-note study is eligible after its matching ascending even-eighth study has exact-current-revision completion evidence; that matching study is its sole prerequisite.
 - Each mixed-pattern study is eligible only after both its matching repeated-note and ordered chord-tone studies have exact-current-revision completion evidence.
+- Each offbeat study is eligible after its matching mixed-pattern study has exact-current-revision completion evidence; that matching study is its sole prerequisite.
 - When every current exercise has exact-revision completion evidence, the service recommends the least recently practiced exercise. Equal recency is resolved by canonical library order.
 - When readable history contains no current-revision completions, the service recommends the first prerequisite-free exercise in canonical library order.
 - The practice page explains why the study was suggested and always keeps the complete exercise library available as the fallback and override.
@@ -82,6 +83,7 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - [ ] Every prerequisite reference resolves and every cycle is rejected before recommendation.
 - [ ] Eligible uncompleted direct dependents are preferred, followed by eligible uncompleted exercises in canonical library order.
 - [ ] Each mixed-pattern candidate requires exact-current-revision evidence for both its matching repeated-note and ordered chord-tone prerequisites; neither prerequisite alone makes it eligible.
+- [ ] Each offbeat candidate requires exact-current-revision evidence only for its matching mixed-pattern prerequisite and remains freely selectable without it.
 - [ ] Empty readable history selects the first prerequisite-free exercise.
 - [ ] When every current exercise has matching completion evidence, the least recently practiced exercise is selected with canonical-order tie-breaking.
 - [ ] A just-completed in-memory attempt may inform the immediate suggestion before save, and successful persistence refreshes the retained-history result.
@@ -105,7 +107,7 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 ### Verification
 
 - **Graph tests:** Accept the current library; reject missing prerequisite IDs, self-cycles, and multi-node cycles without returning a partial recommendation.
-- **Rule tests:** Cover direct dependent, an unmet additional prerequisite, ordered chord-tone eligibility from its sole step-and-skip prerequisite, repeated-note eligibility from its sole ascending even-eighth prerequisite, mixed-pattern eligibility only after both matching prerequisites, eligible non-dependent fallback, canonical-order tie-break, empty history, all-completed review, and equal recency.
+- **Rule tests:** Cover direct dependent, an unmet additional prerequisite, ordered chord-tone eligibility from its sole step-and-skip prerequisite, repeated-note eligibility from its sole ascending even-eighth prerequisite, mixed-pattern eligibility only after both matching prerequisites, offbeat eligibility from its sole matching mixed-pattern prerequisite, eligible non-dependent fallback, canonical-order tie-break, empty history, all-completed review, and equal recency.
 - **Evidence tests:** Cover current versus old revision, duplicate completions, unknown exercise history, bounded-history disappearance, and a just-completed transient record.
 - **Exclusion tests:** Changing error counts, timing classifications, tempo, and input kind on otherwise equivalent completed records does not change the recommendation.
 - **Controller tests:** Recommendation loads independently of practice, recalculates optimistically on completion, refreshes after save, and preserves the in-session suggestion while surfacing save failure honestly.
@@ -155,6 +157,12 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - Given: `mixed-eighth-pattern-c-major-right-hand` declares `repeated-note-eighths-c-major-right-hand` and `ordered-chord-tones-c-major-right-hand` as prerequisites
 - When: recommendation runs with exact-current-revision completion evidence for only one of them
 - Then: the mixed-pattern candidate is skipped; after both are present it becomes eligible, remains freely selectable either way, and receives no duration, release, articulation, fingering, hand, relaxation, reading, consistency, mastery, or readiness claim
+
+**Scenario: Suggest offbeat onsets after the mixed pattern**
+
+- Given: `mixed-eighth-pattern-c-major-right-hand` has exact-current-revision completion evidence and `offbeat-step-skip-c-major-right-hand` is uncompleted
+- When: recommendation considers the offbeat study
+- Then: it is eligible as a direct dependent from that sole prerequisite, remains freely selectable without it, and receives no audible-phase, timing-quality, syncopation, readiness, or mastery claim
 
 **Scenario: Fall back to another eligible study**
 

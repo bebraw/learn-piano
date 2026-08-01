@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-eighth-pattern-exercises.js";
+import { offbeatStepSkipRightHandExercise } from "../exercises/library/offbeat-step-skip-exercises.js";
 import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
@@ -55,7 +56,7 @@ describe("exercise presentation", () => {
     ).toBe("Both hands");
   });
 
-  it("classifies untimed, quarter-note, even-eighth, and other timed grids from canonical offsets", () => {
+  it("classifies untimed, quarter-note, even-eighth, offbeat-eighth, and other timed grids from canonical offsets", () => {
     const genericBeatOffsets = [0, 0.5, 1.5, 2, 3] as const;
     const genericTimed: Exercise = {
       ...steadyQuarterRightHandExercise,
@@ -85,6 +86,13 @@ describe("exercise presentation", () => {
         "After the count-in, play on the eighth-note grid: each click is a numbered beat, and the “and” count falls halfway between. Count 1 & 2 & 3.",
       staffLabel: "Pitch order · Even eighth-note onsets",
     });
+    expect(getExerciseRhythmPresentation(offbeatStepSkipRightHandExercise)).toMatchObject({
+      kind: "offbeat-eighth",
+      label: "Offbeat grid",
+      practiceTask:
+        "After the count-in, play the first note on 1, then place each remaining note on an “and” count between clicks. Count 1 & 2 & 3 & 4 &.",
+      staffLabel: "Pitch order · Downbeat then offbeat onsets",
+    });
     expect(getExerciseRhythmPresentation(genericTimed)).toMatchObject({
       kind: "timed",
       label: "Timed study",
@@ -93,9 +101,13 @@ describe("exercise presentation", () => {
     });
     expect(formatExerciseTimingLabel(genericTimed)).toBe("Timed study · 60 BPM");
     expect(
-      [fiveNoteAscentExercise, steadyQuarterRightHandExercise, evenEighthsRightHandExercise, genericTimed].every(
-        (exercise) => !getExerciseRhythmPresentation(exercise).practiceTask.includes("key stays lit"),
-      ),
+      [
+        fiveNoteAscentExercise,
+        steadyQuarterRightHandExercise,
+        evenEighthsRightHandExercise,
+        offbeatStepSkipRightHandExercise,
+        genericTimed,
+      ].every((exercise) => !getExerciseRhythmPresentation(exercise).practiceTask.includes("key stays lit")),
     ).toBe(true);
   });
 
@@ -121,6 +133,40 @@ describe("exercise presentation", () => {
     expect(getExerciseRhythmPresentation(threeFourGrid).practiceTask).toBe(
       "After the count-in, play on the eighth-note grid: each click is a numbered beat, and the “and” count falls halfway between. Count 1 & 2 & 3 & 1 &.",
     );
+  });
+
+  it("derives a one-measure offbeat count from the exercise meter", () => {
+    const threeFourOffbeats: Exercise = {
+      ...offbeatStepSkipRightHandExercise,
+      id: "three-four-offbeat-grid",
+      timing: { ...offbeatStepSkipRightHandExercise.timing!, beatsPerMeasure: 3 },
+      expectedEvents: offbeatStepSkipRightHandExercise.expectedEvents.slice(0, 4),
+    };
+
+    expect(getExerciseRhythmPresentation(threeFourOffbeats)).toMatchObject({
+      kind: "offbeat-eighth",
+      practiceTask:
+        "After the count-in, play the first note on 1, then place each remaining note on an “and” count between clicks. Count 1 & 2 & 3 &.",
+    });
+  });
+
+  it("classifies offbeat grids from timing data rather than exercise metadata", () => {
+    const neutralOffbeatGrid: Exercise = {
+      ...offbeatStepSkipRightHandExercise,
+      id: "timed-study-with-neutral-metadata",
+      title: "Timed study with neutral metadata",
+    };
+    const misleadingOffbeatMetadata: Exercise = {
+      ...offbeatStepSkipRightHandExercise,
+      id: "offbeat-grid-with-irregular-timing",
+      title: "Offbeat grid with irregular timing",
+      expectedEvents: offbeatStepSkipRightHandExercise.expectedEvents.map((event, index) =>
+        index === 4 ? { ...event, beatOffset: 3.75 } : event,
+      ),
+    };
+
+    expect(getExerciseRhythmPresentation(neutralOffbeatGrid).kind).toBe("offbeat-eighth");
+    expect(getExerciseRhythmPresentation(misleadingOffbeatMetadata).kind).toBe("timed");
   });
 
   it("keeps an irregular eight-event grid on the generic timed fallback", () => {
@@ -152,12 +198,20 @@ describe("exercise presentation", () => {
       label: "Timed study",
       staffLabel: "Pitch order · Timing shown separately",
     });
+    expect(
+      getExerciseRhythmPresentation({
+        ...offbeatStepSkipRightHandExercise,
+        id: "offbeats-with-an-eighth-note-beat",
+        timing: { ...offbeatStepSkipRightHandExercise.timing!, beatUnit: 8 },
+      }),
+    ).toMatchObject({ kind: "timed", label: "Timed study" });
   });
 
   it("formats rhythm labels with tempo and optional meter", () => {
     expect(formatExerciseTimingLabel(fiveNoteAscentExercise)).toBe("Untimed");
     expect(formatExerciseTimingLabel(steadyQuarterRightHandExercise)).toBe("Steady pulse · 60 BPM");
     expect(formatExerciseTimingLabel(evenEighthsRightHandExercise, true)).toBe("Eighth-note grid · 60 BPM · 4/4");
+    expect(formatExerciseTimingLabel(offbeatStepSkipRightHandExercise, true)).toBe("Offbeat grid · 60 BPM · 4/4");
   });
 
   it("projects one physical natural-note span while retaining canonical accidentals", () => {

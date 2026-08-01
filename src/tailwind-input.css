@@ -2016,7 +2016,7 @@
     padding-block: 0.55rem;
   }
 
-  .practice-score-task {
+  .practice-page:not([data-cue-mode="reading-focus"]) .practice-score-task {
     display: none;
   }
 

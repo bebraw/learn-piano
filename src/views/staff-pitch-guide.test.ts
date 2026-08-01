@@ -3,6 +3,7 @@ import { fiveNoteDescentLeftHandExercise } from "../exercises/library/beginner-f
 import { evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-eighth-pattern-exercises.js";
+import { offbeatStepSkipRightHandExercise } from "../exercises/library/offbeat-step-skip-exercises.js";
 import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
@@ -94,6 +95,15 @@ describe("renderStaffPitchGuide", () => {
         expect(html.indexOf(`id="staff-note-${eventIds[index - 1]}"`)).toBeLessThan(html.indexOf(`id="staff-note-${eventId}"`));
       }
     }
+  });
+
+  it("labels offbeat intent without turning equal staff spacing into rhythm notation", () => {
+    const html = renderStaffPitchGuide(offbeatStepSkipRightHandExercise);
+
+    expect(html).toContain("Pitch order · Downbeat then offbeat onsets");
+    expect(html.match(/data-staff-note/g)).toHaveLength(5);
+    expect(html).not.toContain("Timing shown separately");
+    expect(html).not.toContain("One note per beat");
   });
 
   it("does not claim one note per beat for another supported timed pattern", () => {

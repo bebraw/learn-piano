@@ -4,6 +4,7 @@ import { stepSkipRightHandExercise } from "../exercises/library/beginner-five-no
 import { evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-eighth-pattern-exercises.js";
+import { offbeatStepSkipRightHandExercise } from "../exercises/library/offbeat-step-skip-exercises.js";
 import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises.js";
 import { steadyQuarterStepSkipRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
@@ -67,7 +68,7 @@ describe("renderPracticePage", () => {
     expect(html).toContain('<option value="60" selected>60 BPM</option>');
     expect(html.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).toContain("hidden");
     expect(html).not.toContain("The next expected key stays lit.");
-    expect(exerciseLibrary).toHaveLength(18);
+    expect(exerciseLibrary).toHaveLength(20);
   });
 
   it("derives the rendered sequence and physical key order from the supplied exercise", () => {
@@ -161,6 +162,21 @@ describe("renderPracticePage", () => {
     for (const event of mixedEighthPatternRightHandExercise.expectedEvents) {
       expect(html).toContain(`data-event-id="${event.id}"`);
     }
+  });
+
+  it("renders offbeat guidance separately from the pitch-only staff spacing", () => {
+    const html = renderPracticePage(offbeatStepSkipRightHandExercise, exerciseLibrary);
+
+    expect(html).toContain("After the four-beat count-in, play C on beat 1, then E-D-F-G");
+    expect(html).toContain("C4 · E4 · D4 · F4 · G4");
+    expect(html).toContain(
+      '<p class="practice-score-task">After the count-in, play the first note on 1, then place each remaining note on an “and” count between clicks. Count 1 &amp; 2 &amp; 3 &amp; 4 &amp;.</p>',
+    );
+    expect(html).toContain("Pitch order · Downbeat then offbeat onsets");
+    expect(html).toContain("Offbeat grid · 60 BPM");
+    expect(html.match(/data-staff-note/g)).toHaveLength(5);
+    expect(html.match(/data-practice-key/g)).toHaveLength(5);
+    expect(html).not.toContain("After the count-in, follow the study's timing guide.");
   });
 
   it("marks only the selected exercise as the current catalog link", () => {

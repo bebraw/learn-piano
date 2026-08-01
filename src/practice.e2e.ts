@@ -3,6 +3,7 @@ import { defaultExercise, exerciseLibrary } from "./exercises/library/index.js";
 import { formatMidiNote } from "./exercises/evaluator.js";
 import { evenEighthsRightHandExercise } from "./exercises/library/even-eighth-exercises.js";
 import { mixedEighthPatternRightHandExercise } from "./exercises/library/mixed-eighth-pattern-exercises.js";
+import { offbeatStepSkipRightHandExercise } from "./exercises/library/offbeat-step-skip-exercises.js";
 import { orderedChordTonesRightHandExercise } from "./exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "./exercises/library/repeated-note-exercises.js";
 import { ATTEMPT_STORAGE_KEY } from "./client/persistence/attempt-repository.js";
@@ -428,6 +429,59 @@ test("completes and persists an eight-onset mixed pattern", async ({ page }) => 
     exerciseId: exercise.id,
     timing: { assessedIntervals: 7 },
   });
+});
+
+test("keeps offbeat count guidance visible in Reading Focus and persists completion", async ({ page }) => {
+  const exercise = offbeatStepSkipRightHandExercise;
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto(exercisePracticeHref(exercise));
+
+  const instructions = page.locator(".practice-heading-copy");
+  const task = page.locator(".practice-score-task");
+  const sequence = page.locator(".practice-score-sequence");
+  await expect(page.getByRole("heading", { level: 1, name: exercise.title })).toBeVisible();
+  await expect(instructions).toBeVisible();
+  await expect(task).toHaveText(
+    "After the count-in, play the first note on 1, then place each remaining note on an “and” count between clicks. Count 1 & 2 & 3 & 4 &.",
+  );
+  await expect(task).toBeHidden();
+  await expect(page.getByText("Pitch order · Downbeat then offbeat onsets")).toBeVisible();
+  await expect(page.locator("[data-staff-note]")).toHaveCount(5);
+  await expect(page.locator("[data-practice-key]")).toHaveCount(5);
+
+  await page.getByRole("button", { name: "Reading focus" }).click();
+  await expect(instructions).toHaveCSS("position", "absolute");
+  await expect(instructions).toHaveCSS("width", "1px");
+  await expect(sequence).toHaveCSS("position", "absolute");
+  await expect(task).toBeVisible();
+
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await page.locator("#pulse-tempo").selectOption("100");
+  await page.getByRole("button", { name: "Start pulse" }).click();
+  await expect(page.locator("#practice-stage")).toHaveAttribute("data-pulse-status", "running", { timeout: 5_000 });
+
+  for (const event of exercise.expectedEvents) {
+    await playNote(page, event.noteNumber);
+  }
+
+  await expect(page.getByText("5 of 5 notes")).toBeVisible();
+  await expect(page.getByText("1 attempt completed today")).toBeVisible();
+
+  const attempt = await page.evaluate((storageKey) => {
+    const value = localStorage.getItem(storageKey);
+    return value === null
+      ? null
+      : (
+          JSON.parse(value) as {
+            attempts?: Array<{
+              exerciseId?: string;
+              timing?: { assessedIntervals?: number; onPulse?: number; early?: number; late?: number };
+            }>;
+          }
+        ).attempts?.[0];
+  }, ATTEMPT_STORAGE_KEY);
+  expect(attempt).toMatchObject({ exerciseId: exercise.id, timing: { assessedIntervals: 4 } });
+  expect((attempt?.timing?.onPulse ?? 0) + (attempt?.timing?.early ?? 0) + (attempt?.timing?.late ?? 0)).toBe(4);
 });
 
 test("uses the injected iPad bridge through the shared practice flow", async ({ page }) => {

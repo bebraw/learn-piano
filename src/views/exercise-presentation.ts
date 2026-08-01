@@ -11,8 +11,10 @@ const CATEGORY_LABELS: Readonly<Record<string, string>> = {
 const NATURAL_PITCH_CLASSES = new Set([0, 2, 4, 5, 7, 9, 11]);
 const EVEN_EIGHTH_PRACTICE_TASK =
   "After the count-in, play on the eighth-note grid: each click is a numbered beat, and the “and” count falls halfway between.";
+const OFFBEAT_EIGHTH_PRACTICE_TASK =
+  "After the count-in, play the first note on 1, then place each remaining note on an “and” count between clicks.";
 
-export type ExerciseRhythmKind = "untimed" | "steady-quarter" | "even-eighth" | "timed";
+export type ExerciseRhythmKind = "untimed" | "steady-quarter" | "even-eighth" | "offbeat-eighth" | "timed";
 export type PracticeKeyboardNoteState = "accepted" | "expected" | "idle" | "remaining";
 
 export interface ExerciseRhythmPresentation {
@@ -40,6 +42,12 @@ const RHYTHM_PRESENTATIONS: Readonly<Record<ExerciseRhythmKind, ExerciseRhythmPr
     label: "Eighth-note grid",
     practiceTask: EVEN_EIGHTH_PRACTICE_TASK,
     staffLabel: "Pitch order · Even eighth-note onsets",
+  },
+  "offbeat-eighth": {
+    kind: "offbeat-eighth",
+    label: "Offbeat grid",
+    practiceTask: OFFBEAT_EIGHTH_PRACTICE_TASK,
+    staffLabel: "Pitch order · Downbeat then offbeat onsets",
   },
   timed: {
     kind: "timed",
@@ -117,15 +125,28 @@ export function getExerciseRhythmPresentation(exercise: Exercise): ExerciseRhyth
   if (usesQuarterNoteBeat && exercise.expectedEvents.every((event, index) => event.beatOffset === index / 2)) {
     return {
       ...RHYTHM_PRESENTATIONS["even-eighth"],
-      practiceTask: `${EVEN_EIGHTH_PRACTICE_TASK} Count ${formatEvenEighthCount(exercise.expectedEvents.length, timing.beatsPerMeasure)}.`,
+      practiceTask: `${EVEN_EIGHTH_PRACTICE_TASK} Count ${formatEighthGridCount(exercise.expectedEvents.length, timing.beatsPerMeasure)}.`,
+    };
+  }
+
+  if (
+    usesQuarterNoteBeat &&
+    exercise.expectedEvents.length === timing.beatsPerMeasure + 1 &&
+    exercise.expectedEvents.every((event, index) => event.beatOffset === (index === 0 ? 0 : index - 0.5))
+  ) {
+    return {
+      ...RHYTHM_PRESENTATIONS["offbeat-eighth"],
+      practiceTask: `${OFFBEAT_EIGHTH_PRACTICE_TASK} Count ${formatEighthGridCount(timing.beatsPerMeasure * 2, timing.beatsPerMeasure)}.`,
     };
   }
 
   return RHYTHM_PRESENTATIONS.timed;
 }
 
-function formatEvenEighthCount(eventCount: number, beatsPerMeasure: number): string {
-  return Array.from({ length: eventCount }, (_, index) => (index % 2 === 0 ? String(((index / 2) % beatsPerMeasure) + 1) : "&")).join(" ");
+function formatEighthGridCount(positionCount: number, beatsPerMeasure: number): string {
+  return Array.from({ length: positionCount }, (_, index) => (index % 2 === 0 ? String(((index / 2) % beatsPerMeasure) + 1) : "&")).join(
+    " ",
+  );
 }
 
 export function formatExerciseTimingLabel(exercise: Exercise, includeMeter = false): string {

@@ -4,6 +4,7 @@ import { createEvaluationState, evaluateMidiEvent } from "./evaluator.js";
 import { evenEighthsRightHandExercise } from "./library/even-eighth-exercises.js";
 import { fiveNoteAscentExercise } from "./library/five-note-ascent.js";
 import { mixedEighthPatternRightHandExercise } from "./library/mixed-eighth-pattern-exercises.js";
+import { offbeatStepSkipRightHandExercise } from "./library/offbeat-step-skip-exercises.js";
 import { repeatedNotesRightHandExercise } from "./library/repeated-note-exercises.js";
 import { steadyQuarterRightHandExercise, steadyQuarterStepSkipRightHandExercise } from "./library/steady-quarter-exercises.js";
 import { parseExercise } from "./schema.js";
@@ -218,6 +219,66 @@ describe("timed ordered-note evaluation", () => {
         },
       },
     });
+  });
+
+  it("evaluates offbeat onsets from the fixed first-note anchor regardless of timestamp origin", () => {
+    const performAt = (anchorTimestamp: number) => {
+      let state = createEvaluationState(offbeatStepSkipRightHandExercise);
+      const timingClassifications: string[] = [];
+
+      for (const event of offbeatStepSkipRightHandExercise.expectedEvents) {
+        const transition = evaluateMidiEvent(
+          offbeatStepSkipRightHandExercise,
+          state,
+          noteOn(event.noteNumber, anchorTimestamp + event.beatOffset! * 1_000),
+        );
+        if (transition.feedback?.timing !== undefined) {
+          timingClassifications.push(transition.feedback.timing.classification);
+        }
+        state = transition.state;
+      }
+
+      return { state, timingClassifications };
+    };
+
+    const first = performAt(2_000);
+    const translated = performAt(12_000);
+
+    expect(offbeatStepSkipRightHandExercise.expectedEvents.map(({ beatOffset }) => beatOffset)).toEqual([0, 0.5, 1.5, 2.5, 3.5]);
+    expect(first.timingClassifications).toEqual(["anchor", "on-pulse", "on-pulse", "on-pulse", "on-pulse"]);
+    expect(first.state).toMatchObject({
+      nextExpectedIndex: 5,
+      counts: { correct: 5, repeated: 0, outOfOrder: 0, wrong: 0 },
+      completed: true,
+      timing: {
+        anchorTimestamp: 2_000,
+        assessedIntervals: 4,
+        onPulse: 4,
+        early: 0,
+        late: 0,
+        totalAbsoluteErrorMs: 0,
+      },
+      completionSummary: {
+        errorFree: true,
+        timing: { assessedIntervals: 4, onPulse: 4, early: 0, late: 0, meanAbsoluteErrorMs: 0 },
+      },
+    });
+    expect(translated.timingClassifications).toEqual(first.timingClassifications);
+    expect(translated.state.timing).toEqual({ ...first.state.timing, anchorTimestamp: 12_000 });
+    expect(translated.state.completionSummary).toEqual(first.state.completionSummary);
+  });
+
+  it("accepts a correctly pitched offbeat onset while reporting a missed half-beat target", () => {
+    let state = createEvaluationState(offbeatStepSkipRightHandExercise);
+    state = evaluateMidiEvent(offbeatStepSkipRightHandExercise, state, noteOn(60, 1_000)).state;
+
+    const lateE = evaluateMidiEvent(offbeatStepSkipRightHandExercise, state, noteOn(64, 2_000));
+
+    expect(lateE.feedback).toMatchObject({
+      classification: "correct",
+      timing: { classification: "late", deviationMs: 500 },
+    });
+    expect(lateE.state).toMatchObject({ nextExpectedIndex: 2, timing: { assessedIntervals: 1, late: 1 } });
   });
 
   it("keeps an extra same-pitch onset outside the canonical repeated pair off the timing grid", () => {

@@ -4,13 +4,13 @@
 
 ### Context
 
-The README is the first surface for a learner or contributor. It must identify the current Piano Practice product, explain the eighteen-exercise beginner slice, ordered chord-tone, repeated-note, and mixed-pattern evidence boundaries, pitch-only staff guide, transient reading-focus presentation, timing and platform limits, provide accurate local commands and architecture orientation, and preserve the repository's documentation contract. The committed screenshot should stay representative without adding screenshot automation to routine development or CI.
+The README is the first surface for a learner or contributor. It must identify the current Piano Practice product, explain the twenty-exercise beginner slice and its ordered chord-tone, repeated-note, mixed-pattern, and offbeat-onset evidence boundaries, pitch-only staff guide, transient reading-focus presentation, timing and platform limits, provide accurate local commands and architecture orientation, and preserve the repository's documentation contract. The committed screenshot should stay representative without adding screenshot automation to routine development or CI.
 
 ### Architecture
 
 - **Primary document:** `README.md`
 - **Committed screenshot:** `docs/screenshots/home.png`
-- **Product summary:** eighteen-exercise selection, server-rendered treble and bass pitch guides, learner-controlled transient reading focus, ordered C-E-G-E-C chord-tone preparation, C-C-D-D-E repeated-note onsets, C-E-D-D-F-G-E-C mixed-pattern onsets, local-first practice behavior, bounded quarter-note and half-beat onset feedback, per-exercise persistence, input choices, and explicit limitations
+- **Product summary:** twenty-exercise selection, server-rendered treble and bass pitch guides, learner-controlled transient reading focus, ordered C-E-G-E-C chord-tone preparation, C-C-D-D-E repeated-note onsets, C-E-D-D-F-G-E-C mixed-pattern onsets, C-E-D-F-G offbeat-onset preparation, local-first practice behavior, bounded quarter-note and fractional-position onset feedback, per-exercise persistence, input choices, and explicit limitations
 - **Developer summary:** runtime, default and query-selected practice routes, source layout, generated assets, verification, and authoritative documentation locations
 - **Screenshot refresh:** a manual developer action after material UI or catalog changes; screenshot capture remains outside the routine implementation and automated quality-gate loop
 - **Non-goal:** no local or remote screenshot workflow in the automated build, development loop, or CI
@@ -23,6 +23,7 @@ The README is the first surface for a learner or contributor. It must identify t
 - Do not claim the application can assess physical technique or replace a teacher.
 - Do not describe the pitch-only staff guide as full score notation, give its markers duration semantics, or claim completion proves staff reading.
 - Do not describe reading focus as a saved preference, separate exercise, assessment, recommendation input, or proof of staff-reading mastery.
+- Do not describe the offbeat pair as proof of audible downbeat alignment, between-click placement, rests, silence, duration, release, holding, accents, articulation, velocity quality, syncopation, fingering, hand use, reading, relaxation, consistency, or mastery.
 - Do not point at stale commands, ports, generated paths, routes, package names, or source layout.
 - Do not imply that generated code becomes authoritative merely because CI passes.
 - Do not point at a missing or materially stale screenshot.
@@ -33,10 +34,11 @@ The README is the first surface for a learner or contributor. It must identify t
 ### Definition of Done
 
 - [ ] The README identifies Piano Practice as a local-first Cloudflare Worker application near the top.
-- [ ] It describes all eighteen right- and left-hand exercises, including the ordered chord-tone, repeated-note, and mixed-pattern pairs, the two straight and two step-and-skip steady-quarter studies, and the ascending even-eighth pair, plus direct exercise selection, progressive enhancement, input options, per-exercise history, and feedback boundaries.
+- [ ] It describes all twenty right- and left-hand exercises, including the ordered chord-tone, repeated-note, mixed-pattern, and offbeat pairs, the two straight and two step-and-skip steady-quarter studies, and the ascending even-eighth pair, plus direct exercise selection, progressive enhancement, input options, per-exercise history, and feedback boundaries.
 - [ ] It explains that C-E-G-E-C remains five ordered individual-note events, reuses C and E physical controls, and provides no simultaneous chord, voicing, or harmony-recognition evidence.
-- [ ] It explains that the six ascending even-eighth, repeated-note, and mixed-pattern studies use fractional onset offsets, a ±0.1-beat window, and a quarter-note click that the learner subdivides; each mixed-pattern study has eight events and seven assessed intervals.
+- [ ] It explains that six regular eighth-grid studies and two offbeat studies use fractional onset positions, a ±0.1-beat window, and a quarter-note click that the learner subdivides; the ten five-note timed studies have four assessed intervals and each mixed-pattern study has eight events and seven assessed intervals.
 - [ ] It explains that mixed-pattern completion proves only C-E-D-D-F-G-E-C pitch order and onset placement, not duration, release, articulation, fingering, declared-hand use, relaxation, reading, consistency, rests, notation, simultaneity, or physical technique.
+- [ ] It explains that offbeat completion proves only C-E-D-F-G pitch order and four later MIDI-relative timing gaps. Because the first C is ungraded and audio is not the evaluation clock, it proves no audible phase, rests, silence, duration, release, holding, accents, articulation, velocity quality, syncopation, fingering, declared-hand use, reading, relaxation, consistency, or mastery.
 - [ ] It explains that every current exercise has a supported server-rendered treble or bass pitch guide with semantic note text, no duration semantics, and no staff-reading mastery inference.
 - [ ] It explains that enhanced supported guides offer a transient reading-focus presentation, which reduces visible answers while preserving accessibility and progress, resets on navigation or reload, and contributes no attempt or reading-mastery evidence.
 - [ ] It states the desktop Web MIDI dependency and explains the implemented native iPad wrapper, including its operator-owned signing and physical-device verification steps.
@@ -49,7 +51,7 @@ The README is the first surface for a learner or contributor. It must identify t
 - `README.md` must reference the existing `docs/screenshots/home.png` asset.
 - A new reader must understand the current product and server-rendered/progressively enhanced model before exploring the source tree.
 - The README must identify `/practice` as the canonical default and `?exercise=<id>` as direct selection, including the `404` behavior for unknown IDs.
-- The eight untimed exercises must remain distinct from the ten timed exercises; none may be described as percentage-scored, AI-evaluated, or cloud-backed.
+- The eight untimed exercises must remain distinct from the twelve timed exercises; none may be described as percentage-scored, AI-evaluated, or cloud-backed.
 - Learner-facing timing language must say “on time” while documenting `onPulse` and `on-pulse` only as compatibility names where technical detail is relevant.
 - The current pitch guide must not be described as a complete score, a duration model, or evidence that the learner read the staff.
 - Reading focus must remain distinct from the fully guided server default and must not be described as persisted, assessed, or available for unsupported notation.
@@ -66,7 +68,7 @@ The README is the first surface for a learner or contributor. It must identify t
 - **Manual check:** inspect the image and verify that it renders from the README path.
 - **Repository checks:** `git diff --check` and `npm run format:check`.
 - **Behavior check:** compare documented commands, routes, and file paths with `package.json`, `wrangler.jsonc`, and the source tree.
-- **Feature check:** compare exercise counts, pitch-guide subset, reading-focus availability/lifetime/evidence boundary, pulse behavior, evaluator boundaries, and exclusions with the relevant living specs and implemented ADRs.
+- **Feature check:** compare exercise counts, regular and offbeat rhythm presentation, pitch-guide subset, reading-focus availability/lifetime/evidence boundary, pulse behavior, MIDI/audio evaluator boundaries, and exclusions with the relevant living specs and implemented ADRs.
 
 ### Scenarios
 
@@ -74,7 +76,7 @@ The README is the first surface for a learner or contributor. It must identify t
 
 - Given: the repository is viewed locally or on Git hosting
 - When: the learner reads the opening sections
-- Then: they understand the eighteen exercises available now, including the ordered but non-simultaneous chord-tone pair, onset-only repeated-note pair, and eight-event mixed-pattern pair, how the staff pitch guide, transient reading focus, quarter-pulse and half-beat onset timing, selection, input, and per-exercise history work, and what the application cannot assess
+- Then: they understand the twenty exercises available now, including the ordered but non-simultaneous chord-tone pair, onset-only repeated-note pair, eight-event mixed-pattern pair, and MIDI-relative offbeat pair, how the staff pitch guide, transient reading focus, quarter-pulse and fractional-position onset timing, selection, input, and per-exercise history work, and what the application cannot assess
 
 **Scenario: Contributor runs the application**
 

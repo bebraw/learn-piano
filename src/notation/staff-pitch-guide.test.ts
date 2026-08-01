@@ -6,6 +6,7 @@ import {
 } from "../exercises/library/beginner-five-note-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-eighth-pattern-exercises.js";
+import { offbeatStepSkipRightHandExercise } from "../exercises/library/offbeat-step-skip-exercises.js";
 import type { ExerciseExpectedEvent } from "../exercises/types.js";
 import { projectStaffPitchGuide, STAFF_PITCH_GUIDE_SUPPORTED_RANGES } from "./staff-pitch-guide.js";
 
@@ -59,6 +60,13 @@ describe("projectStaffPitchGuide", () => {
     expect(guide?.notes.map(({ label }) => label)).toEqual(["C3", "E3", "D3", "F3", "G3"]);
     expect(guide?.notes.map(({ x }) => x)).toEqual([180, 272, 364, 456, 548]);
     expect(guide?.notes.map(({ y }) => y)).toEqual([80, 64, 72, 56, 48]);
+  });
+
+  it("keeps nonuniform offbeat timing out of horizontal pitch-guide spacing", () => {
+    const guide = projectStaffPitchGuide(offbeatStepSkipRightHandExercise.expectedEvents);
+
+    expect(offbeatStepSkipRightHandExercise.expectedEvents.map(({ beatOffset }) => beatOffset)).toEqual([0, 0.5, 1.5, 2.5, 3.5]);
+    expect(guide?.notes.map(({ x }) => x)).toEqual([180, 272, 364, 456, 548]);
   });
 
   it("keeps repeated canonical events distinct without adding duration data", () => {

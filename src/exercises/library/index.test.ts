@@ -13,6 +13,7 @@ import {
   MIXED_EIGHTH_PATTERN_LEFT_HAND_EXERCISE_ID,
   MIXED_EIGHTH_PATTERN_RIGHT_HAND_EXERCISE_ID,
 } from "./mixed-eighth-pattern-exercises.js";
+import { OFFBEAT_STEP_SKIP_LEFT_HAND_EXERCISE_ID, OFFBEAT_STEP_SKIP_RIGHT_HAND_EXERCISE_ID } from "./offbeat-step-skip-exercises.js";
 import { ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID, ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID } from "./ordered-chord-tone-exercises.js";
 import { REPEATED_NOTES_LEFT_HAND_EXERCISE_ID, REPEATED_NOTES_RIGHT_HAND_EXERCISE_ID } from "./repeated-note-exercises.js";
 import {
@@ -41,6 +42,8 @@ const EXPECTED_SEQUENCES = new Map<string, readonly number[]>([
   [REPEATED_NOTES_LEFT_HAND_EXERCISE_ID, [48, 48, 50, 50, 52]],
   [MIXED_EIGHTH_PATTERN_RIGHT_HAND_EXERCISE_ID, [60, 64, 62, 62, 65, 67, 64, 60]],
   [MIXED_EIGHTH_PATTERN_LEFT_HAND_EXERCISE_ID, [48, 52, 50, 50, 53, 55, 52, 48]],
+  [OFFBEAT_STEP_SKIP_RIGHT_HAND_EXERCISE_ID, [60, 64, 62, 65, 67]],
+  [OFFBEAT_STEP_SKIP_LEFT_HAND_EXERCISE_ID, [48, 52, 50, 53, 55]],
 ]);
 
 const EXPECTED_FINGERINGS = new Map<string, string>([
@@ -62,12 +65,14 @@ const EXPECTED_FINGERINGS = new Map<string, string>([
   [REPEATED_NOTES_LEFT_HAND_EXERCISE_ID, "5-5-4-4-3"],
   [MIXED_EIGHTH_PATTERN_RIGHT_HAND_EXERCISE_ID, "1-3-2-2-4-5-3-1"],
   [MIXED_EIGHTH_PATTERN_LEFT_HAND_EXERCISE_ID, "5-3-4-4-2-1-3-5"],
+  [OFFBEAT_STEP_SKIP_RIGHT_HAND_EXERCISE_ID, "1-3-2-4-5"],
+  [OFFBEAT_STEP_SKIP_LEFT_HAND_EXERCISE_ID, "5-3-4-2-1"],
 ]);
 
 describe("beginner exercise library", () => {
-  it("exposes eighteen stable identities with the original ascent as default", () => {
+  it("exposes twenty stable identities with the original ascent as default", () => {
     expect(exerciseLibrary.map(({ id, revision }) => [id, revision])).toEqual([...EXPECTED_SEQUENCES.keys()].map((id) => [id, 1]));
-    expect(new Set(exerciseLibrary.map(({ id }) => id))).toHaveLength(18);
+    expect(new Set(exerciseLibrary.map(({ id }) => id))).toHaveLength(20);
     expect(DEFAULT_EXERCISE_ID).toBe("five-note-ascent-c-major-right-hand");
     expect(defaultExercise.id).toBe(DEFAULT_EXERCISE_ID);
     expect(findExerciseById(DEFAULT_EXERCISE_ID)).toBe(defaultExercise);
@@ -120,11 +125,11 @@ describe("beginner exercise library", () => {
     }
   });
 
-  it("covers both hands, motion, step-skip patterns, subdivision, repeated pairs, mixed patterns, and returning chord tones", () => {
+  it("covers both hands, motion, step-skip patterns, subdivision, repeated pairs, mixed patterns, offbeats, and returning chord tones", () => {
     const rightHandExercises = exerciseLibrary.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "right"));
     const leftHandExercises = exerciseLibrary.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "left"));
-    expect(rightHandExercises).toHaveLength(9);
-    expect(leftHandExercises).toHaveLength(9);
+    expect(rightHandExercises).toHaveLength(10);
+    expect(leftHandExercises).toHaveLength(10);
 
     expect(findExerciseById(FIVE_NOTE_DESCENT_RIGHT_HAND_EXERCISE_ID)?.expectedEvents.map(({ noteNumber }) => noteNumber)).toEqual([
       67, 65, 64, 62, 60,
@@ -140,6 +145,8 @@ describe("beginner exercise library", () => {
       STEADY_QUARTER_STEP_SKIP_LEFT_HAND_EXERCISE_ID,
       MIXED_EIGHTH_PATTERN_RIGHT_HAND_EXERCISE_ID,
       MIXED_EIGHTH_PATTERN_LEFT_HAND_EXERCISE_ID,
+      OFFBEAT_STEP_SKIP_RIGHT_HAND_EXERCISE_ID,
+      OFFBEAT_STEP_SKIP_LEFT_HAND_EXERCISE_ID,
     ]) {
       const pitches = findExerciseById(id)?.expectedEvents.map(({ noteNumber }) => noteNumber) ?? [];
       const intervals = pitches.slice(1).map((pitch, index) => Math.abs(pitch - pitches[index]!));
@@ -148,8 +155,21 @@ describe("beginner exercise library", () => {
       expect(intervals.some((interval) => interval >= 3)).toBe(true);
     }
 
-    expect(exerciseLibrary.filter(({ evaluationMode }) => evaluationMode === "timed-ordered-notes")).toHaveLength(10);
+    expect(exerciseLibrary.filter(({ evaluationMode }) => evaluationMode === "timed-ordered-notes")).toHaveLength(12);
     expect(exerciseLibrary.filter(({ evaluationMode }) => evaluationMode === "untimed-ordered-notes")).toHaveLength(8);
+  });
+
+  it.each([
+    {
+      id: OFFBEAT_STEP_SKIP_RIGHT_HAND_EXERCISE_ID,
+      prerequisite: MIXED_EIGHTH_PATTERN_RIGHT_HAND_EXERCISE_ID,
+    },
+    {
+      id: OFFBEAT_STEP_SKIP_LEFT_HAND_EXERCISE_ID,
+      prerequisite: MIXED_EIGHTH_PATTERN_LEFT_HAND_EXERCISE_ID,
+    },
+  ])("requires the matching mixed eighth-pattern study for $id", ({ id, prerequisite }) => {
+    expect(findExerciseById(id)?.prerequisites).toEqual([prerequisite]);
   });
 
   it.each([
