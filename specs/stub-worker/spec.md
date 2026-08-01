@@ -37,7 +37,7 @@ The repository has evolved from a runnable template stub into a personal piano-p
 - [ ] Wrangler starts the application without additional scaffolding.
 - [ ] `/` returns the current Piano Practice overview and visible links to all thirty canonical exercises.
 - [ ] The home response names the local-practice region, keeps its data-dependent facts hidden until browser history loads, and preserves the complete library when JavaScript or storage is unavailable.
-- [ ] The home response keeps all canonical cards in server HTML and exposes focus/hand filters only after enhancement; filter state never changes URLs, storage, canonical order, or recommendation behavior.
+- [ ] The home response keeps all canonical cards in server HTML and exposes focus/hand/timing filters only after enhancement; filter state never changes URLs, storage, canonical order, or recommendation behavior.
 - [ ] `/practice` returns useful canonical default-exercise content before client enhancement.
 - [ ] The practice response remains fully guided, while supported client enhancement may expose a transient reading-focus toggle without adding a route, query parameter, or alternate document identity.
 - [ ] Home, practice, and not-found documents share the finished application identity, responsive layout rules, and accessible interaction sizing rather than presenting disconnected prototype screens.
@@ -54,7 +54,7 @@ The repository has evolved from a runnable template stub into a personal piano-p
 ### Regression Guardrails
 
 - `GET /` must return HTML with the Piano Practice heading and visible links to all thirty exercises.
-- Enhanced home filtering must begin at All/All on every load, while the no-JavaScript response keeps controls hidden and all links visible.
+- Enhanced home filtering must begin at All/All/All on every load, while the no-JavaScript response keeps controls hidden and all links visible.
 - `GET /practice` must include the default exercise title, instructions, expected note sequence, limitation text, server-rendered chooser, and same-origin module entry point.
 - Reading-focus enhancement must leave that guided response content and canonical identity intact; navigation or reload creates a new guided document and no Worker state persists the choice.
 - `GET /practice?exercise=<id>` must keep the URL selection, rendered content, and embedded canonical identity aligned without client JavaScript.

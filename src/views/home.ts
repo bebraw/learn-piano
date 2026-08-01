@@ -1,6 +1,12 @@
 import { formatMidiNote } from "../exercises/evaluator";
 import type { Exercise } from "../exercises/types";
-import { FOLIO_FOCUS_FILTERS, FOLIO_HAND_FILTERS, projectFolioCurriculumFocuses } from "../curriculum/folio-filter";
+import {
+  FOLIO_FOCUS_FILTERS,
+  FOLIO_HAND_FILTERS,
+  FOLIO_TIMING_FILTERS,
+  projectFolioCurriculumFocuses,
+  projectFolioStudyTiming,
+} from "../curriculum/folio-filter";
 import {
   exercisePracticeHref,
   formatExerciseCategory,
@@ -34,15 +40,16 @@ export function renderHomePage(
       const handLabel = formatExerciseHand(exercise);
       const hand = handLabel === "Left hand" ? "left" : handLabel === "Right hand" ? "right" : "both";
       const focuses = projectFolioCurriculumFocuses(exercise.curriculumTags);
+      const timing = projectFolioStudyTiming(exercise.evaluationMode);
       const selected = exercise.id === defaultExercise.id;
       const timingLabel = formatExerciseTimingLabel(exercise, true);
-      return `<li data-folio-entry data-hand="${hand}" data-focuses="${focuses.join(" ")}">
+      return `<li data-folio-entry data-hand="${hand}" data-focuses="${focuses.join(" ")}" data-timing="${timing}">
         <a
           class="folio-card group"
           data-exercise-id="${escapeHtml(exercise.id)}"
           data-exercise-revision="${exercise.revision}"
           data-hand="${hand}"
-          data-mode="${exercise.evaluationMode === "timed-ordered-notes" ? "timed" : "untimed"}"
+          data-mode="${timing}"
           href="${escapeHtml(exercisePracticeHref(exercise))}"
         >
           <span class="folio-card-index">${String(index + 1).padStart(2, "0")}</span>
@@ -205,6 +212,10 @@ function renderFolioFilters(studyCount: number): string {
       <fieldset class="folio-filter-group folio-filter-group-hand">
         <legend>Hand</legend>
         <div class="folio-filter-options">${renderFolioFilterOptions("folio-hand", "data-folio-hand-filter", FOLIO_HAND_FILTERS)}</div>
+      </fieldset>
+      <fieldset class="folio-filter-group folio-filter-group-timing">
+        <legend>Timing</legend>
+        <div class="folio-filter-options">${renderFolioFilterOptions("folio-timing", "data-folio-timing-filter", FOLIO_TIMING_FILTERS)}</div>
       </fieldset>
     </div>
     <div class="folio-filter-summary">

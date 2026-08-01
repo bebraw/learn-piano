@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { FolioCurriculumFocus } from "../curriculum/folio-filter.js";
+import type { FolioCurriculumFocus, FolioStudyTiming } from "../curriculum/folio-filter.js";
 import type { ExerciseHand } from "../exercises/types.js";
 import { initializeHomeFolioFilter, type HomeFolioFilterElements } from "./home-folio-filter.js";
 
@@ -52,13 +52,15 @@ interface FakeStudy {
   readonly element: FakeElement;
   readonly focuses: readonly FolioCurriculumFocus[];
   readonly hand: ExerciseHand;
+  readonly timing: FolioStudyTiming;
 }
 
 describe("initializeHomeFolioFilter", () => {
   it("opens on the complete folio even when the browser restores stale radio state", () => {
-    const page = createElements([study("right", ["notes-and-reading"])]);
+    const page = createElements([study("right", ["notes-and-reading"], "untimed")]);
     page.focusControls[1]!.checked = true;
     page.handControls[2]!.checked = true;
+    page.timingControls[2]!.checked = true;
     page.items[0]!.element.hidden = true;
 
     initializeHomeFolioFilter(page.elements);
@@ -66,16 +68,17 @@ describe("initializeHomeFolioFilter", () => {
     expect(page.root.hidden).toBe(false);
     expect(page.focusControls.map(({ checked }) => checked)).toEqual([true, false, false, false]);
     expect(page.handControls.map(({ checked }) => checked)).toEqual([true, false, false]);
+    expect(page.timingControls.map(({ checked }) => checked)).toEqual([true, false, false]);
     expect(page.items[0]!.element.hidden).toBe(false);
     expect(page.status.textContent).toBe("Showing 1 of 1 study");
     expect(page.resetButton.disabled).toBe(true);
   });
 
-  it("composes multi-track focus and hand filters, then restores every study", () => {
+  it("composes multi-track focus, hand, and timing filters, then restores every study", () => {
     const page = createElements([
-      study("right", ["notes-and-reading", "patterns-and-technique"]),
-      study("left", ["rhythm-and-coordination", "patterns-and-technique"]),
-      study("right", ["rhythm-and-coordination"]),
+      study("right", ["notes-and-reading", "patterns-and-technique"], "untimed"),
+      study("left", ["rhythm-and-coordination", "patterns-and-technique"], "timed"),
+      study("right", ["rhythm-and-coordination"], "timed"),
     ]);
     initializeHomeFolioFilter(page.elements);
 
@@ -88,6 +91,10 @@ describe("initializeHomeFolioFilter", () => {
     expect(page.items.map(({ element }) => element.hidden)).toEqual([true, false, true]);
     expect(page.status.textContent).toBe("Showing 1 of 3 studies");
 
+    page.timingControls[1]!.select(page.timingControls);
+    expect(page.items.every(({ element }) => element.hidden)).toBe(true);
+    expect(page.status.textContent).toBe("Showing 0 of 3 studies");
+
     page.resetButton.click();
     expect(page.items.every(({ element }) => !element.hidden)).toBe(true);
     expect(page.status.textContent).toBe("Showing 3 of 3 studies");
@@ -95,15 +102,18 @@ describe("initializeHomeFolioFilter", () => {
   });
 
   it("falls back to the complete folio if a checked control has an unknown value", () => {
-    const page = createElements([study("left", ["notes-and-reading"]), study("right", ["rhythm-and-coordination"])]);
+    const page = createElements([study("left", ["notes-and-reading"], "untimed"), study("right", ["rhythm-and-coordination"], "timed")]);
     const unknownFocus = new FakeFilterControl("unknown-focus");
     const unknownHand = new FakeFilterControl("unknown-hand");
+    const unknownTiming = new FakeFilterControl("unknown-timing");
     page.focusControls.push(unknownFocus);
     page.handControls.push(unknownHand);
+    page.timingControls.push(unknownTiming);
     initializeHomeFolioFilter(page.elements);
 
     unknownFocus.select(page.focusControls);
     unknownHand.select(page.handControls);
+    unknownTiming.select(page.timingControls);
 
     expect(page.items.every(({ element }) => !element.hidden)).toBe(true);
     expect(page.status.textContent).toBe("Showing 2 of 2 studies");
@@ -118,6 +128,7 @@ function createElements(items: FakeStudy[]): {
   readonly resetButton: FakeResetControl;
   readonly focusControls: FakeFilterControl[];
   readonly handControls: FakeFilterControl[];
+  readonly timingControls: FakeFilterControl[];
   readonly items: FakeStudy[];
 } {
   const root = new FakeElement();
@@ -130,10 +141,11 @@ function createElements(items: FakeStudy[]): {
     new FakeFilterControl("patterns-and-technique"),
   ];
   const handControls = [new FakeFilterControl("all"), new FakeFilterControl("right"), new FakeFilterControl("left")];
-  const elements: HomeFolioFilterElements = { root, status, resetButton, focusControls, handControls, items };
-  return { elements, root, status, resetButton, focusControls, handControls, items };
+  const timingControls = [new FakeFilterControl("all"), new FakeFilterControl("untimed"), new FakeFilterControl("timed")];
+  const elements: HomeFolioFilterElements = { root, status, resetButton, focusControls, handControls, timingControls, items };
+  return { elements, root, status, resetButton, focusControls, handControls, timingControls, items };
 }
 
-function study(hand: ExerciseHand, focuses: readonly FolioCurriculumFocus[]): FakeStudy {
-  return { element: new FakeElement(), focuses, hand };
+function study(hand: ExerciseHand, focuses: readonly FolioCurriculumFocus[], timing: FolioStudyTiming): FakeStudy {
+  return { element: new FakeElement(), focuses, hand, timing };
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { exampleRoutes } from "../app-routes";
-import { projectFolioCurriculumFocuses } from "../curriculum/folio-filter";
+import { projectFolioCurriculumFocuses, projectFolioStudyTiming } from "../curriculum/folio-filter";
 import { defaultExercise, exerciseLibrary } from "../exercises/library";
 import { evenEighthsLeftHandExercise, evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises";
 import { fiveFourPulseLeftHandExercise, fiveFourPulseRightHandExercise } from "../exercises/library/five-four-pulse-exercises.js";
@@ -44,11 +44,14 @@ describe("renderHomePage", () => {
     expect(html).toContain('class="folio-filters" id="folio-filters" data-enhancement hidden');
     expect(html).toContain("<legend>Focus</legend>");
     expect(html).toContain("<legend>Hand</legend>");
+    expect(html).toContain("<legend>Timing</legend>");
+    expect(html).toContain("Pulse-guided");
     expect(html).toContain('id="folio-filter-status" role="status" aria-live="polite"');
     expect(html).toContain(`Showing ${exerciseLibrary.length} of ${exerciseLibrary.length} studies`);
     expect(html.match(/data-folio-focus-filter/g)).toHaveLength(4);
     expect(html.match(/data-folio-hand-filter/g)).toHaveLength(3);
-    expect(html.match(/aria-controls="folio-grid" checked/g)).toHaveLength(2);
+    expect(html.match(/data-folio-timing-filter/g)).toHaveLength(3);
+    expect(html.match(/aria-controls="folio-grid" checked/g)).toHaveLength(3);
     expect(html.match(/data-folio-entry/g)).toHaveLength(exerciseLibrary.length);
     expect(html).not.toContain("Piano practice companion overview");
     expect(html).not.toContain("Untimed exercises for both hands and varied note order");
@@ -65,6 +68,7 @@ describe("renderHomePage", () => {
       expect(entry).toContain(`data-exercise-id="${exercise.id}"`);
       expect(entry).toContain(`data-exercise-revision="${exercise.revision}"`);
       expect(entry).toContain(`data-focuses="${projectFolioCurriculumFocuses(exercise.curriculumTags).join(" ")}"`);
+      expect(entry).toContain(`data-timing="${projectFolioStudyTiming(exercise.evaluationMode)}"`);
     }
     expect(html).toContain("cannot assess posture, tension, fingering, or replace a qualified teacher");
     expect(html).toContain('class="home-hero');

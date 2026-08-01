@@ -3,8 +3,11 @@ import {
   isFolioCurriculumFocus,
   isFolioFocusFilter,
   isFolioHandFilter,
+  isFolioStudyTiming,
+  isFolioTimingFilter,
   matchesFolioFilter,
   type FolioCurriculumFocus,
+  type FolioStudyTiming,
 } from "../curriculum/folio-filter.js";
 import type { ExerciseHand } from "../exercises/types.js";
 
@@ -31,6 +34,7 @@ export interface HomeFolioFilterItemElements {
   readonly element: VisibilityElementLike;
   readonly focuses: readonly FolioCurriculumFocus[];
   readonly hand: ExerciseHand;
+  readonly timing: FolioStudyTiming;
 }
 
 export interface HomeFolioFilterElements {
@@ -39,6 +43,7 @@ export interface HomeFolioFilterElements {
   readonly resetButton: ResetControlLike;
   readonly focusControls: readonly FilterControlLike[];
   readonly handControls: readonly FilterControlLike[];
+  readonly timingControls: readonly FilterControlLike[];
   readonly items: readonly HomeFolioFilterItemElements[];
 }
 
@@ -46,7 +51,8 @@ export function collectHomeFolioFilterElements(pageDocument: Document): HomeFoli
   const items = [...pageDocument.querySelectorAll<HTMLElement>("[data-folio-entry]")].map((element): HomeFolioFilterItemElements => {
     const hand = readExerciseHand(element.dataset.hand);
     const focuses = (element.dataset.focuses ?? "").split(" ").filter(isFolioCurriculumFocus);
-    return { element, focuses, hand };
+    const timing = readFolioStudyTiming(element.dataset.timing);
+    return { element, focuses, hand, timing };
   });
 
   return {
@@ -55,6 +61,7 @@ export function collectHomeFolioFilterElements(pageDocument: Document): HomeFoli
     resetButton: requireElement(pageDocument, "folio-filter-reset", HTMLButtonElement),
     focusControls: [...pageDocument.querySelectorAll<HTMLInputElement>("[data-folio-focus-filter]")],
     handControls: [...pageDocument.querySelectorAll<HTMLInputElement>("[data-folio-hand-filter]")],
+    timingControls: [...pageDocument.querySelectorAll<HTMLInputElement>("[data-folio-timing-filter]")],
     items,
   };
 }
@@ -63,9 +70,11 @@ export function initializeHomeFolioFilter(elements: HomeFolioFilterElements): vo
   const render = (): void => {
     const selectedFocus = elements.focusControls.find((control) => control.checked)?.value;
     const selectedHand = elements.handControls.find((control) => control.checked)?.value;
+    const selectedTiming = elements.timingControls.find((control) => control.checked)?.value;
     const filter = {
       focus: selectedFocus !== undefined && isFolioFocusFilter(selectedFocus) ? selectedFocus : DEFAULT_FOLIO_FILTER.focus,
       hand: selectedHand !== undefined && isFolioHandFilter(selectedHand) ? selectedHand : DEFAULT_FOLIO_FILTER.hand,
+      timing: selectedTiming !== undefined && isFolioTimingFilter(selectedTiming) ? selectedTiming : DEFAULT_FOLIO_FILTER.timing,
     };
     let visibleCount = 0;
 
@@ -79,16 +88,20 @@ export function initializeHomeFolioFilter(elements: HomeFolioFilterElements): vo
 
     const studyLabel = elements.items.length === 1 ? "study" : "studies";
     setTextContent(elements.status, `Showing ${visibleCount} of ${elements.items.length} ${studyLabel}`);
-    elements.resetButton.disabled = filter.focus === DEFAULT_FOLIO_FILTER.focus && filter.hand === DEFAULT_FOLIO_FILTER.hand;
+    elements.resetButton.disabled =
+      filter.focus === DEFAULT_FOLIO_FILTER.focus &&
+      filter.hand === DEFAULT_FOLIO_FILTER.hand &&
+      filter.timing === DEFAULT_FOLIO_FILTER.timing;
   };
 
   const reset = (): void => {
     selectDefault(elements.focusControls, DEFAULT_FOLIO_FILTER.focus);
     selectDefault(elements.handControls, DEFAULT_FOLIO_FILTER.hand);
+    selectDefault(elements.timingControls, DEFAULT_FOLIO_FILTER.timing);
     render();
   };
 
-  for (const control of [...elements.focusControls, ...elements.handControls]) {
+  for (const control of [...elements.focusControls, ...elements.handControls, ...elements.timingControls]) {
     control.addEventListener("change", render);
   }
   elements.resetButton.addEventListener("click", reset);
@@ -108,6 +121,13 @@ function readExerciseHand(value: string | undefined): ExerciseHand {
     return value;
   }
   throw new Error("Home folio entry has an invalid hand");
+}
+
+function readFolioStudyTiming(value: string | undefined): FolioStudyTiming {
+  if (value !== undefined && isFolioStudyTiming(value)) {
+    return value;
+  }
+  throw new Error("Home folio entry has an invalid timing");
 }
 
 function requireElement<T extends HTMLElement>(pageDocument: Document, id: string, elementType: { new (): T }): T {

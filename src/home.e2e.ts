@@ -32,15 +32,16 @@ test("enhances empty local history without restricting the library", async ({ pa
   await expect(page.locator(".folio-card")).toHaveCount(exerciseLibrary.length);
   await expect(page.locator("#folio-filters")).toBeVisible();
   await expect(page.locator("#folio-filter-status")).toHaveText(`Showing ${exerciseLibrary.length} of ${exerciseLibrary.length} studies`);
-  await expect(page.getByRole("radio", { name: "All" })).toHaveCount(2);
+  await expect(page.getByRole("radio", { name: "All" })).toHaveCount(3);
   await expect(page.getByRole("button", { name: "Reset filters" })).toBeDisabled();
 });
 
-test("filters the complete folio by every matching focus and hand without changing its default", async ({ page }) => {
+test("filters the complete folio by every matching focus, hand, and timing facet without changing its default", async ({ page }) => {
   const rhythmStudies = exerciseLibrary.filter((exercise) =>
     exercise.curriculumTags.some((tag) => tag.startsWith("rhythm-and-coordination.")),
   );
   const rightHandRhythmStudies = rhythmStudies.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "right"));
+  const rightHandPulseGuidedRhythmStudies = rightHandRhythmStudies.filter((exercise) => exercise.evaluationMode === "timed-ordered-notes");
   await page.goto("/");
 
   await page.getByRole("radio", { name: "Rhythm & coordination" }).check();
@@ -51,6 +52,12 @@ test("filters the complete folio by every matching focus and hand without changi
   await expect(page.locator("[data-folio-entry]:visible")).toHaveCount(rightHandRhythmStudies.length);
   await expect(page.locator("#folio-filter-status")).toHaveText(
     `Showing ${rightHandRhythmStudies.length} of ${exerciseLibrary.length} studies`,
+  );
+
+  await page.getByRole("radio", { name: "Pulse-guided" }).check();
+  await expect(page.locator("[data-folio-entry]:visible")).toHaveCount(rightHandPulseGuidedRhythmStudies.length);
+  await expect(page.locator("#folio-filter-status")).toHaveText(
+    `Showing ${rightHandPulseGuidedRhythmStudies.length} of ${exerciseLibrary.length} studies`,
   );
   expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
 
@@ -63,9 +70,11 @@ test("filters the complete folio by every matching focus and hand without changi
   expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
 
   await page.getByRole("radio", { name: "Left" }).check();
+  await page.getByRole("radio", { name: "Untimed" }).check();
   await page.reload();
   await expect(page.locator("[data-folio-entry]:visible")).toHaveCount(exerciseLibrary.length);
   await expect(page.getByRole("radio", { name: "All" }).first()).toBeChecked();
+  await expect(page.getByRole("radio", { name: "All" }).nth(1)).toBeChecked();
   await expect(page.getByRole("radio", { name: "All" }).last()).toBeChecked();
   expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
 });
@@ -121,15 +130,17 @@ test("keeps a populated overview contained at desktop, iPad, and narrow widths",
     const recommendation = page.locator("#home-overview-recommendation");
     const recommendationLink = page.locator("#home-overview-recommendation-link");
     const folioFilters = page.locator("#folio-filters");
+    const timingFilter = page.locator(".folio-filter-group-timing");
     const filterReset = page.locator("#folio-filter-reset");
     await recommendation.scrollIntoViewIfNeeded();
     await expect(recommendation).toBeVisible();
     await expect(recommendationLink).toBeVisible();
     await expect(folioFilters).toBeVisible();
+    await expect(timingFilter).toBeVisible();
     await expect(filterReset).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 
-    for (const locator of [page.locator(".home-overview"), recommendation, recommendationLink, folioFilters, filterReset]) {
+    for (const locator of [page.locator(".home-overview"), recommendation, recommendationLink, folioFilters, timingFilter, filterReset]) {
       const box = await locator.boundingBox();
       if (box === null) {
         throw new Error("Expected the overview element to have visible geometry");
