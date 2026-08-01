@@ -95,6 +95,106 @@ describe("createPracticePageView", () => {
     expect(keys[0]?.dataset.noteState).toBe("expected");
   });
 
+  it("projects note-free Reading Focus coaching into the live region and preserves terminal state", () => {
+    const { elements } = createElements();
+    const view = createPracticePageView(elements, () => "reading-focus");
+    const initial = createEvaluationState(fiveNoteAscentExercise);
+    const correct = evaluateMidiEvent(fiveNoteAscentExercise, initial, {
+      type: "note-on",
+      channel: 1,
+      noteNumber: 60,
+      velocity: 72,
+      timestamp: 1,
+    });
+
+    view.render(snapshot());
+    expect(elements.feedbackMessage.textContent).toBe("Begin when your input is connected. Read the highlighted staff note, then play.");
+    expect(elements.feedbackMessage.textContent).not.toContain("C4");
+    expect(elements.readingFocusNextNote.textContent).toBe("On staff");
+
+    view.render(
+      snapshot({
+        connection: connection("connected", "mock-midi-input"),
+        sessionStatus: "in-progress",
+        evaluation: correct.state,
+        feedback: correct.feedback,
+      }),
+    );
+    expect(elements.feedbackMessage.textContent).toBe("Correct. Read the next highlighted staff note.");
+    expect(elements.feedbackMessage.textContent).not.toMatch(/C4|D4/);
+
+    view.render(
+      snapshot({
+        connection: connection("connected", "mock-midi-input"),
+        sessionStatus: "interrupted",
+        evaluation: correct.state,
+        feedback: correct.feedback,
+      }),
+    );
+    expect(elements.feedbackMessage.textContent).toBe("This attempt was interrupted. Restart from the first highlighted staff note.");
+    expect(elements.readingFocusNextNote.textContent).toBe("Restart required");
+
+    let completedEvaluation = initial;
+    for (const [index, event] of fiveNoteAscentExercise.expectedEvents.entries()) {
+      completedEvaluation = evaluateMidiEvent(fiveNoteAscentExercise, completedEvaluation, {
+        type: "note-on",
+        channel: 1,
+        noteNumber: event.noteNumber,
+        velocity: 72,
+        timestamp: index,
+      }).state;
+    }
+    view.render(snapshot({ sessionStatus: "completed", evaluation: completedEvaluation }));
+    expect(elements.feedbackMessage.textContent).toBe("The sequence was correct.");
+    expect(elements.readingFocusNextNote.textContent).toBe("Complete");
+  });
+
+  it("keeps count-in and timing facts in Reading Focus without disclosing a pitch", () => {
+    const { elements } = createElements(steadyQuarterRightHandExercise);
+    const view = createPracticePageView(elements, () => "reading-focus");
+    const connected = connection("connected", "mock-midi-input");
+
+    view.render(
+      timedSnapshot({
+        connection: connected,
+        pulse: pulse("counting-in", { countInBeat: 2 }),
+      }),
+    );
+    expect(elements.feedbackMessage.textContent).toBe(
+      "Listen through the 4-beat count-in. Begin with the highlighted staff note when the pulse starts.",
+    );
+    expect(elements.feedbackMessage.textContent).not.toContain("C4");
+
+    for (const [classification, message] of [
+      ["anchor", "Correct. Pulse timing starts here. Read the next highlighted staff note."],
+      ["on-pulse", "Correct and on time. Read the next highlighted staff note."],
+      ["early", "Correct pitch, a little early. Read the next highlighted staff note."],
+      ["late", "Correct pitch, a little late. Read the next highlighted staff note."],
+    ] as const) {
+      view.render(
+        timedSnapshot({
+          connection: connected,
+          sessionStatus: "in-progress",
+          pulse: pulse("running"),
+          feedback: {
+            classification: "correct",
+            actualNoteNumber: 60,
+            expectedNoteNumber: 60,
+            expectedEventId: steadyQuarterRightHandExercise.expectedEvents[0]!.id,
+            message: "Pitch-bearing evaluator copy.",
+            timing: {
+              classification,
+              deviationMs: classification === "anchor" ? null : 100,
+              message: "Timing fact.",
+            },
+          },
+        }),
+      );
+      expect(elements.feedbackMessage.textContent).toBe(message);
+      expect(elements.feedbackMessage.textContent).not.toContain("C4");
+    }
+  });
+
   it("maps shuffled staff markers by event ID and does not advance them for a wrong note", () => {
     const { elements, staffNotes } = createElements();
     const evaluation = createEvaluationState(fiveNoteAscentExercise);
@@ -329,6 +429,23 @@ describe("createPracticePageView", () => {
       }),
     );
     expect(elements.feedbackMessage.textContent).toBe("Correct: C4. Pulse timing starts here. D4 is next.");
+
+    const secondTransition = evaluateMidiEvent(steadyQuarterRightHandExercise, firstTransition.state, {
+      type: "note-on",
+      channel: 1,
+      noteNumber: 62,
+      velocity: 72,
+      timestamp: 2_000,
+    });
+    view.render(
+      timedSnapshot({
+        connection: connected,
+        sessionStatus: "in-progress",
+        pulse: pulse("running", { currentBeat: 2 }),
+        evaluation: secondTransition.state,
+        feedback: secondTransition.feedback,
+      }),
+    );
 
     let evaluation = firstTransition.state;
     for (const [index, event] of steadyQuarterRightHandExercise.expectedEvents.slice(1).entries()) {
@@ -693,6 +810,7 @@ function createElements(exercise: Exercise = fiveNoteAscentExercise): {
       pulseBeats: [new FakeElement(), new FakeElement(), new FakeElement(), new FakeElement()],
       connectionStatus: new FakeElement(),
       nextNote: new FakeElement(),
+      readingFocusNextNote: new FakeElement(),
       progressText: new FakeElement(),
       feedbackMessage: new FakeElement(),
       persistenceMessage: new FakeElement(),

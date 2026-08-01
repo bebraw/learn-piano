@@ -91,6 +91,7 @@ No accepted-only ADRs are currently pending implementation.
 | [ADR-056](./implemented/ADR-056-keep-study-recommendations-local-and-advisory.md)       | Implemented | Choose one explainable local study suggestion from prerequisites and exact-revision history.         |
 | [ADR-057](./implemented/ADR-057-represent-subdivisions-with-fractional-beat-offsets.md) | Implemented | Represent onset subdivisions with fractional beat offsets while quarter-note audio remains guidance. |
 | [ADR-058](./implemented/ADR-058-separate-event-occurrences-from-physical-keys.md)       | Implemented | Separate occurrence progress from pitch-keyed physical controls.                                     |
+| [ADR-059](./implemented/ADR-059-keep-reading-focus-transient-and-presentational.md)     | Implemented | Keep reading focus learner-controlled, page-local, and separate from exercise or attempt evidence.   |
 
 ## Creating A New ADR
 

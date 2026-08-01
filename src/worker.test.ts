@@ -132,6 +132,9 @@ describe("worker", () => {
     expect(response.headers.get("content-type")).toContain("text/css");
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
-    await expect(response.text()).resolves.toContain("--color-app-canvas:#ebe9e0");
+    const stylesheet = await response.text();
+    expect(stylesheet).toContain("--color-app-canvas:#ebe9e0");
+    expect(stylesheet).toContain(".reading-focus-toggle");
+    expect(stylesheet).toContain(".practice-page[data-cue-mode=reading-focus]");
   });
 });

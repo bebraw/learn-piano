@@ -11,6 +11,7 @@ The learner wants practical technique, reading, rhythm, coordination, harmony, a
 - The four-track curriculum remains a documented domain model and metadata vocabulary rather than a complete planner or adaptive recommendation engine. A first deterministic advisory recommender is implemented over the canonical exercise library and local completion evidence.
 - The fourteen canonical beginner exercises, seven per hand, cover C-position ascents and descents, untimed C-E-D-F-G step-and-skip patterns, untimed C-E-G-E-C ordered chord-tone patterns, straight C-D-E-F-G steady-quarter studies, timed C-E-D-F-G step-and-skip studies, and C-D-E-F-G even-eighth onset studies.
 - Ascents and descents support keyboard geography and five-finger-pattern work; step-and-skip variants add interval recognition and focused coordination-pattern practice. The ordered chord-tone pair adds a small C-major pitch-membership pattern while preserving individual-note order. Every exercise also presents its supported natural pitches on a pitch-only treble or bass staff guide, giving visual exposure to the current clef positions. Four steady-quarter variants add bounded evidence for a 4/4 quarter-note pulse from 40–100 BPM. The timed step-and-skip pair combines that pulse with previously completed interval-pattern evidence when reached through recommendation, while the recommendation graph positions each even-eighth study after its matching straight steady-quarter completion. Every variant remains hands-separate work and freely selectable.
+- On a validated supported staff guide, the learner may choose a transient reading-focus presentation that reduces visible note-name and expected-key answers. It is optional presentation practice, not a separate curriculum node, prerequisite, completion kind, saved preference, or assessed reading result.
 - The eight pitch-pattern exercises are untimed and provide evidence only for pitch order. The ordered chord-tone pair may support `patterns-and-technique.chord-tone-patterns` and interval-recognition exposure, but completion does not prove simultaneous chord playing, harmony recognition, voicing, fingering, or hand use. The four steady-quarter completions add MIDI onset-interval evidence after the first correct note anchors timing, using a ±0.2-beat tolerance. The even-eighth pair uses offsets 0, 0.5, 1, 1.5, and 2 with a ±0.1-beat tolerance while the learner subdivides a quarter-note click. Hand assignment remains instructional and is not verified by MIDI; seeing the staff guide does not prove that the learner read it, and no result establishes note duration, rests, velocity quality, dynamics, staff-reading mastery, fingering quality, or physical technique.
 - Named artists, protected pieces, and game themes are represented only as future repertoire-goal metadata and competency pathways.
 - No copyrighted score, MIDI transcription, recording, lyrics, or substantial melodic reproduction is bundled by this slice.
@@ -28,7 +29,7 @@ The learner wants practical technique, reading, rhythm, coordination, harmony, a
 - **Progression unit:** A node has a stable ID, track tags, competency tags, difficulty, prerequisite node or competency IDs, lawful-content metadata, and one or more canonical exercise IDs when exercises exist.
 - **Recommendation boundary:** Current recommendation consumes the ordered validated canonical exercise library, declared prerequisite IDs, retained exact-current-revision completed attempts, and an optional just-completed in-memory record. It returns one canonical exercise and structured reason, does not modify evaluator results, and does not invent absent exercises.
 - **Learner control:** Recommendations are suggestions. The learner may repeat, skip, change tracks, or choose motivating material without losing progress or being punished.
-- **Staff-reading evidence boundary:** The current pitch guide is a presentation aid, not an assessed curriculum result. MIDI completion may support the exercise's existing pitch/order and optional steady-pulse evidence but cannot reveal whether the learner used note names, keyboard cues, memory, or staff positions.
+- **Staff-reading evidence boundary:** The current pitch guide and optional reading-focus presentation are presentation aids, not assessed curriculum results. MIDI completion may support the exercise's existing pitch/order and optional steady-pulse evidence but cannot reveal whether the learner used note names, hidden accessible semantics, memory, or staff positions. Reading-focus state is not stored with the attempt or supplied to recommendation.
 - **Dependencies:** Curriculum references canonical exercise IDs; exercises do not depend on UI or staff position. Recommendation depends on canonical exercise and typed attempt data rather than DOM or storage iteration order, and the curriculum and complete chooser remain usable without recommendation history.
 
 ### Track 1: Notes and Reading
@@ -42,7 +43,7 @@ This track develops keyboard and notation fluency through:
 - short sight-reading patterns
 - interval recognition
 
-The current treble C4-G4 and bass C3-G3 pitch guides introduce the staff positions used by all fourteen current exercises. They connect visible staff position, note name, and keyboard geography, but the persistent note-name and keyboard cues mean completion is not a sight-reading test. Repeated C and E markers in the ordered chord-tone pair remain occurrence-based and do not become chord notation. The guide has no duration semantics and does not establish general clef fluency, interval reading, rhythmic-notation reading, or staff-reading mastery.
+The current treble C4-G4 and bass C3-G3 pitch guides introduce the staff positions used by all fourteen current exercises. They connect visible staff position, note name, and keyboard geography. A learner may temporarily hide several visible answers with reading focus, but can reveal them at any time, receives explicit pitch correction after an error, and retains accessible semantic equivalents; completion therefore remains neither a sight-reading test nor reading evidence. Repeated C and E markers in the ordered chord-tone pair remain occurrence-based and do not become chord notation. The guide has no duration semantics and does not establish general clef fluency, interval reading, rhythmic-notation reading, or staff-reading mastery.
 
 ### Track 2: Rhythm and Coordination
 
@@ -121,6 +122,7 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 - Do not reward excessive repetition, daily streaks, ranks, lives, punitive scores, or comparison with other learners.
 - Do not claim a MIDI-only result proves posture, relaxation, fingering, strength, or teacher-level assessment.
 - Do not promote visibility of the pitch guide or successful MIDI completion into staff-reading mastery, sight-reading evidence, or proof of clef fluency.
+- Do not promote use of reading focus into a curriculum node, prerequisite, recommendation signal, saved achievement, or evidence that visible staff positions caused the correct performance.
 - Do not copy protected repertoire into “inspired-by” exercises through recognizable melodies, substantial passages, transcriptions, recordings, or lyrics.
 - Do not assume public-domain status without checking the composition, edition, arrangement, recording, and applicable jurisdiction.
 - Do not let recommendation logic bypass canonical exercise IDs, prerequisites, or source metadata.
@@ -134,6 +136,7 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 - [ ] Four parallel tracks and their initial competencies are documented.
 - [ ] The fourteen current exercises are mapped only to keyboard-geography, interval, hands-separate guidance, pattern, ordered chord-tone, steady-quarter, and even-eighth onset competencies they actually exercise, without claiming the evaluator verifies hand use.
 - [ ] The current treble and bass pitch guides are documented as staff-position exposure only, with no duration meaning or staff-reading evidence inferred from completion.
+- [ ] Reading focus is documented as an optional transient presentation that changes no exercise, attempt, competency, prerequisite, history, or recommendation evidence.
 - [ ] The two straight steady-quarter studies require their matching untimed ascents, while each timed step-and-skip study requires its matching untimed step-and-skip and straight steady-quarter studies; all four contribute bounded 4/4 quarter-pulse evidence at the selected 40–100 BPM tempo. Each even-eighth study requires only its matching straight steady-quarter study and contributes bounded half-beat onset-subdivision evidence with a ±0.1-beat window.
 - [ ] Each ordered chord-tone study requires only its matching untimed step-and-skip study and carries `patterns-and-technique.chord-tone-patterns`, `notes-and-reading.interval-recognition`, and `rhythm-and-coordination.hands-separately` without creating simultaneous chord or harmony-assessment evidence.
 - [ ] Hanon-style work remains a selective part of Patterns and Technique with explicit health and scope limitations.
@@ -151,6 +154,7 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 - The eight untimed exercises must not confer verified hand use, timing, dynamics, staff-reading mastery, pedal, fingering, or physical-technique mastery, even though their staff pitch guides are visible. The ordered chord-tone pair also must not confer simultaneous chord, voicing, or harmony-recognition mastery.
 - The six timed studies must not confer verified hand use, note duration, velocity, rests, written-notation reading, syncopation, hands-together coordination, adaptive-tempo, or broad rhythm mastery. Only the even-eighth pair may support its declared half-beat onset-subdivision competency.
 - Neither timed completion nor untimed completion may satisfy a staff-reading competency without a future reading-focused evidence contract.
+- Reading-focus use must not satisfy that future-evidence requirement: the current toggle is not recorded and cannot establish which cue the learner used.
 - Hanon-style exercises must never become a compulsory whole-curriculum routine.
 - Named repertoire goals must not imply bundled or launchable protected content.
 - Every launchable curriculum exercise must resolve to a validated canonical exercise and lawful source metadata.
@@ -161,7 +165,7 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 
 ### Verification
 
-- **Current documentation checks:** Review the track vocabulary, fourteen-exercise mappings, ordered chord-tone and pitch-guide exposure boundaries, steady-quarter and even-eighth onset evidence boundaries, Hanon position, repertoire competency pathways, and explicit current exclusions.
+- **Current documentation checks:** Review the track vocabulary, fourteen-exercise mappings, ordered chord-tone, pitch-guide, and transient reading-focus exposure boundaries, steady-quarter and even-eighth onset evidence boundaries, Hanon position, repertoire competency pathways, and explicit current exclusions.
 - **Model tests:** Validate IDs, exercise references, prerequisites, cycles, multi-track membership, rights eligibility, exact-revision evidence, and deterministic recommendation tie-breaking.
 - **Behavior tests:** Prove that untimed completion updates only supported pitch/pattern competencies, timed completion adds only its bounded steady-quarter or even-eighth onset evidence, timed step-and-skip eligibility requires both declared prerequisites, even-eighth eligibility requires the matching straight steady-quarter completion, recommendation ignores performance-quality fields, and missing or evicted history and invalid graphs have a neutral fallback.
 - **Coverage target:** When curriculum code exists, all validation failures and recommendation branches remain exercised directly rather than through UI snapshots.
@@ -191,6 +195,12 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 - Given: a current exercise displays its supported treble or bass pitch guide beside note names and keyboard cues
 - When: the learner completes the exercise through MIDI
 - Then: the guide has exposed the corresponding staff positions, but the attempt records only its existing pitch/order and optional timing evidence and does not satisfy a staff-reading competency
+
+**Scenario: Reduce cues without creating reading evidence**
+
+- Given: the learner completes a current exercise with reading focus active
+- When: curriculum evidence and recommendation consume the completion
+- Then: they receive the same pitch/order and optional timing facts as guided practice, with no reading-focus record, prerequisite, mastery claim, or recommendation difference
 
 **Scenario: Record bounded steady-pulse evidence**
 

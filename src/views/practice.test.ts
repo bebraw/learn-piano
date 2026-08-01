@@ -22,6 +22,7 @@ describe("renderPracticePage", () => {
     expect(html.match(/data-staff-note/g)).toHaveLength(5);
     expect(html).toContain(`data-exercise-id="${fiveNoteAscentExercise.id}"`);
     expect(html).toContain(`data-exercise-revision="${fiveNoteAscentExercise.revision}"`);
+    expect(html).toContain('data-cue-mode="guided"');
     expect(html.match(/data-practice-key/g)).toHaveLength(5);
     expect(html).toContain('data-note-number="60"');
     expect(html).toContain('data-note-number="67"');
@@ -34,6 +35,16 @@ describe("renderPracticePage", () => {
     expect(html).toContain('rel="stylesheet" href="/styles.css"');
     expect(html).toContain('id="native-midi-input-kind" value="native-midi" hidden disabled');
     expect(html).toContain('id="pair-bluetooth-midi" type="button" hidden');
+    const readingFocusToggle = html.match(/<button\s+class="reading-focus-toggle"[\s\S]*?>/)?.[0];
+    expect(readingFocusToggle).toBeDefined();
+    expect(readingFocusToggle).toContain('id="reading-focus-toggle"');
+    expect(readingFocusToggle).toContain('aria-pressed="false"');
+    expect(readingFocusToggle).toContain("hidden");
+    expect(readingFocusToggle).toContain("disabled");
+    expect(readingFocusToggle).not.toContain("data-enhancement");
+    expect(html).toContain('<strong class="reading-focus-next-note" id="reading-focus-next-note" aria-hidden="true">On staff</strong>');
+    expect(html).toContain('<span class="keyboard-cue-guided">Follow the amber cue</span>');
+    expect(html).toContain('<span class="keyboard-cue-reading" aria-hidden="true">Read the staff, then play</span>');
     expect(html).toContain("Choose an exercise");
     expect(html).toContain(`<span class="study-count">${exerciseLibrary.length}</span>`);
     expect(html).toContain('id="practice-stage" class="practice-stage" data-session-status="ready"');
@@ -53,6 +64,7 @@ describe("renderPracticePage", () => {
     expect(html.match(/<option value="(?:40|50|60|70|80|90|100)"/g)).toHaveLength(7);
     expect(html).toContain('<option value="60" selected>60 BPM</option>');
     expect(html.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).toContain("hidden");
+    expect(html).not.toContain("The next expected key stays lit.");
     expect(exerciseLibrary).toHaveLength(14);
   });
 

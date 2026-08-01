@@ -24,13 +24,13 @@ const RHYTHM_PRESENTATIONS: Readonly<Record<ExerciseRhythmKind, ExerciseRhythmPr
   untimed: {
     kind: "untimed",
     label: "Untimed",
-    practiceTask: "Play the notes in order. The next expected key stays lit.",
+    practiceTask: "Play the notes in order.",
     staffLabel: "Pitch order · No fixed rhythm",
   },
   "steady-quarter": {
     kind: "steady-quarter",
     label: "Steady pulse",
-    practiceTask: "After the count-in, place one note on each beat. The next expected key stays lit.",
+    practiceTask: "After the count-in, place one note on each beat.",
     staffLabel: "Pitch order · One note per beat",
   },
   "even-eighth": {
@@ -43,7 +43,7 @@ const RHYTHM_PRESENTATIONS: Readonly<Record<ExerciseRhythmKind, ExerciseRhythmPr
   timed: {
     kind: "timed",
     label: "Timed study",
-    practiceTask: "After the count-in, follow the study's timing guide. The next expected key stays lit.",
+    practiceTask: "After the count-in, follow the study's timing guide.",
     staffLabel: "Pitch order · Timing shown separately",
   },
 };

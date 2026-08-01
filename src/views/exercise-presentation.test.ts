@@ -67,12 +67,13 @@ describe("exercise presentation", () => {
     expect(getExerciseRhythmPresentation(fiveNoteAscentExercise)).toMatchObject({
       kind: "untimed",
       label: "Untimed",
-      practiceTask: "Play the notes in order. The next expected key stays lit.",
+      practiceTask: "Play the notes in order.",
       staffLabel: "Pitch order · No fixed rhythm",
     });
     expect(getExerciseRhythmPresentation(steadyQuarterRightHandExercise)).toMatchObject({
       kind: "steady-quarter",
       label: "Steady pulse",
+      practiceTask: "After the count-in, place one note on each beat.",
       staffLabel: "Pitch order · One note per beat",
     });
     expect(getExerciseRhythmPresentation(evenEighthsRightHandExercise)).toMatchObject({
@@ -85,10 +86,15 @@ describe("exercise presentation", () => {
     expect(getExerciseRhythmPresentation(genericTimed)).toMatchObject({
       kind: "timed",
       label: "Timed study",
-      practiceTask: "After the count-in, follow the study's timing guide. The next expected key stays lit.",
+      practiceTask: "After the count-in, follow the study's timing guide.",
       staffLabel: "Pitch order · Timing shown separately",
     });
     expect(formatExerciseTimingLabel(genericTimed)).toBe("Timed study · 60 BPM");
+    expect(
+      [fiveNoteAscentExercise, steadyQuarterRightHandExercise, evenEighthsRightHandExercise, genericTimed].every(
+        (exercise) => !getExerciseRhythmPresentation(exercise).practiceTask.includes("key stays lit"),
+      ),
+    ).toBe(true);
   });
 
   it("does not name subdivisions without a quarter-note beat unit", () => {

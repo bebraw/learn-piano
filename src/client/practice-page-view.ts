@@ -3,6 +3,7 @@ import type { MidiInputDevice } from "../midi/types.js";
 import type { AttemptTimingSummary } from "./persistence/attempt-repository.js";
 import { formatPracticeKeyboardNoteLabel, type PracticeKeyboardNoteState } from "../views/exercise-presentation.js";
 import type { PracticeSnapshot, PracticeView } from "./practice-controller.js";
+import type { PracticeCueMode } from "./practice-cue-mode.js";
 
 interface AttributeElementLike {
   getAttribute(name: string): string | null;
@@ -58,6 +59,7 @@ export interface PracticePageElements {
   readonly pulseBeats: readonly ElementLike[];
   readonly connectionStatus: ElementLike;
   readonly nextNote: ElementLike;
+  readonly readingFocusNextNote: ElementLike;
   readonly progressText: ElementLike;
   readonly feedbackMessage: ElementLike;
   readonly persistenceMessage: ElementLike;
@@ -74,7 +76,7 @@ export interface PracticePageElements {
   readonly staffNotes: readonly PracticeStaffNoteElement[];
 }
 
-export function createPracticePageView(elements: PracticePageElements): PracticeView {
+export function createPracticePageView(elements: PracticePageElements, getCueMode: () => PracticeCueMode = () => "guided"): PracticeView {
   return {
     render(snapshot): void {
       for (const element of elements.enhancements) {
@@ -86,7 +88,7 @@ export function createPracticePageView(elements: PracticePageElements): Practice
       renderInputs(elements.midiInput, snapshot.inputs, snapshot.connection.selectedInputId);
       renderConnection(elements, snapshot);
       renderPulse(elements, snapshot);
-      renderSession(elements, snapshot);
+      renderSession(elements, snapshot, getCueMode());
       renderHistory(elements, snapshot);
     },
   };
@@ -200,7 +202,7 @@ function connectionMessage(snapshot: PracticeSnapshot, selectedLabel: string | u
   }
 }
 
-function renderSession(elements: PracticePageElements, snapshot: PracticeSnapshot): void {
+function renderSession(elements: PracticePageElements, snapshot: PracticeSnapshot, cueMode: PracticeCueMode): void {
   const nextEvent = snapshot.exercise.expectedEvents[snapshot.evaluation.nextExpectedIndex];
   const timed = snapshot.exercise.evaluationMode === "timed-ordered-notes";
   const pulseRunning = snapshot.pulse?.status === "running";
@@ -230,22 +232,81 @@ function renderSession(elements: PracticePageElements, snapshot: PracticeSnapsho
     key.element.setAttribute("aria-pressed", activeNotes.has(key.noteNumber) ? "true" : "false");
   }
 
-  setTextContent(
-    elements.nextNote,
+  const nextNoteText =
     snapshot.sessionStatus === "completed"
       ? "Complete"
       : snapshot.sessionStatus === "interrupted"
         ? "Restart required"
         : nextEvent === undefined
           ? "—"
-          : formatMidiNote(nextEvent.noteNumber),
+          : formatMidiNote(nextEvent.noteNumber);
+  setTextContent(elements.nextNote, nextNoteText);
+  setTextContent(
+    elements.readingFocusNextNote,
+    snapshot.sessionStatus === "completed" ? "Complete" : snapshot.sessionStatus === "interrupted" ? "Restart required" : "On staff",
   );
   setTextContent(elements.progressText, `${snapshot.evaluation.nextExpectedIndex} of ${snapshot.exercise.expectedEvents.length} notes`);
-  setTextContent(elements.feedbackMessage, feedbackMessage(snapshot, nextEvent?.noteNumber));
+  setTextContent(
+    elements.feedbackMessage,
+    cueMode === "reading-focus" ? readingFocusFeedbackMessage(snapshot) : feedbackMessage(snapshot, nextEvent?.noteNumber),
+  );
   setTextContent(elements.keyboardHelp, keyboardHelpMessage(snapshot, mockKeysEnabled));
 
   elements.persistenceMessage.hidden = snapshot.persistenceMessage === null;
   setTextContent(elements.persistenceMessage, snapshot.persistenceMessage);
+}
+
+function readingFocusFeedbackMessage(snapshot: PracticeSnapshot): string {
+  if (snapshot.sessionStatus === "interrupted") {
+    const pulseError = snapshot.pulse?.status === "error" ? ` ${snapshot.pulse.errorMessage ?? "The practice pulse stopped."}` : "";
+    const recovery =
+      snapshot.connection.status === "connected"
+        ? "Restart from the first highlighted staff note."
+        : "Reconnect the input, then restart from the first highlighted staff note.";
+    return `This attempt was interrupted. ${recovery}${pulseError}`;
+  }
+
+  if (snapshot.sessionStatus === "completed") {
+    return feedbackMessage(snapshot, undefined);
+  }
+
+  if (snapshot.pulse?.status === "error") {
+    return `${snapshot.pulse.errorMessage ?? "The practice pulse could not start."} Your note progress is unchanged.`;
+  }
+
+  if (snapshot.pulse?.status === "counting-in") {
+    const countInBeats = snapshot.exercise.timing?.countInBeats ?? 4;
+    return `Listen through the ${countInBeats}-beat count-in. Begin with the highlighted staff note when the pulse starts.`;
+  }
+
+  if (snapshot.pulse?.status === "starting") {
+    return "The pulse is starting. Listen for the count-in before you begin.";
+  }
+
+  if (snapshot.feedback !== null) {
+    if (snapshot.feedback.classification !== "correct") {
+      return snapshot.feedback.message;
+    }
+
+    switch (snapshot.feedback.timing?.classification) {
+      case "anchor":
+        return "Correct. Pulse timing starts here. Read the next highlighted staff note.";
+      case "on-pulse":
+        return "Correct and on time. Read the next highlighted staff note.";
+      case "early":
+        return "Correct pitch, a little early. Read the next highlighted staff note.";
+      case "late":
+        return "Correct pitch, a little late. Read the next highlighted staff note.";
+      case undefined:
+        return "Correct. Read the next highlighted staff note.";
+    }
+  }
+
+  if (snapshot.pulse?.status === "running") {
+    return `The pulse is steady at ${snapshot.pulse.tempoBpm} BPM. Read the highlighted staff note, then play.`;
+  }
+
+  return "Begin when your input is connected. Read the highlighted staff note, then play.";
 }
 
 function renderRecommendation(elements: PracticePageElements, snapshot: PracticeSnapshot): void {

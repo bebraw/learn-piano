@@ -844,6 +844,79 @@
     letter-spacing: -0.02em;
   }
 
+  .reading-focus-next-note,
+  .keyboard-cue-reading {
+    display: none;
+  }
+
+  .reading-focus-toggle {
+    display: inline-flex;
+    min-height: 2.55rem;
+    flex: none;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid var(--color-app-line-inverse);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.045);
+    color: rgb(255 253 247 / 0.72);
+    font-size: 0.67rem;
+    font-weight: 750;
+    line-height: 1.2;
+    transition:
+      background-color 140ms ease,
+      border-color 140ms ease,
+      color 140ms ease;
+  }
+
+  .reading-focus-toggle:hover:not(:disabled) {
+    border-color: rgb(223 243 107 / 0.42);
+    background: rgb(223 243 107 / 0.08);
+    color: var(--color-app-paper);
+  }
+
+  .reading-focus-toggle-track {
+    position: relative;
+    width: 1.65rem;
+    height: 0.95rem;
+    flex: none;
+    border: 1px solid rgb(255 253 247 / 0.24);
+    border-radius: 999px;
+    background: rgb(255 253 247 / 0.08);
+    transition:
+      background-color 140ms ease,
+      border-color 140ms ease;
+  }
+
+  .reading-focus-toggle-track > span {
+    position: absolute;
+    top: 50%;
+    left: 0.16rem;
+    width: 0.56rem;
+    height: 0.56rem;
+    border-radius: 999px;
+    background: rgb(255 253 247 / 0.68);
+    transform: translateY(-50%);
+    transition:
+      background-color 140ms ease,
+      transform 140ms ease;
+  }
+
+  .reading-focus-toggle[aria-pressed="true"] {
+    border-color: rgb(223 243 107 / 0.42);
+    color: var(--color-app-paper);
+  }
+
+  .reading-focus-toggle[aria-pressed="true"] .reading-focus-toggle-track {
+    border-color: var(--color-app-cue-strong);
+    background: rgb(223 243 107 / 0.18);
+  }
+
+  .reading-focus-toggle[aria-pressed="true"] .reading-focus-toggle-track > span {
+    background: var(--color-app-cue);
+    transform: translate(0.68rem, -50%);
+  }
+
   .connection-chip,
   .progress-chip {
     display: inline-flex;
@@ -1598,6 +1671,46 @@
     line-height: 1.55;
   }
 
+  .practice-page[data-cue-mode="reading-focus"]
+    :is(.practice-heading-copy, #next-note, .practice-score-sequence, .study-link-current .study-link-notes) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    border: 0;
+    margin: -1px;
+    clip: rect(0 0 0 0);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .practice-page[data-cue-mode="reading-focus"] .reading-focus-next-note,
+  .practice-page[data-cue-mode="reading-focus"] .keyboard-cue-reading {
+    display: inline;
+  }
+
+  .practice-page[data-cue-mode="reading-focus"] .keyboard-cue-guided {
+    display: none;
+  }
+
+  .practice-page[data-cue-mode="reading-focus"] .staff-pitch-note-label,
+  .practice-page[data-cue-mode="reading-focus"] .piano-key-note,
+  .practice-page[data-cue-mode="reading-focus"] .piano-key-label {
+    opacity: 0;
+  }
+
+  .practice-page[data-cue-mode="reading-focus"] .piano-key[data-note-state="expected"]:not([aria-pressed="true"]) {
+    border-color: var(--color-app-key-edge);
+    background: var(--color-app-key);
+    box-shadow: var(--shadow-key);
+    color: var(--color-app-text-soft);
+    transform: none;
+  }
+
+  .practice-page[data-cue-mode="reading-focus"] .piano-key[data-note-state="expected"]:not([aria-pressed="true"])::before {
+    background: transparent;
+  }
+
   .not-found-page {
     display: grid;
     min-height: calc(100dvh - 4rem);
@@ -1861,6 +1974,11 @@
   .feedback-mark {
     width: 2.1rem;
     height: 2.1rem;
+  }
+
+  .reading-focus-toggle {
+    flex: 1 1 100%;
+    justify-content: center;
   }
 }
 

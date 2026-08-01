@@ -8,6 +8,7 @@ import { projectPracticeKeyboardNotes } from "../views/exercise-presentation.js"
 import type { AttemptInputKind, AttemptRepository } from "./persistence/attempt-repository.js";
 import { LocalStorageAttemptRepository } from "./persistence/local-storage-attempt-repository.js";
 import { PracticeController } from "./practice-controller.js";
+import { initializePracticeCueMode } from "./practice-cue-mode.js";
 import { resolveRenderedExercise } from "./practice-exercise-resolver.js";
 import { handlePracticePageHide } from "./practice-page-lifecycle.js";
 import {
@@ -25,15 +26,22 @@ export async function bootstrapPracticePage(pageDocument: Document, browserWindo
   }
 
   const elements = collectPageElements(pageDocument, exercise);
+  const cueMode = initializePracticeCueMode(
+    root,
+    elements.readingFocusToggle,
+    elements.staffNotes.length === exercise.expectedEvents.length,
+  );
   const mockPort = new MockMidiInputPort();
   const nativePort = new NativeMidiInputPort({ bridge: createNativeMidiBridgeFromHost(browserWindow) });
+  const pageView = createPracticePageView(elements, cueMode.getMode);
   const controller = new PracticeController(
     exercise,
     { mock: mockPort, "web-midi": new WebMidiInputPort(), "native-midi": nativePort },
     createBrowserAttemptRepository(browserWindow),
-    createPracticePageView(elements),
+    pageView,
     { createPulse: (config) => new WebAudioPracticePulse(config), exerciseLibrary },
   );
+  cueMode.subscribe(() => pageView.render(controller.getSnapshot()));
 
   if (nativePort.capability === "supported") {
     elements.nativeInputOption.hidden = false;
@@ -118,6 +126,7 @@ function collectPageElements(
   readonly startPulseButton: HTMLButtonElement;
   readonly stopPulseButton: HTMLButtonElement;
   readonly feedbackMessage: HTMLElement;
+  readonly readingFocusToggle: HTMLButtonElement;
   readonly keys: readonly (PracticeKeyElement & { readonly element: HTMLButtonElement })[];
   readonly staffNotes: readonly PracticeStaffNoteElement[];
 } {
@@ -146,8 +155,10 @@ function collectPageElements(
     pulseBeats: [1, 2, 3, 4].map((beat) => requireElement(pageDocument, `pulse-beat-${beat}`, HTMLElement)),
     connectionStatus: requireElement(pageDocument, "connection-status", HTMLElement),
     nextNote: requireElement(pageDocument, "next-note", HTMLElement),
+    readingFocusNextNote: requireElement(pageDocument, "reading-focus-next-note", HTMLElement),
     progressText: requireElement(pageDocument, "progress-text", HTMLElement),
     feedbackMessage: requireElement(pageDocument, "feedback-message", HTMLElement),
+    readingFocusToggle: requireElement(pageDocument, "reading-focus-toggle", HTMLButtonElement),
     persistenceMessage: requireElement(pageDocument, "persistence-message", HTMLElement),
     historyCount: requireElement(pageDocument, "history-count", HTMLElement),
     historyDetail: requireElement(pageDocument, "history-detail", HTMLElement),

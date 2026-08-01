@@ -80,6 +80,7 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
       data-practice-root
       data-exercise-id="${escapeHtml(exercise.id)}"
       data-exercise-revision="${exercise.revision}"
+      data-cue-mode="guided"
     >
       <header class="practice-heading app-rise">
         <div>
@@ -104,9 +105,20 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
             <div class="practice-stage-toolbar">
               <div>
                 <p class="app-eyebrow app-eyebrow-inverse" id="stage-heading">Live study</p>
-                <p class="practice-cue"><span>Next note</span> <strong id="next-note">${escapeHtml(formatMidiNote(firstEvent.noteNumber))}</strong></p>
+                <p class="practice-cue"><span>Next note</span> <strong id="next-note">${escapeHtml(formatMidiNote(firstEvent.noteNumber))}</strong><strong class="reading-focus-next-note" id="reading-focus-next-note" aria-hidden="true">On staff</strong></p>
               </div>
               <div class="flex flex-wrap items-center justify-end gap-2">
+                <button
+                  class="reading-focus-toggle"
+                  id="reading-focus-toggle"
+                  type="button"
+                  aria-pressed="false"
+                  hidden
+                  disabled
+                >
+                  <span class="reading-focus-toggle-track" aria-hidden="true"><span></span></span>
+                  <span>Reading focus</span>
+                </button>
                 <a class="connection-chip" href="#input-setup">
                   <span aria-hidden="true"></span>
                   <strong id="connection-status" data-status="idle" role="status" aria-live="polite">Live input is not connected.</strong>
@@ -155,7 +167,8 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
             <div class="keyboard-case">
               <div class="keyboard-case-topline">
                 <span>${escapeHtml(handLabel)} · C position</span>
-                <span>Follow the amber cue</span>
+                <span class="keyboard-cue-guided">Follow the amber cue</span>
+                <span class="keyboard-cue-reading" aria-hidden="true">Read the staff, then play</span>
               </div>
               <div class="practice-keyboard" aria-label="${escapeHtml(exercise.title)} ${keyboardNotes.length}-key guide">
                 ${pianoKeys}

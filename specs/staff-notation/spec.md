@@ -18,13 +18,14 @@ The first notation surface must preserve the server-rendered, progressively enha
 - The selected exercise's existing semantic note sequence remains adjacent to the SVG as the accessible and unsupported-content fallback.
 - Progressive enhancement marks accepted, next, and remaining canonical events in the guide from the same evaluator progress that drives the textual next-note cue and keyboard.
 - The ordered C-major chord-tone pair renders five markers for C-E-G-E-C. Repeated C and E occurrences retain separate expected-event IDs and horizontal positions even though they share staff pitch positions and physical keyboard controls.
+- For a validated supported guide, enhanced reading focus may visually suppress staff pitch labels and the surrounding note-name answers while retaining occurrence-based staff progress and semantic equivalents. Guided server rendering remains the default.
 - This presentation addition does not change exercise schema version, exercise revision, evaluator behavior, attempt persistence, prerequisites, curriculum evidence, or exercise identity.
 
 ### Future Scope
 
 - Accidentals, key signatures, written durations, rests, beams, ties, articulation, dynamics, multiple voices, both-hand grand staff, simultaneous chord notation, scrolling, pagination, editing, MusicXML, and score import or export require later domain and rendering decisions.
 - A full notation adapter or third-party notation library may replace the initial renderer when canonical exercise data contains the musical semantics needed to use it truthfully.
-- A later reading-focused practice mode may reduce note-name or keyboard cues, but it must retain an accessible equivalent and define its own learner-control and evidence boundaries.
+- Reading assessment, sight-reading evidence, saved cue preferences, and graduated hint levels remain future work; the current reading-focus presentation adds none of them.
 
 ### Architecture
 
@@ -33,6 +34,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 - **Supported-subset rule:** The adapter renders only the documented single-hand natural-note subset. A mixed-hand, `both`-hand, chromatic, or out-of-range exercise is unsupported until a later contract broadens the adapter.
 - **Fallback rule:** Unsupported notation never blocks the practice page. The semantic exercise title, instructions, ordered note text, keyboard guidance, and evaluator remain available; the renderer must not transpose, clamp, respell, or silently omit events to force a drawing.
 - **Progress projection:** Each rendered pitch marker retains its canonical event ID. Client enhancement projects accepted, next, and remaining state onto those existing markers from evaluator state; the SVG never decides progress itself. Staff occurrence state remains lossless when the physical keyboard aggregates repeated occurrences by MIDI pitch.
+- **Reading-focus projection:** Only a validated supported guide enables reading focus. The client may hide visible staff labels and adjacent visual answers, but preserves the guide, canonical marker state, semantic fallback, and accessible meaning. The choice is page-local presentation state and never enters exercise or attempt identity.
 - **Clef rule:** Current right-hand C4-G4 material uses treble clef and current left-hand C3-G3 material uses bass clef. This is a supported-subset mapping, not a global claim that hand assignment always determines clef.
 - **Pitch convention:** Staff position is derived from the canonical MIDI note number using C4/MIDI 60 as middle C. Natural pitch spelling is valid only for the current supported notes.
 - **Reversibility:** Callers depend on the pitch-guide presentation boundary rather than a notation library's internal document model. Replacing the inline SVG implementation must not require new canonical IDs, changed exercise revisions, or rewritten attempt history.
@@ -44,6 +46,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 - Next-note and progress meaning remains available in text and is not conveyed by pitch-marker colour alone.
 - Inline SVG scales within the practice stage without horizontal page overflow or loss of readable text at supported desktop, iPad, and narrow-phone widths.
 - Client enhancement may update marker state but must not replace or remove the server-rendered fallback.
+- Reading focus visually suppresses selected cues without removing their semantic or ARIA equivalents. It retains staff progress and restores every guided cue when switched off.
 
 ### Edge Cases
 
@@ -54,6 +57,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 - If exercise data falls outside the supported subset, the renderer returns the explicit unsupported result and the page continues with semantic text rather than partial or misleading notation.
 - Timed exercise progress may update the same pitch markers, but beat offsets and timing feedback do not change their pitch-only meaning.
 - Fractional beat offsets in an even-eighth exercise do not alter marker spacing, create beams, imply held duration, or introduce rests between markers.
+- Reading focus may be toggled during progress without changing marker identity or state. Unsupported notation has no toggle and remains fully guided.
 
 ### Anti-Patterns
 
@@ -64,6 +68,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 - Do not make the SVG the only source of pitch order or the only accessible explanation of the exercise.
 - Do not silently approximate accidentals, unsupported ranges, mixed hands, simultaneous chords, or multiple voices.
 - Do not merge repeated-pitch markers merely because the physical keyboard reuses one pitch control.
+- Do not offer reading focus for an unsupported guide, hide evaluator-driven staff progress, remove the only semantic pitch equivalent, or use the presentation as reading evidence.
 - Do not add a notation dependency, font download, MusicXML pipeline, or exercise-schema field merely to extend this first supported subset.
 
 ## Contract
@@ -74,6 +79,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 - [ ] Each ordered chord-tone study renders five occurrence-based markers for C-E-G-E-C while the keyboard separately reuses one C control and one E control from the same canonical data.
 - [ ] Right-hand C4-G4 material renders on treble staff and left-hand C3-G3 material renders on bass staff, with the supported middle-C ledger line.
 - [ ] The guide distinguishes accepted, next, and remaining events from evaluator progress without advancing evaluation itself.
+- [ ] A validated supported guide can enter reading focus, hiding visible pitch labels and answer cues while retaining semantic equivalents and occurrence progress; unsupported and no-JavaScript pages remain guided.
 - [ ] Ordered note text remains present and meaningful without JavaScript and when notation is unsupported.
 - [ ] Pitch markers carry no duration or performance-timing meaning, and timed studies continue to use their separate pulse controls and evaluator contract.
 - [ ] Exercise schema versions, exercise revisions, canonical IDs, evaluator behavior, and persisted attempt records remain unchanged.
@@ -89,14 +95,15 @@ The first notation surface must preserve the server-rendered, progressively enha
 - Marker styling and spacing must never be interpreted as canonical duration, rhythm, velocity, or articulation.
 - Adding the guide alone must not increment an exercise revision or make existing history disappear.
 - MIDI completion must not satisfy a staff-reading competency merely because staff graphics were visible.
+- Reading-focus visibility, toggling, or completion must not satisfy a staff-reading competency or change canonical, evaluator, or attempt identity.
 - No external runtime asset, notation dependency, or client framework may become required for the initial pitch guide.
 
 ### Verification
 
 - **Unit tests:** Natural-note pitch-to-staff mapping, treble and bass selection for the supported subset, middle-C ledger-line placement, canonical horizontal order, repeated-pitch occurrence identity, and explicit unsupported results.
 - **View tests:** Server HTML contains the complete SVG guide and semantic note sequence for right-hand, left-hand, descending, step-and-skip, and timed exercises.
-- **Client tests:** Accepted, next, remaining, restart, interrupted, and completed projections update the matching canonical marker without changing evaluator state.
-- **Browser tests:** With and without JavaScript, the guide and text fallback remain visible; desktop, iPad, and narrow layouts do not overflow; a mock-input completion advances marker state consistently with keyboard and text.
+- **Client tests:** Accepted, next, remaining, restart, interrupted, and completed projections update the matching canonical marker without changing evaluator state; reading focus hides labels but preserves the same progress and semantic hooks.
+- **Browser tests:** Without JavaScript the guide and text fallback remain guided; enhanced supported guides can hide and restore visual labels while retaining accessibility and progress; desktop, iPad, and narrow layouts do not overflow; a mock-input completion advances marker state consistently with keyboard and text.
 - **Documentation checks:** README, practice-session, exercise-format, and curriculum wording retain the pitch-only and no-mastery boundaries.
 
 ### Scenarios
@@ -118,6 +125,12 @@ The first notation surface must preserve the server-rendered, progressively enha
 - Given: the enhanced guide shows C4 as next and the shared evaluator accepts C4
 - When: the practice view projects its new state
 - Then: C4 becomes accepted and the marker for the evaluator's next canonical event becomes next, matching the text and keyboard cues
+
+**Scenario: Use the guide in reading focus**
+
+- Given: the enhanced page has validated a supported staff guide
+- When: the learner turns on reading focus
+- Then: visible staff labels and surrounding pitch answers are suppressed while the complete guide, occurrence progress, semantic equivalents, and canonical marker identity remain unchanged
 
 **Scenario: Preserve ordered chord-tone occurrences**
 
