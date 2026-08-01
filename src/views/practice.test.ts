@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defaultExercise, exerciseLibrary } from "../exercises/library/index.js";
 import { stepSkipRightHandExercise } from "../exercises/library/beginner-five-note-exercises.js";
+import { evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { steadyQuarterStepSkipRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import type { Exercise } from "../exercises/types.js";
@@ -51,7 +52,7 @@ describe("renderPracticePage", () => {
     expect(html.match(/<option value="(?:40|50|60|70|80|90|100)"/g)).toHaveLength(7);
     expect(html).toContain('<option value="60" selected>60 BPM</option>');
     expect(html.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).toContain("hidden");
-    expect(exerciseLibrary).toHaveLength(10);
+    expect(exerciseLibrary).toHaveLength(12);
   });
 
   it("derives the rendered sequence and physical key order from the supplied exercise", () => {
@@ -122,6 +123,17 @@ describe("renderPracticePage", () => {
     expect(html).toContain("<span>60 BPM</span><span>4/4</span>");
     expect(html.match(/<select[^>]*id="pulse-tempo"[^>]*>/)?.[0]).toContain("disabled");
     expect(html).not.toContain('id="pulse-status" role="status"');
+  });
+
+  it("explains the eighth-note grid and distinguishes it in the exercise catalog", () => {
+    const html = renderPracticePage(evenEighthsRightHandExercise, exerciseLibrary);
+
+    expect(html).toContain(
+      '<p class="practice-score-task">After the count-in, play on the eighth-note grid: each click is a numbered beat, and the “and” count falls halfway between. Count 1 &amp; 2 &amp; 3.</p>',
+    );
+    expect(html).toContain("Pitch order · Even eighth-note onsets");
+    expect(html).toContain("Eighth-note grid · 60 BPM");
+    expect(html).not.toContain("After the count-in, place one note on each beat.");
   });
 
   it("rejects an empty exercise instead of rendering false completion", () => {

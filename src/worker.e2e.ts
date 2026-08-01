@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { evenEighthsRightHandExercise } from "./exercises/library/even-eighth-exercises.js";
 import { exerciseLibrary } from "./exercises/library/index.js";
 import { steadyQuarterStepSkipRightHandExercise } from "./exercises/library/steady-quarter-exercises.js";
 import { exercisePracticeHref } from "./views/exercise-presentation.js";
@@ -10,9 +11,10 @@ test("renders the piano practice home page", async ({ page }) => {
   await expect(page.getByText("Small, focused studies for building calm and reliable movement at the keyboard.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Choose your next study" })).toBeVisible();
   const exerciseFolio = page.locator(".folio-grid");
-  expect(exerciseLibrary).toHaveLength(10);
+  expect(exerciseLibrary).toHaveLength(12);
   await expect(exerciseFolio.locator('a[href^="/practice?exercise="]')).toHaveCount(exerciseLibrary.length);
-  await expect(exerciseFolio.locator('[data-mode="timed"]')).toHaveCount(4);
+  await expect(exerciseFolio.locator('[data-mode="timed"]')).toHaveCount(6);
+  await expect(page.getByRole("link", { name: new RegExp(evenEighthsRightHandExercise.title) })).toContainText("Eighth-note grid · 60 BPM");
   for (const exercise of exerciseLibrary) {
     await expect(page.getByRole("link", { name: new RegExp(exercise.title) })).toBeVisible();
   }
@@ -37,6 +39,18 @@ test("shows steady-pulse facts and controls only for timed studies", async ({ pa
   await page.goto(exercisePracticeHref(untimedExercise!));
 
   await expect(page.locator("#pulse-controls")).toBeHidden();
+});
+
+test("describes the even-eighth grid without implying one note per click", async ({ page }) => {
+  await page.goto(exercisePracticeHref(evenEighthsRightHandExercise));
+
+  await expect(page.getByRole("heading", { level: 1, name: evenEighthsRightHandExercise.title })).toBeVisible();
+  await expect(page.locator(".practice-score-task")).toHaveText(
+    "After the count-in, play on the eighth-note grid: each click is a numbered beat, and the “and” count falls halfway between. Count 1 & 2 & 3.",
+  );
+  await expect(page.getByText("Pitch order · Even eighth-note onsets")).toBeVisible();
+  await expect(page.locator('a[aria-current="page"] .study-link-mode')).toHaveText("Eighth-note grid · 60 BPM");
+  await expect(page.getByText("place one note on each beat")).toHaveCount(0);
 });
 
 test("serves the health endpoint", async ({ request }) => {

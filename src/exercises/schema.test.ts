@@ -134,6 +134,17 @@ describe("parseExercise", () => {
     expect(exercise.expectedEvents.map(({ beatOffset }) => beatOffset)).toEqual([0, 1]);
   });
 
+  it("preserves fractional beat offsets and a narrower proportional timing window", () => {
+    const document = createTimedExerciseDocument();
+    document.timing!.timingWindowBeats = 0.1;
+    document.expectedEvents[1]!.beatOffset = 0.5;
+
+    const exercise = parseExercise(document);
+
+    expect(exercise.timing?.timingWindowBeats).toBe(0.1);
+    expect(exercise.expectedEvents.map(({ beatOffset }) => beatOffset)).toEqual([0, 0.5]);
+  });
+
   it("rejects a non-object document", () => {
     expectInvalid(null, "exercise");
   });

@@ -266,13 +266,17 @@ function createTimingCompletionSummary(timing: TimingEvaluationState): TimingCom
   if (timing.assessedIntervals === 0) {
     message = "Pulse timing began, but there was no interval to assess.";
   } else if (timing.onPulse === timing.assessedIntervals) {
-    message = `All ${timing.assessedIntervals} ${timing.assessedIntervals === 1 ? "interval" : "intervals"} stayed on the pulse at ${timing.tempoBpm} BPM.`;
+    message =
+      timing.assessedIntervals === 1
+        ? `The interval was on time at ${timing.tempoBpm} BPM.`
+        : `All ${timing.assessedIntervals} intervals were on time at ${timing.tempoBpm} BPM.`;
   } else {
     const observations = [
       timing.early === 0 ? null : `${timing.early} ${timing.early === 1 ? "interval was" : "intervals were"} early.`,
       timing.late === 0 ? null : `${timing.late} ${timing.late === 1 ? "interval was" : "intervals were"} late.`,
     ].filter((observation): observation is string => observation !== null);
-    message = `${timing.onPulse} of ${timing.assessedIntervals} intervals stayed on the pulse at ${timing.tempoBpm} BPM. ${observations.join(" ")}`;
+    const intervalTiming = timing.assessedIntervals === 1 ? "interval was" : "intervals were";
+    message = `${timing.onPulse} of ${timing.assessedIntervals} ${intervalTiming} on time at ${timing.tempoBpm} BPM. ${observations.join(" ")}`;
   }
 
   return {
@@ -327,7 +331,7 @@ function evaluateTiming(
     feedback: {
       classification,
       deviationMs,
-      message: classification === "on-pulse" ? "On the pulse." : classification === "early" ? "A little early." : "A little late.",
+      message: classification === "on-pulse" ? "On time." : classification === "early" ? "A little early." : "A little late.",
     },
   };
 }

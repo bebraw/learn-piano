@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { defaultExercise, exerciseLibrary } from "./exercises/library/index.js";
 import { formatMidiNote } from "./exercises/evaluator.js";
-import { steadyQuarterStepSkipRightHandExercise } from "./exercises/library/steady-quarter-exercises.js";
+import { evenEighthsRightHandExercise } from "./exercises/library/even-eighth-exercises.js";
 import { ATTEMPT_STORAGE_KEY } from "./client/persistence/attempt-repository.js";
 import { exercisePracticeHref } from "./views/exercise-presentation.js";
 
@@ -114,12 +114,12 @@ test("completes a selected exercise and reloads its persisted history through mo
   await expect(page.getByText(/Most recent completion:/)).toBeVisible();
 });
 
-test("counts in a timed study and persists its MIDI-relative pulse summary", async ({ page }) => {
-  await page.goto(exercisePracticeHref(steadyQuarterStepSkipRightHandExercise));
+test("counts in an even-eighth study and persists its MIDI-relative timing summary", async ({ page }) => {
+  await page.goto(exercisePracticeHref(evenEighthsRightHandExercise));
 
-  const firstEvent = steadyQuarterStepSkipRightHandExercise.expectedEvents[0];
+  const firstEvent = evenEighthsRightHandExercise.expectedEvents[0];
   if (firstEvent === undefined) {
-    throw new Error("The steady-quarter study requires a first event");
+    throw new Error("The even-eighth study requires a first event");
   }
   const stage = page.locator("#practice-stage");
   const firstKey = page.locator(`[data-practice-key][data-note-number="${firstEvent.noteNumber}"]`);
@@ -137,11 +137,11 @@ test("counts in a timed study and persists its MIDI-relative pulse summary", asy
   await expect(stage).toHaveAttribute("data-pulse-status", "running", { timeout: 5_000 });
   await expect(firstKey).toBeEnabled();
 
-  for (const event of steadyQuarterStepSkipRightHandExercise.expectedEvents) {
+  for (const event of evenEighthsRightHandExercise.expectedEvents) {
     await playNote(page, event.noteNumber);
   }
 
-  await expect(page.locator("#feedback-message")).toContainText(/intervals stayed on the pulse at 100 BPM/);
+  await expect(page.locator("#feedback-message")).toContainText(/The sequence was correct\..*intervals were on time at 100 BPM/);
   await expect(page.getByText("1 attempt completed today")).toBeVisible();
 
   const attempt = await page.evaluate((storageKey) => {
@@ -155,8 +155,8 @@ test("counts in a timed study and persists its MIDI-relative pulse summary", asy
         ).attempts?.[0];
   }, ATTEMPT_STORAGE_KEY);
   expect(attempt).toMatchObject({
-    exerciseId: steadyQuarterStepSkipRightHandExercise.id,
-    exerciseRevision: steadyQuarterStepSkipRightHandExercise.revision,
+    exerciseId: evenEighthsRightHandExercise.id,
+    exerciseRevision: evenEighthsRightHandExercise.revision,
     timing: { tempoBpm: 100, assessedIntervals: 4 },
   });
   expect((attempt?.timing?.onPulse ?? 0) + (attempt?.timing?.early ?? 0) + (attempt?.timing?.late ?? 0)).toBe(4);

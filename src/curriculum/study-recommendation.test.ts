@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CompletedAttemptRecord } from "../client/persistence/attempt-repository.js";
 import { STEP_SKIP_LEFT_HAND_EXERCISE_ID, STEP_SKIP_RIGHT_HAND_EXERCISE_ID } from "../exercises/library/beginner-five-note-exercises.js";
+import { EVEN_EIGHTHS_LEFT_HAND_EXERCISE_ID, EVEN_EIGHTHS_RIGHT_HAND_EXERCISE_ID } from "../exercises/library/even-eighth-exercises.js";
 import { exerciseLibrary } from "../exercises/library/index.js";
 import {
   STEADY_QUARTER_LEFT_HAND_EXERCISE_ID,
@@ -224,6 +225,29 @@ describe("recommendNextStudy", () => {
       reason: {
         kind: "direct-dependent",
         prerequisiteExerciseIds: [pattern.id, straightPulse.id],
+      },
+    });
+  });
+
+  it.each([
+    {
+      straightPulseId: STEADY_QUARTER_RIGHT_HAND_EXERCISE_ID,
+      evenEighthsId: EVEN_EIGHTHS_RIGHT_HAND_EXERCISE_ID,
+    },
+    {
+      straightPulseId: STEADY_QUARTER_LEFT_HAND_EXERCISE_ID,
+      evenEighthsId: EVEN_EIGHTHS_LEFT_HAND_EXERCISE_ID,
+    },
+  ])("recommends $evenEighthsId directly after its straight-pulse prerequisite", ({ straightPulseId, evenEighthsId }) => {
+    const straightPulse = requireLibraryExercise(straightPulseId);
+    const evenEighths = requireLibraryExercise(evenEighthsId);
+
+    expect(recommendNextStudy(exerciseLibrary, [attempt(straightPulse, "2026-08-01T08:00:00.000Z")], straightPulse.id)).toEqual({
+      kind: "new-study",
+      exercise: evenEighths,
+      reason: {
+        kind: "direct-dependent",
+        prerequisiteExerciseIds: [straightPulse.id],
       },
     });
   });

@@ -1,6 +1,12 @@
 import { formatMidiNote } from "../exercises/evaluator";
 import type { Exercise } from "../exercises/types";
-import { exercisePracticeHref, formatExerciseCategory, formatExerciseHand, formatExerciseNoteOrder } from "./exercise-presentation";
+import {
+  exercisePracticeHref,
+  formatExerciseCategory,
+  formatExerciseHand,
+  formatExerciseNoteOrder,
+  formatExerciseTimingLabel,
+} from "./exercise-presentation";
 import { escapeHtml, renderAppHeader } from "./shared";
 
 const appTitle = "Piano Practice";
@@ -26,7 +32,7 @@ export function renderHomePage(
     .map((exercise, index) => {
       const handLabel = formatExerciseHand(exercise);
       const selected = exercise.id === defaultExercise.id;
-      const timingLabel = formatExerciseTiming(exercise);
+      const timingLabel = formatExerciseTimingLabel(exercise, true);
       return `<li>
         <a
           class="folio-card group"
@@ -90,7 +96,7 @@ export function renderHomePage(
           <div class="hero-score-footer">
             <span>${defaultExercise.expectedEvents.length} notes</span>
             <span>Beginner</span>
-            <span>${escapeHtml(formatExerciseTiming(defaultExercise))}</span>
+            <span>${escapeHtml(formatExerciseTimingLabel(defaultExercise, true))}</span>
           </div>
         </div>
       </section>
@@ -101,7 +107,7 @@ export function renderHomePage(
             <p class="app-eyebrow">Exercise folio</p>
             <h2 id="library-heading" class="section-title">Choose your next study</h2>
           </div>
-          <p class="section-heading-copy">${exercises.length} short patterns for both hands, including steady-pulse studies. Each one keeps its own local practice history.</p>
+          <p class="section-heading-copy">${exercises.length} short patterns for both hands, including pulse and subdivision studies. Each one keeps its own local practice history.</p>
         </div>
         <ul class="folio-grid">${exerciseList}</ul>
       </section>
@@ -131,16 +137,4 @@ export function renderHomePage(
     </footer>
   </body>
 </html>`;
-}
-
-function formatExerciseTiming(exercise: Exercise): string {
-  if (exercise.evaluationMode === "untimed-ordered-notes") {
-    return "Untimed";
-  }
-
-  const timing = exercise.timing;
-  if (timing === undefined) {
-    throw new Error(`Timed exercise ${exercise.id} requires timing metadata`);
-  }
-  return `Steady pulse · ${timing.defaultBpm} BPM · ${timing.beatsPerMeasure}/${timing.beatUnit}`;
 }

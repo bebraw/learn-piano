@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { NormalizedMidiEvent } from "../midi/types.js";
 import { createEvaluationState, evaluateMidiEvent } from "./evaluator.js";
+import { evenEighthsRightHandExercise } from "./library/even-eighth-exercises.js";
 import { fiveNoteAscentExercise } from "./library/five-note-ascent.js";
 import { steadyQuarterRightHandExercise, steadyQuarterStepSkipRightHandExercise } from "./library/steady-quarter-exercises.js";
 import { parseExercise } from "./schema.js";
@@ -40,7 +41,7 @@ describe("timed ordered-note evaluation", () => {
       early: 1,
       late: 1,
       meanAbsoluteErrorMs: 150,
-      message: "2 of 4 intervals stayed on the pulse at 60 BPM. 1 interval was early. 1 interval was late.",
+      message: "2 of 4 intervals were on time at 60 BPM. 1 interval was early. 1 interval was late.",
     });
   });
 
@@ -53,7 +54,7 @@ describe("timed ordered-note evaluation", () => {
     const lateBoundary = evaluateMidiEvent(steadyQuarterRightHandExercise, state, noteOn(62, 2_200));
     const lateOutside = evaluateMidiEvent(steadyQuarterRightHandExercise, state, noteOn(62, 2_200.1));
 
-    expect(earlyBoundary.feedback?.timing).toMatchObject({ classification: "on-pulse", deviationMs: -200 });
+    expect(earlyBoundary.feedback?.timing).toMatchObject({ classification: "on-pulse", deviationMs: -200, message: "On time." });
     expect(earlyOutside.feedback?.timing?.classification).toBe("early");
     expect(lateBoundary.feedback?.timing).toMatchObject({ classification: "on-pulse", deviationMs: 200 });
     expect(lateOutside.feedback?.timing?.classification).toBe("late");
@@ -118,7 +119,7 @@ describe("timed ordered-note evaluation", () => {
         early: 0,
         late: 0,
         meanAbsoluteErrorMs: 0,
-        message: "All 4 intervals stayed on the pulse at 60 BPM.",
+        message: "All 4 intervals were on time at 60 BPM.",
       },
     });
   });
@@ -143,6 +144,36 @@ describe("timed ordered-note evaluation", () => {
     });
   });
 
+  it("evaluates even eighth-note onsets on successive half-beat offsets", () => {
+    let state = createEvaluationState(evenEighthsRightHandExercise);
+
+    for (const [index, event] of evenEighthsRightHandExercise.expectedEvents.entries()) {
+      state = evaluateMidiEvent(evenEighthsRightHandExercise, state, noteOn(event.noteNumber, 2_000 + index * 500)).state;
+    }
+
+    expect(evenEighthsRightHandExercise.expectedEvents.map(({ beatOffset }) => beatOffset)).toEqual([0, 0.5, 1, 1.5, 2]);
+    expect(state.completionSummary).toMatchObject({
+      errorFree: true,
+      timing: {
+        assessedIntervals: 4,
+        onPulse: 4,
+        early: 0,
+        late: 0,
+        meanAbsoluteErrorMs: 0,
+      },
+    });
+  });
+
+  it("uses the even-eighth study's narrower tenth-beat tolerance", () => {
+    const initial = createEvaluationState(evenEighthsRightHandExercise);
+    const anchored = evaluateMidiEvent(evenEighthsRightHandExercise, initial, noteOn(60, 1_000)).state;
+
+    expect(evaluateMidiEvent(evenEighthsRightHandExercise, anchored, noteOn(62, 1_400)).feedback?.timing?.classification).toBe("on-pulse");
+    expect(evaluateMidiEvent(evenEighthsRightHandExercise, anchored, noteOn(62, 1_399.9)).feedback?.timing?.classification).toBe("early");
+    expect(evaluateMidiEvent(evenEighthsRightHandExercise, anchored, noteOn(62, 1_600)).feedback?.timing?.classification).toBe("on-pulse");
+    expect(evaluateMidiEvent(evenEighthsRightHandExercise, anchored, noteOn(62, 1_600.1)).feedback?.timing?.classification).toBe("late");
+  });
+
   it("completes a valid one-note timed study without inventing an assessed interval", () => {
     const oneNoteExercise = parseExercise({
       ...steadyQuarterRightHandExercise,
@@ -162,5 +193,19 @@ describe("timed ordered-note evaluation", () => {
       meanAbsoluteErrorMs: 0,
       message: "Pulse timing began, but there was no interval to assess.",
     });
+  });
+
+  it("uses singular timing copy for one assessed interval", () => {
+    const twoNoteExercise = parseExercise({
+      ...steadyQuarterRightHandExercise,
+      id: "two-note-pulse-check",
+      expectedEvents: steadyQuarterRightHandExercise.expectedEvents.slice(0, 2),
+    });
+    let state = createEvaluationState(twoNoteExercise);
+
+    state = evaluateMidiEvent(twoNoteExercise, state, noteOn(60, 1_000)).state;
+    state = evaluateMidiEvent(twoNoteExercise, state, noteOn(62, 2_500)).state;
+
+    expect(state.completionSummary?.timing?.message).toBe("0 of 1 interval was on time at 60 BPM. 1 interval was late.");
   });
 });

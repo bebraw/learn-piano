@@ -4,7 +4,7 @@
 
 ### Context
 
-The current practice stage names every expected pitch and shows its piano key, but the learner also wants gradual exposure to staff reading. All ten current exercises use a small, single-hand, natural-note range, so they can share a useful pitch-position guide without adopting a general score engine or pretending that the application can assess whether the learner actually read it.
+The current practice stage names every expected pitch and shows its piano key, but the learner also wants gradual exposure to staff reading. All twelve current exercises use a small, single-hand, natural-note range, so they can share a useful pitch-position guide without adopting a general score engine or pretending that the application can assess whether the learner actually read it.
 
 The first notation surface must preserve the server-rendered, progressively enhanced application model and the canonical exercise boundary. It must not invent note duration, rhythmic value, or a second exercise identity merely to draw the current pitches.
 
@@ -14,6 +14,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 - The supported subset is deliberately narrow: single-hand exercises containing the current natural notes C4-G4 for right-hand treble display or C3-G3 for left-hand bass display.
 - The guide shows five staff lines, the appropriate clef, ordered pitch markers, and any ledger line required by the supported range.
 - Pitch markers represent vertical staff position and canonical event order only. They have no stem, beam, rest, articulation, duration, velocity, fingering, or performance-timing semantics.
+- Timed staff metadata may name the separate onset contract. The even-eighth pair uses `Pitch order · Even eighth-note onsets`; that text does not turn the pitch markers or their horizontal spacing into written rhythmic notation.
 - The selected exercise's existing semantic note sequence remains adjacent to the SVG as the accessible and unsupported-content fallback.
 - Progressive enhancement marks accepted, next, and remaining canonical events in the guide from the same evaluator progress that drives the textual next-note cue and keyboard.
 - This presentation addition does not change exercise schema version, exercise revision, evaluator behavior, attempt persistence, prerequisites, curriculum evidence, or exercise identity.
@@ -50,10 +51,12 @@ The first notation surface must preserve the server-rendered, progressively enha
 - A repeated pitch in a future supported exercise would retain separate markers because canonical event IDs, not MIDI note number alone, identify positions in the sequence.
 - If exercise data falls outside the supported subset, the renderer returns the explicit unsupported result and the page continues with semantic text rather than partial or misleading notation.
 - Timed exercise progress may update the same pitch markers, but beat offsets and timing feedback do not change their pitch-only meaning.
+- Fractional beat offsets in an even-eighth exercise do not alter marker spacing, create beams, imply held duration, or introduce rests between markers.
 
 ### Anti-Patterns
 
 - Do not infer note duration, rests, meter, beat placement, articulation, or dynamics from pitch-marker shape or horizontal spacing.
+- Do not describe the `Pitch order · Even eighth-note onsets` label as full notation or as evidence that the learner read rhythmic notation.
 - Do not treat the inline SVG as a canonical score document or persist rendered coordinates with an attempt.
 - Do not infer staff-reading mastery, sight-reading ability, clef fluency, or use of the instructed hand from MIDI completion.
 - Do not make the SVG the only source of pitch order or the only accessible explanation of the exercise.
@@ -117,6 +120,12 @@ The first notation surface must preserve the server-rendered, progressively enha
 - Given: a steady-quarter exercise displays its pitch guide
 - When: the learner starts the count-in and plays the exercise
 - Then: the guide continues to represent pitch and order only while the pulse service and MIDI-interval evaluator independently own timing guidance and evidence
+
+**Scenario: Label even-eighth onset intent without drawing rhythm**
+
+- Given: `even-eighths-c-major-right-hand` displays its pitch guide
+- When: the server renders its rhythm metadata
+- Then: the label says `Pitch order · Even eighth-note onsets`, while five unstemmed pitch markers remain equally presentation-spaced and encode no duration, rests, or simultaneity
 
 **Scenario: Encounter unsupported notation**
 

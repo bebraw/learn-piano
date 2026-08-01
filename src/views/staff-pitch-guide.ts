@@ -1,5 +1,6 @@
 import type { Exercise } from "../exercises/types.js";
 import { projectStaffPitchGuide } from "../notation/staff-pitch-guide.js";
+import { getExerciseRhythmPresentation } from "./exercise-presentation.js";
 import { escapeHtml } from "./shared.js";
 
 export function renderStaffPitchGuide(exercise: Exercise): string {
@@ -39,13 +40,13 @@ export function renderStaffPitchGuide(exercise: Exercise): string {
       </g>`;
     })
     .join("");
-  const rhythmLabel = formatRhythmLabel(exercise);
+  const rhythmLabel = getExerciseRhythmPresentation(exercise).staffLabel;
   const clefGlyph = guide.clef === "treble" ? "𝄞" : "𝄢";
 
   return `<figure class="staff-pitch-guide">
     <figcaption class="staff-pitch-guide-caption">
       <span>${escapeHtml(guide.clefLabel)} staff · Pitch guide</span>
-      <span>${rhythmLabel}</span>
+      <span>${escapeHtml(rhythmLabel)}</span>
     </figcaption>
     <svg
       class="staff-pitch-guide-canvas"
@@ -61,13 +62,4 @@ export function renderStaffPitchGuide(exercise: Exercise): string {
       <g class="staff-pitch-notes">${notes}</g>
     </svg>
   </figure>`;
-}
-
-function formatRhythmLabel(exercise: Exercise): string {
-  if (exercise.evaluationMode === "untimed-ordered-notes") {
-    return "Pitch order · No fixed rhythm";
-  }
-
-  const usesUnitBeatOffsets = exercise.expectedEvents.every((event, index) => event.beatOffset === index);
-  return usesUnitBeatOffsets ? "Pitch order · One note per beat" : "Pitch order · Timing shown separately";
 }

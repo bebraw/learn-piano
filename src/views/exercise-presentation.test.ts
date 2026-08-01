@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
+import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import type { Exercise } from "../exercises/types.js";
 import {
   exercisePracticeHref,
@@ -7,6 +9,8 @@ import {
   formatExerciseDifficulty,
   formatExerciseHand,
   formatExerciseNoteOrder,
+  formatExerciseTimingLabel,
+  getExerciseRhythmPresentation,
 } from "./exercise-presentation.js";
 
 describe("exercise presentation", () => {
@@ -44,5 +48,62 @@ describe("exercise presentation", () => {
         expectedEvents: [{ ...fiveNoteAscentExercise.expectedEvents[0]!, hand: "both" }],
       }),
     ).toBe("Both hands");
+  });
+
+  it("classifies untimed, quarter-note, even-eighth, and other timed grids from canonical offsets", () => {
+    const genericBeatOffsets = [0, 0.5, 1.5, 2, 3] as const;
+    const genericTimed: Exercise = {
+      ...steadyQuarterRightHandExercise,
+      id: "timed-with-another-grid",
+      expectedEvents: steadyQuarterRightHandExercise.expectedEvents.map((event, index) => ({
+        ...event,
+        beatOffset: genericBeatOffsets[index]!,
+      })),
+    };
+
+    expect(getExerciseRhythmPresentation(fiveNoteAscentExercise)).toMatchObject({
+      kind: "untimed",
+      label: "Untimed",
+      staffLabel: "Pitch order · No fixed rhythm",
+    });
+    expect(getExerciseRhythmPresentation(steadyQuarterRightHandExercise)).toMatchObject({
+      kind: "steady-quarter",
+      label: "Steady pulse",
+      staffLabel: "Pitch order · One note per beat",
+    });
+    expect(getExerciseRhythmPresentation(evenEighthsRightHandExercise)).toMatchObject({
+      kind: "even-eighth",
+      label: "Eighth-note grid",
+      practiceTask:
+        "After the count-in, play on the eighth-note grid: each click is a numbered beat, and the “and” count falls halfway between. Count 1 & 2 & 3.",
+      staffLabel: "Pitch order · Even eighth-note onsets",
+    });
+    expect(getExerciseRhythmPresentation(genericTimed)).toMatchObject({
+      kind: "timed",
+      label: "Timed study",
+      practiceTask: "After the count-in, follow the study's timing guide. The next expected key stays lit.",
+      staffLabel: "Pitch order · Timing shown separately",
+    });
+    expect(formatExerciseTimingLabel(genericTimed)).toBe("Timed study · 60 BPM");
+  });
+
+  it("does not name subdivisions without a quarter-note beat unit", () => {
+    const eighthNoteBeat: Exercise = {
+      ...evenEighthsRightHandExercise,
+      id: "half-offsets-with-an-eighth-note-beat",
+      timing: { ...evenEighthsRightHandExercise.timing!, beatUnit: 8 },
+    };
+
+    expect(getExerciseRhythmPresentation(eighthNoteBeat)).toMatchObject({
+      kind: "timed",
+      label: "Timed study",
+      staffLabel: "Pitch order · Timing shown separately",
+    });
+  });
+
+  it("formats rhythm labels with tempo and optional meter", () => {
+    expect(formatExerciseTimingLabel(fiveNoteAscentExercise)).toBe("Untimed");
+    expect(formatExerciseTimingLabel(steadyQuarterRightHandExercise)).toBe("Steady pulse · 60 BPM");
+    expect(formatExerciseTimingLabel(evenEighthsRightHandExercise, true)).toBe("Eighth-note grid · 60 BPM · 4/4");
   });
 });

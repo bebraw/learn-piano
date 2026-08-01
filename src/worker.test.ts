@@ -21,9 +21,9 @@ describe("worker", () => {
     expect(body).toContain("Piano Practice");
     expect(body).toContain(exercisePracticeHref(defaultExercise));
     expect(body).toContain("Choose your next study");
-    expect(exerciseLibrary).toHaveLength(10);
+    expect(exerciseLibrary).toHaveLength(12);
     expect(body.match(/class="folio-card group"/g)).toHaveLength(exerciseLibrary.length);
-    expect(body.match(/data-mode="timed"/g)).toHaveLength(4);
+    expect(body.match(/data-mode="timed"/g)).toHaveLength(6);
     expect(body).toContain("/api/health");
   });
 

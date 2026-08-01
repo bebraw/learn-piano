@@ -407,8 +407,8 @@ function formatHistoryTiming(timing: AttemptTimingSummary | undefined): string {
     return ` At ${timing.tempoBpm} BPM, there was no interval to assess.`;
   }
 
-  const intervalLabel = timing.assessedIntervals === 1 ? "interval stayed" : "intervals stayed";
-  return ` At ${timing.tempoBpm} BPM, ${timing.onPulse} of ${timing.assessedIntervals} ${intervalLabel} on the pulse.`;
+  const intervalLabel = timing.assessedIntervals === 1 ? "interval was" : "intervals were";
+  return ` At ${timing.tempoBpm} BPM, ${timing.onPulse} of ${timing.assessedIntervals} ${intervalLabel} on time.`;
 }
 
 function formatCompletionTime(value: string): string {

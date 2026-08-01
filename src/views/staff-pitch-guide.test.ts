@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fiveNoteDescentLeftHandExercise } from "../exercises/library/beginner-five-note-exercises.js";
+import { evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import type { Exercise } from "../exercises/types.js";
@@ -40,6 +41,13 @@ describe("renderStaffPitchGuide", () => {
 
     expect(html).toContain("Pitch order · One note per beat");
     expect(html).not.toContain("No fixed rhythm");
+  });
+
+  it("labels even half-beat offsets as eighth-note onsets", () => {
+    const html = renderStaffPitchGuide(evenEighthsRightHandExercise);
+
+    expect(html).toContain("Pitch order · Even eighth-note onsets");
+    expect(html).not.toContain("One note per beat");
   });
 
   it("does not claim one note per beat for another supported timed pattern", () => {

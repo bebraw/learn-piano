@@ -4,7 +4,7 @@
 
 ### Context
 
-The learner has ten short exercises across pitch, pattern, hand, and steady-pulse work. The exercise library already declares prerequisites, and completed attempts already carry stable exercise IDs and revisions in local history. The practice flow should use that evidence to suggest one understandable next study instead of advancing by a circular UI position, while preserving the learner's freedom to choose any exercise.
+The learner has twelve short exercises across pitch, pattern, hand, steady-pulse, and onset-subdivision work. The exercise library already declares prerequisites, and completed attempts already carry stable exercise IDs and revisions in local history. The practice flow should use that evidence to suggest one understandable next study instead of advancing by a circular UI position, while preserving the learner's freedom to choose any exercise.
 
 A recommendation is practice guidance, not an evaluator result, unlock, grade, or mastery claim. The first implementation therefore uses only completion identity and recency. Pitch-error counts, timing classifications, tempo, velocity, and inferred physical technique do not affect this version.
 
@@ -15,6 +15,7 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - The recommendation graph uses each canonical exercise's declared prerequisite IDs. Missing prerequisite references and prerequisite cycles make recommendation unavailable without blocking practice.
 - After completion, the service prefers an eligible, uncompleted direct dependent of the just-completed exercise, then the first eligible, uncompleted exercise in canonical library order.
 - Each timed step-and-skip study is eligible only after both its matching untimed step-and-skip study and its matching straight steady-quarter study have exact-current-revision completion evidence.
+- Each even-eighth study is eligible after its matching straight steady-quarter study has exact-current-revision completion evidence; it does not require the matching untimed step-and-skip study.
 - When every current exercise has exact-revision completion evidence, the service recommends the least recently practiced exercise. Equal recency is resolved by canonical library order.
 - When readable history contains no current-revision completions, the service recommends the first prerequisite-free exercise in canonical library order.
 - The practice page explains why the study was suggested and always keeps the complete exercise library available as the fallback and override.
@@ -126,6 +127,12 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - Given: a timed step-and-skip study names its matching untimed step-and-skip and straight steady-quarter studies as prerequisites
 - When: only one of those prerequisites has exact-revision completion evidence
 - Then: the timed step-and-skip candidate is skipped and the service selects the first other eligible uncompleted exercise
+
+**Scenario: Suggest even eighths after the matching pulse foundation**
+
+- Given: the matching straight steady-quarter study has exact-current-revision completion evidence and the even-eighth study is uncompleted
+- When: recommendation considers `even-eighths-c-major-right-hand`
+- Then: that study is eligible from its one declared prerequisite, remains freely selectable without it, and receives no readiness or mastery claim
 
 **Scenario: Fall back to another eligible study**
 

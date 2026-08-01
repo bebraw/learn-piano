@@ -297,9 +297,9 @@ describe("createPracticePageView", () => {
       }),
     );
 
-    expect(elements.feedbackMessage.textContent).toBe("The sequence was correct. All 4 intervals stayed on the pulse at 60 BPM.");
+    expect(elements.feedbackMessage.textContent).toBe("The sequence was correct. All 4 intervals were on time at 60 BPM.");
     expect(elements.pulseStatus.textContent).toBe("Pulse stopped. Study complete at 60 BPM.");
-    expect(elements.historyDetail.textContent).toContain("At 60 BPM, 4 of 4 intervals stayed on the pulse.");
+    expect(elements.historyDetail.textContent).toContain("At 60 BPM, 4 of 4 intervals were on time.");
     expect(elements.nextExerciseLink.hidden).toBe(false);
   });
 
@@ -550,6 +550,14 @@ describe("createPracticePageView", () => {
             inputKind: "mock",
             status: "completed",
             errorCounts: { outOfOrder: 0, repeated: 0, wrong: 0 },
+            timing: {
+              tempoBpm: 60,
+              assessedIntervals: 1,
+              onPulse: 0,
+              early: 0,
+              late: 1,
+              meanAbsoluteErrorMs: 250,
+            },
           },
         },
       }),
@@ -558,6 +566,7 @@ describe("createPracticePageView", () => {
     expect(elements.midiInput.innerHTML).toContain("&lt;Keyboard &amp; Co&gt;");
     expect(elements.midiInput.innerHTML).toContain('value="unsafe&quot;"');
     expect(elements.historyCount.textContent).toBe("1 attempt completed today");
+    expect(elements.historyDetail.textContent).toContain("At 60 BPM, 0 of 1 interval was on time.");
     expect(elements.historyDetail.textContent).toContain("1 total for this exercise");
   });
 

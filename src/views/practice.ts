@@ -6,6 +6,8 @@ import {
   formatExerciseDifficulty,
   formatExerciseHand,
   formatExerciseNoteOrder,
+  formatExerciseTimingLabel,
+  getExerciseRhythmPresentation,
 } from "./exercise-presentation.js";
 import { escapeHtml, renderAppHeader } from "./shared.js";
 import { renderStaffPitchGuide } from "./staff-pitch-guide.js";
@@ -20,6 +22,7 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
   const handLabel = formatExerciseHand(exercise);
   const categoryLabel = formatExerciseCategory(exercise);
   const difficultyLabel = formatExerciseDifficulty(exercise);
+  const rhythm = getExerciseRhythmPresentation(exercise);
   const timing = getExerciseTiming(exercise);
   const tempoOptions = renderTempoOptions(timing?.defaultBpm ?? 60);
   const timingStatus =
@@ -111,11 +114,7 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
 
             <div class="practice-score">
               <p class="practice-score-label">Your phrase</p>
-              <p class="practice-score-task">${
-                timing === null
-                  ? "Play each note once in order. The next expected key stays lit."
-                  : "After the count-in, place one note on each beat. The next expected key stays lit."
-              }</p>
+              <p class="practice-score-task">${escapeHtml(rhythm.practiceTask)}</p>
               ${staffPitchGuide}
               <p class="practice-score-sequence" aria-label="Pitch order: ${escapeHtml(noteSequence)}">${escapeHtml(noteSequence)}</p>
             </div>
@@ -280,11 +279,6 @@ function getExerciseTiming(exercise: Exercise): NonNullable<Exercise["timing"]> 
     throw new Error(`Timed exercise ${exercise.id} requires timing metadata`);
   }
   return exercise.timing;
-}
-
-function formatExerciseTimingLabel(exercise: Exercise): string {
-  const timing = getExerciseTiming(exercise);
-  return timing === null ? "Untimed" : `Steady pulse · ${timing.defaultBpm} BPM`;
 }
 
 function renderTempoOptions(defaultBpm: number): string {
