@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PracticePulseState, PracticePulseStatus } from "../audio/practice-pulse-port.js";
+import { fiveNoteDescentRightHandExercise } from "../exercises/library/beginner-five-note-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import { createEvaluationState, evaluateMidiEvent } from "../exercises/evaluator.js";
@@ -362,6 +363,108 @@ describe("createPracticePageView", () => {
     expect(staffNotes.every((note) => note.getAttribute("data-note-active") === "false")).toBe(true);
   });
 
+  it.each([
+    {
+      name: "a direct next study",
+      recommendation: {
+        kind: "new-study",
+        exercise: fiveNoteDescentRightHandExercise,
+        reason: { kind: "direct-dependent", prerequisiteExerciseIds: [fiveNoteAscentExercise.id] },
+      } as const,
+      kicker: "Suggested next",
+      action: "Open next study",
+      reason: "Builds directly on the study you just completed.",
+    },
+    {
+      name: "a study with one practiced prerequisite",
+      recommendation: {
+        kind: "new-study",
+        exercise: fiveNoteDescentRightHandExercise,
+        reason: { kind: "prerequisites-practiced", prerequisiteExerciseIds: ["one"] },
+      } as const,
+      kicker: "Suggested next",
+      action: "Open next study",
+      reason: "You've completed its prerequisite study in this browser.",
+    },
+    {
+      name: "a study with practiced prerequisites",
+      recommendation: {
+        kind: "new-study",
+        exercise: fiveNoteDescentRightHandExercise,
+        reason: { kind: "prerequisites-practiced", prerequisiteExerciseIds: ["one", "two"] },
+      } as const,
+      kicker: "Suggested next",
+      action: "Open next study",
+      reason: "You've completed its prerequisite studies in this browser.",
+    },
+    {
+      name: "another foundation study",
+      recommendation: {
+        kind: "new-study",
+        exercise: fiveNoteAscentExercise,
+        reason: { kind: "prerequisite-free" },
+      } as const,
+      kicker: "Suggested next",
+      action: "Open next study",
+      reason: "A new foundation study with no prerequisites.",
+    },
+    {
+      name: "the least recent review",
+      recommendation: {
+        kind: "review",
+        exercise: fiveNoteAscentExercise,
+        reason: { kind: "least-recently-practiced", lastCompletedAt: "2026-08-01T08:00:00.000Z" },
+      } as const,
+      kicker: "Suggested review",
+      action: "Review study",
+      reason: "You've completed every current study; this one was practiced least recently.",
+    },
+  ])("renders $name as an explainable completion action", ({ recommendation, kicker, action, reason }) => {
+    const { elements } = createElements();
+
+    createPracticePageView(elements).render(snapshot({ sessionStatus: "completed", recommendation }));
+
+    expect(elements.nextStudyRecommendation.hidden).toBe(false);
+    expect(elements.nextStudyKicker.textContent).toBe(kicker);
+    expect(elements.nextStudyTitle.textContent).toBe(recommendation.exercise.title);
+    expect(elements.nextStudyReason.textContent).toBe(reason);
+    expect(elements.nextExerciseLabel.textContent).toBe(action);
+    expect(elements.nextExerciseLink.getAttribute("href")).toBe(`/practice?exercise=${encodeURIComponent(recommendation.exercise.id)}`);
+  });
+
+  it("clears a rendered recommendation when recommendation history becomes unavailable", () => {
+    const { elements } = createElements();
+    const view = createPracticePageView(elements);
+
+    view.render(
+      snapshot({
+        sessionStatus: "completed",
+        recommendation: {
+          kind: "new-study",
+          exercise: fiveNoteDescentRightHandExercise,
+          reason: { kind: "direct-dependent", prerequisiteExerciseIds: [fiveNoteAscentExercise.id] },
+        },
+      }),
+    );
+    expect(elements.nextStudyRecommendation.hidden).toBe(false);
+    expect(elements.nextStudyTitle.textContent).toBe(fiveNoteDescentRightHandExercise.title);
+
+    view.render(
+      snapshot({
+        sessionStatus: "completed",
+        recommendationStatus: "unavailable",
+        recommendation: null,
+      }),
+    );
+
+    expect(elements.nextStudyRecommendation.hidden).toBe(true);
+    expect(elements.nextStudyTitle.textContent).toBe("");
+    expect(elements.nextStudyReason.textContent).toBe("");
+    expect(elements.nextExerciseLink.hidden).toBe(false);
+    expect(elements.nextExerciseLink.getAttribute("href")).toBe("/");
+    expect(elements.nextExerciseLabel.textContent).toBe("Exercise library");
+  });
+
   it("asks for only a restart when a connected learner stops an active study", () => {
     const { elements } = createElements(steadyQuarterRightHandExercise);
 
@@ -511,7 +614,12 @@ function createElements(exercise: Exercise = fiveNoteAscentExercise): {
       historyCount: new FakeElement(),
       historyDetail: new FakeElement(),
       keyboardHelp: new FakeElement(),
+      nextStudyRecommendation: new FakeElement(),
+      nextStudyKicker: new FakeElement(),
+      nextStudyTitle: new FakeElement(),
+      nextStudyReason: new FakeElement(),
       nextExerciseLink: new FakeElement(),
+      nextExerciseLabel: new FakeElement(),
       keys: exercise.expectedEvents.map((event, index) => ({
         eventId: event.id,
         noteNumber: event.noteNumber,
@@ -560,6 +668,8 @@ function snapshot(overrides: Partial<PracticeSnapshot> = {}): PracticeSnapshot {
     activeNoteNumbers: [],
     historyStatus: "ready",
     history: { completedToday: 0, totalCompleted: 0, mostRecent: null },
+    recommendationStatus: "ready",
+    recommendation: null,
     persistenceMessage: null,
     ...overrides,
   };

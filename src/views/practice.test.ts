@@ -35,7 +35,11 @@ describe("renderPracticePage", () => {
     expect(html).toContain(`<span class="study-count">${exerciseLibrary.length}</span>`);
     expect(html).toContain('id="practice-stage" class="practice-stage" data-session-status="ready"');
     expect(html).toContain('data-pulse-status="idle"');
-    expect(html).toContain('id="next-exercise"');
+    expect(html).toContain('id="next-study-recommendation" hidden');
+    expect(html).toContain('id="next-study-title"');
+    expect(html).toContain('id="next-study-reason"');
+    expect(html).toContain('id="next-exercise" href="/" hidden');
+    expect(html).toContain('id="next-exercise-label">Exercise library</span>');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain('id="pulse-controls"');
     expect(html).toContain('id="pulse-status"');

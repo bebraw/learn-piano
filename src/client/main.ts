@@ -1,5 +1,6 @@
 import type { Exercise } from "../exercises/types.js";
 import { WebAudioPracticePulse } from "../audio/web-audio-practice-pulse.js";
+import { exerciseLibrary } from "../exercises/library/index.js";
 import { MockMidiInputPort } from "../midi/mock-midi-input-port.js";
 import { createNativeMidiBridgeFromHost, NativeMidiInputPort } from "../midi/native-midi-input-port.js";
 import { WebMidiInputPort } from "../midi/web-midi-input-port.js";
@@ -30,7 +31,7 @@ export async function bootstrapPracticePage(pageDocument: Document, browserWindo
     { mock: mockPort, "web-midi": new WebMidiInputPort(), "native-midi": nativePort },
     createBrowserAttemptRepository(browserWindow),
     createPracticePageView(elements),
-    { createPulse: (config) => new WebAudioPracticePulse(config) },
+    { createPulse: (config) => new WebAudioPracticePulse(config), exerciseLibrary },
   );
 
   if (nativePort.capability === "supported") {
@@ -151,7 +152,12 @@ function collectPageElements(
     historyCount: requireElement(pageDocument, "history-count", HTMLElement),
     historyDetail: requireElement(pageDocument, "history-detail", HTMLElement),
     keyboardHelp: requireElement(pageDocument, "keyboard-help", HTMLElement),
+    nextStudyRecommendation: requireElement(pageDocument, "next-study-recommendation", HTMLElement),
+    nextStudyKicker: requireElement(pageDocument, "next-study-kicker", HTMLElement),
+    nextStudyTitle: requireElement(pageDocument, "next-study-title", HTMLElement),
+    nextStudyReason: requireElement(pageDocument, "next-study-reason", HTMLElement),
     nextExerciseLink: requireElement(pageDocument, "next-exercise", HTMLAnchorElement),
+    nextExerciseLabel: requireElement(pageDocument, "next-exercise-label", HTMLElement),
     keys,
     staffNotes: collectStaffNotes(pageDocument, exercise),
   };

@@ -202,6 +202,10 @@ test("uses the injected iPad bridge through the shared practice flow", async ({ 
 
   await expect(page.getByText("The sequence was correct.")).toBeVisible();
   await expect(page.getByText("1 attempt completed today")).toBeVisible();
+  const suggestedExercise = exerciseLibrary[1]!;
+  await expect(page.locator("#next-study-title")).toHaveText(suggestedExercise.title);
+  await expect(page.locator("#next-study-reason")).toHaveText("Builds directly on the study you just completed.");
+  await expect(page.getByRole("link", { name: "Open next study" })).toHaveAttribute("href", exercisePracticeHref(suggestedExercise));
   const storedInputKind = await page.evaluate((storageKey) => {
     const value = localStorage.getItem(storageKey);
     return value === null ? null : (JSON.parse(value) as { attempts?: Array<{ inputKind?: string }> }).attempts?.[0]?.inputKind;

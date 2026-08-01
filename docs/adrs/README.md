@@ -88,6 +88,7 @@ No accepted-only ADRs are currently pending implementation.
 | [ADR-053](./implemented/ADR-053-use-a-versioned-canonical-exercise-representation.md)  | Implemented | Share one versioned exercise representation across views, evaluation, and persistence.            |
 | [ADR-054](./implemented/ADR-054-anchor-timing-to-midi-intervals.md)                    | Implemented | Anchor steady-pulse timing to accepted-note MIDI intervals while Web Audio remains guidance-only. |
 | [ADR-055](./implemented/ADR-055-use-a-reversible-inline-svg-pitch-guide.md)            | Implemented | Render the current pitch-only staff subset through a replaceable dependency-free SVG adapter.     |
+| [ADR-056](./implemented/ADR-056-keep-study-recommendations-local-and-advisory.md)      | Implemented | Choose one explainable local study suggestion from prerequisites and exact-revision history.      |
 
 ## Creating A New ADR
 

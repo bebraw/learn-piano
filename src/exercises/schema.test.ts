@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { exerciseLibrary } from "./library/index.js";
 import { fiveNoteAscentExercise } from "./library/five-note-ascent.js";
 import { ExerciseValidationError, parseExercise, parseExerciseLibrary } from "./schema.js";
 
@@ -313,6 +314,13 @@ describe("parseExercise", () => {
     expect(exercise.expectedEvents.map(({ noteNumber }) => noteNumber)).toEqual([60, 60]);
     expect(exercise.source).toEqual({ kind: "licensed", license: "Example license" });
   });
+
+  it("leaves prerequisite graph validation to the complete library boundary", () => {
+    const document = createExerciseDocument();
+    document.prerequisites = [document.id, "not-in-this-document"];
+
+    expect(parseExercise(document).prerequisites).toEqual(["test-exercise", "not-in-this-document"]);
+  });
 });
 
 describe("parseExerciseLibrary", () => {
@@ -324,6 +332,32 @@ describe("parseExerciseLibrary", () => {
     expect(parseExerciseLibrary([first, second]).map(({ id }) => id)).toEqual(["test-exercise", "another-exercise"]);
   });
 
+  it("accepts the current canonical library and independent prerequisite DAGs", () => {
+    expect(parseExerciseLibrary(exerciseLibrary).map(({ id }) => id)).toEqual(exerciseLibrary.map(({ id }) => id));
+
+    const firstRoot = createExerciseDocument();
+    firstRoot.id = "first-root";
+    const firstChild = createExerciseDocument();
+    firstChild.id = "first-child";
+    firstChild.prerequisites = [firstRoot.id];
+    const firstGrandchild = createExerciseDocument();
+    firstGrandchild.id = "first-grandchild";
+    firstGrandchild.prerequisites = [firstChild.id];
+    const secondRoot = createExerciseDocument();
+    secondRoot.id = "second-root";
+    const secondChild = createExerciseDocument();
+    secondChild.id = "second-child";
+    secondChild.prerequisites = [secondRoot.id];
+
+    expect(parseExerciseLibrary([firstGrandchild, secondChild, firstRoot, secondRoot, firstChild]).map(({ id }) => id)).toEqual([
+      "first-grandchild",
+      "second-child",
+      "first-root",
+      "second-root",
+      "first-child",
+    ]);
+  });
+
   it("rejects duplicate canonical IDs even when revisions differ", () => {
     const first = createExerciseDocument();
     const second = createExerciseDocument();
@@ -332,7 +366,52 @@ describe("parseExerciseLibrary", () => {
     expect(() => parseExerciseLibrary([first, second])).toThrow(/duplicates exercise ID/);
   });
 
+  it("rejects unknown prerequisite IDs at their library positions", () => {
+    const document = createExerciseDocument();
+    document.prerequisites = ["missing-exercise"];
+
+    expectLibraryIssue([document], "library[0].prerequisites[0]", 'references unknown exercise ID "missing-exercise"');
+  });
+
+  it("rejects a self prerequisite as a cycle", () => {
+    const document = createExerciseDocument();
+    document.prerequisites = [document.id];
+
+    expectLibraryIssue([document], "library[0].prerequisites[0]", 'creates a prerequisite cycle: "test-exercise" -> "test-exercise"');
+  });
+
+  it("rejects transitive prerequisite cycles at the edge that closes the cycle", () => {
+    const first = createExerciseDocument();
+    first.id = "exercise-a";
+    first.prerequisites = ["exercise-b"];
+    const second = createExerciseDocument();
+    second.id = "exercise-b";
+    second.prerequisites = ["exercise-c"];
+    const third = createExerciseDocument();
+    third.id = "exercise-c";
+    third.prerequisites = ["exercise-a"];
+
+    expectLibraryIssue(
+      [first, second, third],
+      "library[2].prerequisites[0]",
+      'creates a prerequisite cycle: "exercise-a" -> "exercise-b" -> "exercise-c" -> "exercise-a"',
+    );
+  });
+
   it("rejects a non-array library", () => {
     expect(() => parseExerciseLibrary({})).toThrow(ExerciseValidationError);
   });
 });
+
+function expectLibraryIssue(library: unknown, path: string, message: string): void {
+  try {
+    parseExerciseLibrary(library);
+    throw new Error("Expected exercise library validation to fail");
+  } catch (error) {
+    if (!(error instanceof ExerciseValidationError)) {
+      throw error;
+    }
+
+    expect(error.issues).toContainEqual({ path, message });
+  }
+}

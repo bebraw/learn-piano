@@ -12,14 +12,15 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - `GET /practice` returns the default right-hand ascent. `GET /practice?exercise=<id>` returns the selected canonical exercise, while an unknown, empty, or duplicated exercise parameter returns `404` instead of silently changing the learner's task.
 - The home and practice pages render the complete exercise chooser on the server. The selected title, instructions, expected notes, pitch-only staff guide, chooser, and basic limitation text remain meaningful without JavaScript; connecting input, live highlighting, evaluation, completion, and local history are progressive enhancements.
 - Every current exercise receives a supported inline-SVG pitch guide derived from its canonical expected events: treble for the single-hand right-hand C4-G4 natural-note range and bass for the single-hand left-hand C3-G3 natural-note range. Adjacent ordered note text remains the semantic fallback, and the guide adds no duration, rhythm, or staff-reading evidence.
-- Enhanced mode provides input selection and connection state, accepted/next/remaining pitch-guide state, a clear five-key note display, the next expected note, brief event feedback, restart, completion feedback, and a local history summary. Timed studies also expose a 40–100 BPM control with 60 BPM default, a four-beat 4/4 count-in, quarter-note click guidance, and deterministic on-pulse, early, or late feedback. The pitch guide, next-note cue, keyboard, and feedback read as one primary practice stage; input setup, exercise selection, history, and scope guidance sit in a secondary rail that follows the stage when the layout stacks.
+- Enhanced mode provides input selection and connection state, accepted/next/remaining pitch-guide state, a clear five-key note display, the next expected note, brief event feedback, restart, completion feedback, a local history summary, and one explained advisory study suggestion after completion. Timed studies also expose a 40–100 BPM control with 60 BPM default, a four-beat 4/4 count-in, quarter-note click guidance, and deterministic on-pulse, early, or late feedback. The pitch guide, next-note cue, keyboard, and feedback read as one primary practice stage; input setup, exercise selection, history, and scope guidance sit in a secondary rail that follows the stage when the layout stacks.
 - The mock adapter supports the complete browser flow without physical hardware. Supported desktop browsers may use Web MIDI and the iPadOS 17-or-later wrapper may use CoreMIDI through `NativeMidiInputPort`, all through the same session boundary.
 - Only completed attempts are persisted in this slice. History is filtered by exercise ID and revision; an incomplete, restarted, disconnected, or abandoned attempt does not appear as a completed history item. A timed completion may include its fixed tempo, four interval classifications, and mean absolute error while existing untimed records omit timing.
 - Native MIDI completions use the `native-midi` adapter kind; they do not have a separate evaluator, completion rule, or history model.
+- The completion UI suggests an eligible uncompleted direct dependent first, then an eligible uncompleted exercise in canonical library order. When every current exercise has exact-revision completion evidence, it suggests the least recently practiced review. The learner can always ignore it and use the complete exercise chooser.
 
 ### Future Scope
 
-- Full score notation, note-duration and velocity evaluation, rests, eighth notes, syncopation, chords, hands-together coordination, adaptive tempo, pause/resume, richer history, and recommendations belong to later slices.
+- Full score notation, note-duration and velocity evaluation, rests, eighth notes, syncopation, chords, hands-together coordination, adaptive tempo, pause/resume, richer history, and quality-sensitive or goal-sensitive recommendations belong to later slices.
 - Cloud synchronization, authentication, social comparison, streaks, and remote analytics are not implied by local history.
 - Native release distribution, signing automation, device provisioning, and native-only practice features are not implied by the thin MIDI wrapper.
 
@@ -42,6 +43,8 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - **Restart rule:** Restart stops active click guidance, creates a clean evaluator and timing anchor for the same exercise revision and selected tempo, clears transient feedback and progress, and keeps already completed history. Restarting an incomplete attempt does not persist it as completed.
 - **Disconnect rule:** Losing the active input during an in-progress attempt marks it interrupted. The learner is told to reconnect and restart; events after the disconnect cannot complete that attempt.
 - **Completion rule:** The attempt completes once the evaluator accepts every expected event in order. Additional input does not mutate the completed result.
+- **Recommendation boundary:** The controller requests one deterministic recommendation only from the validated canonical library and completed-attempt identity, revision, and recency. Pitch-error counts, timing classifications, tempo, input kind, and other performance-quality fields do not affect this version. The result never changes evaluator state or exercise availability.
+- **Recommendation timing:** The controller loads retained exact-revision records for the library independently from the selected exercise's history summary. On completion it includes the new in-memory record immediately, before persistence settles; after a successful save it reloads retained history and recalculates. The completion UI shows the canonical suggestion and its reason, or the unrestricted exercise library when recommendation is unavailable.
 - **Persistence boundary:** A local attempt repository isolates browser storage from the session controller. A versioned `localStorage` envelope is the first-slice backing store for compact completed-attempt summaries; IndexedDB remains a migration option if the data model outgrows synchronous key-value storage.
 - **Completed-attempt record:** The stored record includes a unique attempt ID, exercise ID and revision, wall-clock start and completion times for history, input adapter kind, completion status, and deterministic feedback/error counts. A timed completion also includes an optional summary with tempo, assessed intervals, on-pulse, early, and late counts, and mean absolute error in milliseconds. Raw MIDI messages, per-note traces, audio times, and platform device objects are not required.
 - **Native attempt identity:** A session driven through `NativeMidiInputPort` records `native-midi` as its adapter kind. It uses the same local attempt repository and exercise/revision scoping as every other completion.
@@ -54,6 +57,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - The adjacent semantic note sequence names every pitch in canonical order. The inline SVG does not create a conflicting second spoken sequence, and next-note meaning remains available in text rather than colour alone.
 - The expected-note state is conveyed by text in addition to colour. The five-key display remains understandable with keyboard navigation and common assistive technology.
 - Connection, feedback, completion, persistence failure, and history regions use appropriate status semantics without repeatedly interrupting the learner.
+- The suggested exercise and its reason are expressed as text in the completion region. Unavailable recommendation state falls back to a plainly labelled exercise-library action, and no exercise link is disabled by recommendation state.
 - Tempo, count-in, and click state are conveyed in text as well as sound. Starting audio remains an explicit learner action compatible with browser audio-permission rules.
 - Controls have visible text labels and usable focus states. No essential action depends only on pointer input.
 
@@ -70,6 +74,9 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - The ±0.2-beat timing window scales with the selected BPM. The window is 300 ms at 40 BPM, 200 ms at 60 BPM, and 120 ms at 100 BPM.
 - Rapid restart invalidates callbacks from the old attempt so a late event cannot mutate the new one.
 - Storage unavailability, quota failure, or a corrupt stored record does not prevent practice or erase other valid records. Completion remains visible and the learner is told that history could not be saved.
+- If the initial cross-library history read fails, recommendation remains unavailable and the completion action opens the full library. If saving a just-completed attempt fails, the current page may retain the optimistic suggestion from that in-memory completion while history reports the failure; after reload only successfully retained evidence can contribute.
+- Local retention is bounded. Once an older completion is evicted, it no longer satisfies a current prerequisite or completion fact and an earlier exercise may be suggested again without regression or penalty language.
+- A missing prerequisite reference, prerequisite cycle, or inability to resolve a canonical candidate yields no suggestion; it does not block the selected exercise or completion.
 - Multiple completion callbacks for one attempt are idempotent and create one stored record.
 - An empty history is displayed as an empty state, never as an error or fabricated zero-streak judgement.
 - Local-day counting handles midnight by deriving the summary from stored timestamps and the current local calendar day at render time.
@@ -89,6 +96,8 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - Do not change tempo adaptively or move the evaluation anchor to excuse an error or accumulated drift.
 - Do not persist a restart, disconnect, or abandoned attempt as a successful completion.
 - Do not block practice because local history storage failed.
+- Do not turn recommendation into an unlock, lock, required next step, mastery claim, or replacement for the complete chooser.
+- Do not choose the next study from rendered card position, a circular “next” link, storage iteration order, error totals, timing quality, tempo, or velocity.
 - Do not add cloud storage, identity, telemetry, streak pressure, punitive scoring, or celebratory game mechanics to this slice.
 - Do not imply that the app replaces a teacher or diagnoses posture, tension, fingering, or strength.
 - Do not infer written duration, beat placement, articulation, dynamics, or staff-reading mastery from the pitch-only guide or its marker spacing.
@@ -114,6 +123,8 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - [ ] One completed-attempt record is stored locally and appears in the history summary.
 - [ ] Timed completion stores one internally consistent optional timing summary while untimed and older records remain valid without it.
 - [ ] Empty and unavailable history states are handled explicitly.
+- [ ] Completion shows one deterministic, explained advisory suggestion from exact-current-revision retained history plus the current in-memory completion, or an exercise-library fallback when recommendation is unavailable.
+- [ ] Recommendation does not restrict exercise choice or use pitch-error and timing-quality fields in this version.
 - [ ] The spec is updated in the same change set when session or persistence behavior changes.
 - [ ] Unit and Playwright tests cover critical lifecycle behavior.
 - [ ] Native completions are persisted with the `native-midi` adapter kind through the existing repository.
@@ -136,6 +147,8 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - Device disconnect must make completion impossible for the interrupted attempt.
 - A completed attempt must be persisted at most once.
 - Storage failure must not convert a completed performance into a failed musical attempt.
+- Recommendation failure must not hide, disable, or reorder the complete exercise chooser, and recommendation must not change evaluator or completion results.
+- Only exact-current-revision retained completions and the current unsaved completion may satisfy recommendation prerequisites; bounded eviction and reload after a failed save remove unavailable evidence without punitive language.
 - History must remain local to the browser and scoped by exercise ID and revision unless a later accepted architecture decision changes that contract.
 - Mock, Web MIDI, and native MIDI input must share the same session and evaluation path.
 - The presence or absence of a WKWebView bridge must not change exercise identity, evaluator results, or browser-only availability.
@@ -146,10 +159,10 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 
 ### Verification
 
-- **Unit tests:** Session state transitions, note-off filtering, restart invalidation, disconnect interruption, completion idempotence, tempo boundaries, four-beat count-in scheduling, audio cleanup, fixed MIDI timing anchor, optional timing-summary validation, local-day summary, empty history, corrupt-record isolation, persistence failure, and pitch-guide state projection.
+- **Unit tests:** Session state transitions, note-off filtering, restart invalidation, disconnect interruption, completion idempotence, tempo boundaries, four-beat count-in scheduling, audio cleanup, fixed MIDI timing anchor, optional timing-summary validation, local-day summary, empty history, corrupt-record isolation, persistence failure, pitch-guide state projection, optimistic post-completion recommendation, retained-history refresh, and unavailable recommendation fallback.
 - **Integration tests:** Exercise-library selection, supported staff rendering, canonical timed and untimed exercises, evaluator, audio guidance, mock port, and attempt repository cooperate without DOM-derived data, notation-derived identity, or cross-clock comparison; unknown IDs fail closed.
 - **Native adapter tests:** Validated native replies, state changes, and normalized events drive the same controller; malformed payloads, stale callbacks, disconnect, and disposal cannot advance or complete an attempt.
-- **Browser tests:** Playwright opens the default, a left-hand untimed exercise, and a timed exercise; verifies server-rendered pitch guides, ordered text, instructions, and chooser behavior; selects mock input; observes matching staff and keyboard progress; changes tempo; starts the count-in; plays canonical timestamped fixtures; observes pitch and timing feedback; completes; reloads; and sees history only for the selected exercise revision.
+- **Browser tests:** Playwright opens the default, a left-hand untimed exercise, and a timed exercise; verifies server-rendered pitch guides, ordered text, instructions, and chooser behavior; selects mock input; observes matching staff and keyboard progress; changes tempo; starts the count-in; plays canonical timestamped fixtures; observes pitch and timing feedback; completes; sees the explained direct-dependent suggestion while the full chooser remains available; reloads; and sees only successfully retained exact-revision history.
 - **Coverage target:** Every session transition and persistence failure branch remains exercised; snapshots alone are insufficient evidence.
 
 ### Scenarios
@@ -218,7 +231,19 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 
 - Given: the sequence is complete but browser storage rejects the write
 - When: the session saves the attempt
-- Then: completion feedback remains visible and a separate message says that history was not saved
+- Then: completion feedback remains visible, a separate message says that history was not saved, and any in-session suggestion may use the transient completion without implying it was retained
+
+**Scenario: Suggest the next study optimistically**
+
+- Given: retained history is available and the learner has just completed the selected exercise
+- When: its completed-attempt save is still pending
+- Then: the completion UI may use that in-memory exact-revision record to show the first eligible direct dependent and explain that it builds on the completed study
+
+**Scenario: Recommendation evidence is unavailable**
+
+- Given: cross-library history cannot be read or the prerequisite graph is invalid
+- When: the learner completes an exercise
+- Then: musical completion remains valid, no study is guessed, and the completion action opens the unrestricted exercise library
 
 **Scenario: Complete through native MIDI**
 

@@ -27,6 +27,7 @@ Use this file for global constraints. Use feature specs under `specs/` for domai
 - Keep live performance evaluation deterministic and local. The same canonical exercise and normalized MIDI sequence must always produce the same progress and feedback.
 - For timed exercises, derive expected intervals from canonical beat offsets and the attempt's fixed tempo, anchor them to the first accepted correct note's normalized MIDI timestamp, and keep later pitch errors from moving that anchor. Web Audio count-ins and clicks are guidance only and must never become the evaluation clock.
 - Keep completed-attempt history local-first behind `AttemptRepository`. Storage failure must not block or redefine musical completion.
+- Keep study recommendations deterministic, local, explainable, and advisory. Derive them from the validated canonical library, exact-current-revision retained attempts, and the current session's just-completed attempt; invalid prerequisite graphs or an initial history-read failure yield a neutral library fallback. Recommendations must never mutate evaluation, claim mastery, or restrict exercise choice.
 - Keep protected repertoire names as goal and competency metadata unless lawful source material is deliberately added with explicit rights metadata.
 
 ## Tooling Baseline

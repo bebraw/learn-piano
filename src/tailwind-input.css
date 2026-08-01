@@ -1366,6 +1366,33 @@
     line-height: 1.45;
   }
 
+  .next-study-recommendation {
+    max-width: 44rem;
+    margin-top: 0.65rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--color-app-line-inverse);
+  }
+
+  .next-study-kicker {
+    color: rgb(223 243 107 / 0.72);
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .next-study-copy {
+    margin-top: 0.18rem;
+    color: rgb(255 253 247 / 0.58);
+    font-size: 0.72rem;
+    line-height: 1.5;
+  }
+
+  .next-study-copy strong {
+    color: var(--color-app-paper);
+    font-weight: 750;
+  }
+
   .feedback-actions {
     display: flex;
     flex: none;

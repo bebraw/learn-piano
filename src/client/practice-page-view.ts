@@ -64,7 +64,12 @@ export interface PracticePageElements {
   readonly historyCount: ElementLike;
   readonly historyDetail: ElementLike;
   readonly keyboardHelp: ElementLike;
+  readonly nextStudyRecommendation: ElementLike;
+  readonly nextStudyKicker: ElementLike;
+  readonly nextStudyTitle: ElementLike;
+  readonly nextStudyReason: ElementLike;
   readonly nextExerciseLink: ElementLike;
+  readonly nextExerciseLabel: ElementLike;
   readonly keys: readonly PracticeKeyElement[];
   readonly staffNotes: readonly PracticeStaffNoteElement[];
 }
@@ -205,6 +210,7 @@ function renderSession(elements: PracticePageElements, snapshot: PracticeSnapsho
   elements.practiceStage.setAttribute("data-session-status", snapshot.sessionStatus);
   elements.feedbackMessage.setAttribute("data-session-status", snapshot.sessionStatus);
   elements.nextExerciseLink.hidden = snapshot.sessionStatus !== "completed";
+  renderRecommendation(elements, snapshot);
 
   for (const [index, event] of snapshot.exercise.expectedEvents.entries()) {
     const state = practiceNoteState(snapshot, index);
@@ -243,6 +249,40 @@ function renderSession(elements: PracticePageElements, snapshot: PracticeSnapsho
 
   elements.persistenceMessage.hidden = snapshot.persistenceMessage === null;
   setTextContent(elements.persistenceMessage, snapshot.persistenceMessage);
+}
+
+function renderRecommendation(elements: PracticePageElements, snapshot: PracticeSnapshot): void {
+  const recommendation = snapshot.sessionStatus === "completed" ? snapshot.recommendation : null;
+  elements.nextStudyRecommendation.hidden = recommendation === null;
+
+  if (recommendation === null) {
+    elements.nextExerciseLink.setAttribute("href", "/");
+    setTextContent(elements.nextExerciseLabel, "Exercise library");
+    setTextContent(elements.nextStudyTitle, null);
+    setTextContent(elements.nextStudyReason, null);
+    return;
+  }
+
+  elements.nextExerciseLink.setAttribute("href", `/practice?exercise=${encodeURIComponent(recommendation.exercise.id)}`);
+  setTextContent(elements.nextExerciseLabel, recommendation.kind === "review" ? "Review study" : "Open next study");
+  setTextContent(elements.nextStudyKicker, recommendation.kind === "review" ? "Suggested review" : "Suggested next");
+  setTextContent(elements.nextStudyTitle, recommendation.exercise.title);
+  setTextContent(elements.nextStudyReason, recommendationReason(recommendation));
+}
+
+function recommendationReason(recommendation: NonNullable<PracticeSnapshot["recommendation"]>): string {
+  switch (recommendation.reason.kind) {
+    case "direct-dependent":
+      return "Builds directly on the study you just completed.";
+    case "prerequisites-practiced": {
+      const count = recommendation.reason.prerequisiteExerciseIds.length;
+      return `You've completed ${count === 1 ? "its prerequisite study" : "its prerequisite studies"} in this browser.`;
+    }
+    case "prerequisite-free":
+      return "A new foundation study with no prerequisites.";
+    case "least-recently-practiced":
+      return "You've completed every current study; this one was practiced least recently.";
+  }
 }
 
 function practiceNoteState(snapshot: PracticeSnapshot, index: number): "accepted" | "expected" | "remaining" {

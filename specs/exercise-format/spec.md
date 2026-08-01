@@ -17,8 +17,9 @@ Exercises need one canonical representation so instructions, visual guidance, ev
   - `step-skip-c-major-left-hand`: C3-E3-D3-F3-G3
   - `steady-quarter-c-major-right-hand`: C4-D4-E4-F4-G4 at quarter-note beat offsets 0–4
   - `steady-quarter-c-major-left-hand`: C3-D3-E3-F3-G3 at quarter-note beat offsets 0–4
-- Every current exercise contains exactly five distinct pitches and remains compatible with the five-key practice view. The original six use `untimed-ordered-notes`; the two steady-quarter studies use `timed-ordered-notes`.
+- Every current exercise contains exactly five distinct pitches and remains compatible with the five-key practice view. The six pitch-pattern studies use `untimed-ordered-notes`; the two steady-quarter studies use `timed-ordered-notes`.
 - The original right-hand ascent remains the default so existing links and attempt identity stay stable. The library API exposes `exerciseLibrary`, `defaultExercise`, `DEFAULT_EXERCISE_ID`, and nullable lookup by stable ID.
+- Canonical library order is deterministic recommendation policy: it resolves candidate and equal-recency ties, but it is not exercise identity and must not be inferred from rendered card or storage order.
 - Each exercise has learner-facing title and instructions, beginner difficulty, explicit hand and prerequisite metadata, curriculum tags, and source metadata identifying it as original project material.
 - Titles name the assigned hand consistently. Instructions offer concise conventional C-position fingering as optional learner guidance; MIDI evaluation checks only the canonical pitch order and cannot verify which fingers were used.
 - Each steady-quarter exercise requires the matching untimed ascent, belongs to the `rhythm-and-coordination.steady-quarter-notes` curriculum competency, and defines a 40–100 BPM range with 60 BPM default, 4/4 meter, quarter-note beat unit, four-beat count-in, and ±0.2-beat timing window.
@@ -36,7 +37,7 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - **Canonical identity:** `id` is a stable opaque identifier for the musical learning task. `revision` is a positive integer that changes when behavior, expected events, or learning intent changes. The pair `(id, revision)` identifies the exact exercise attempted.
 - **Schema identity:** `schemaVersion` is a positive integer describing the document shape. It is independent of the exercise revision.
 - **Core document:** A version-1 exercise contains its identity, title, plain-language instructions, evaluation mode, ordered expected events, difficulty, hand metadata, source metadata, prerequisites, curriculum tags, and repertoire-goal tags. A timed exercise also contains exercise-level timing metadata, while each of its expected events declares a beat offset. Fields with no values use explicit empty collections or are omitted according to the typed schema; they are never inferred from rendered DOM.
-- **Library boundary:** Each document is validated when constructed, and the complete library is validated again for duplicate canonical IDs before export. Selection is by stable ID rather than title or array position; unknown IDs resolve to `null` so callers can choose an explicit fallback.
+- **Library boundary:** Each document is validated when constructed, and the complete library is validated again for duplicate canonical IDs, missing prerequisite references, and prerequisite cycles before export. Selection is by stable ID rather than title or array position; unknown IDs resolve to `null` so callers can choose an explicit fallback. The exported collection order is the deliberate deterministic tie-break for advisory study selection.
 - **Expected event identity:** Each expected event has an ID unique within the exercise. A version-1 event identifies an individual MIDI note and its hand. Event order in the canonical list defines pitch order. `beatOffset` is absent for untimed events and required for timed events; it measures canonical beat-unit distance from the exercise's first event rather than an audio or wall-clock timestamp.
 - **Pitch convention:** MIDI note number is authoritative for machine comparison. Display labels use scientific pitch notation with middle C represented as C4/MIDI 60.
 - **Evaluation mode:** Each exercise explicitly declares `untimed-ordered-notes` or `timed-ordered-notes`. Untimed mode rejects timing metadata and beat offsets. Timed mode requires `timing`, a zero beat offset on the first event, and finite, non-negative, strictly increasing offsets thereafter. Evaluators reject unsupported modes or invalid mode-specific combinations rather than guessing semantics.
@@ -55,6 +56,7 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - A breaking document-shape change increments `schemaVersion`; readers either migrate it explicitly or report it as unsupported.
 - Existing attempt records keep their original ID and revision and are not rewritten to a newer exercise revision.
 - IDs are not derived from display titles or array positions and are never reused for a different learning task.
+- Reordering otherwise unchanged library entries changes recommendation priority but not an exercise's musical task, so it does not increment exercise revisions. The policy change still requires recommendation-spec and tie-break test updates.
 
 ### Edge Cases
 
@@ -68,11 +70,13 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - Timed exercises reject missing or non-increasing beat offsets, a non-zero first offset, invalid or inverted tempo bounds, a default tempo outside the declared range, invalid meter/count-in values, and a negative or non-finite timing window.
 - A missing optional repertoire goal never prevents an otherwise valid original exercise from loading.
 - An exercise outside the pitch-guide adapter's supported range, spelling, or hand subset remains a valid canonical exercise even though that adapter declines to draw it.
+- A library with an unknown prerequisite reference or any direct or transitive prerequisite cycle is invalid. Advisory recommendation also fails neutral if separately supplied malformed graph data reaches its boundary.
 
 ### Anti-Patterns
 
 - Do not hard-code any canonical sequence in a view, controller, fixture runner, or evaluator.
 - Do not use visible labels, DOM element IDs, titles, or curriculum positions as canonical exercise identity.
+- Do not derive recommendation priority from rendered exercise order, persisted record order, or object-key iteration; use the validated canonical library order explicitly.
 - Do not let persisted attempts refer only to "the current exercise" without its ID and revision.
 - Do not encode future chords or rhythms through undocumented array conventions.
 - Do not encode audible click times, MIDI timestamps, or a selected attempt tempo in the canonical exercise; it defines beat-relative intent and allowed tempo only.
@@ -92,6 +96,7 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - [ ] Both timed studies define beat offsets 0–4, 40–100 BPM with 60 BPM default, 4/4 quarter-note pulse, four-beat count-in, and ±0.2-beat tolerance.
 - [ ] The current pitch-guide consumer renders every current canonical sequence from existing event fields while leaving schema version 1 and all exercise revisions unchanged.
 - [ ] Library lookup returns the matching canonical object for a known stable ID and `null` for an unknown ID.
+- [ ] Library validation rejects missing prerequisite references and prerequisite cycles, and canonical order is protected as the recommendation tie-break.
 - [ ] Schema version, stable exercise ID, and exercise revision have distinct documented meanings.
 - [ ] Invalid or unsupported exercise data fails before a practice session begins.
 - [ ] Source and rights metadata exists for every exercise.
@@ -104,6 +109,7 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - All consumers must continue to use the canonical `(id, revision)` pair.
 - C4 must remain MIDI note 60 and C3 MIDI note 48 throughout domain, display, fixture, and evaluation boundaries.
 - Reordering rendered keys must not change the canonical expected sequence.
+- Reordering rendered exercise cards or stored attempt records must not change recommendation priority; changing canonical library order is an explicit policy change.
 - Untimed exercises must remain independent of tempo, duration, inter-event spacing, and velocity.
 - Timed exercises must derive interval targets from canonical beat offsets and a selected tempo inside the declared range; they must not contain runtime audio or MIDI timestamps.
 - The steady-quarter studies must remain hands-separate, single-note, quarter-note material unless a later revision and updated contract explicitly broaden them.
@@ -117,7 +123,7 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 ### Verification
 
 - **Schema tests:** Accept every canonical exercise; reject unknown versions, invalid modes, empty sequences, duplicate IDs, invalid hands, invalid revisions, out-of-range MIDI notes, mode/timing mismatches, invalid tempo ranges, and missing or non-increasing timed beat offsets.
-- **Library tests:** Protect stable identities and default selection, validate all source metadata and prerequisites, require five distinct pitches per exercise, and prove left-hand, descending, step-skip, and steady-quarter coverage.
+- **Library tests:** Protect stable identities, default selection, canonical order, valid prerequisite references, and acyclic prerequisites; validate all source metadata, require five distinct pitches per exercise, and prove left-hand, descending, step-skip, and steady-quarter coverage.
 - **Consumer contract tests:** Rendered guidance and evaluator expectations are derived from the same fixture and identity.
 - **Notation consumer tests:** Protect natural-note pitch mapping, current treble and bass ranges, canonical event order and identity, and explicit unsupported results without schema mutation.
 - **Versioning tests:** A stored attempt continues to resolve its original ID/revision after a newer revision is added.
@@ -196,3 +202,9 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - Given: an author changes the expected note order
 - When: the updated exercise is published
 - Then: its revision increments while older attempts retain the previous revision
+
+**Scenario: Change recommendation priority without changing an exercise**
+
+- Given: two unchanged eligible exercises exchange positions in the canonical library
+- When: recommendation resolves a candidate tie
+- Then: the new canonical order determines the suggestion, while both exercise IDs and revisions remain unchanged and rendered or storage order remains irrelevant

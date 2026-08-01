@@ -54,8 +54,6 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
     .join("");
   const staffPitchGuide = renderStaffPitchGuide(exercise);
   const exerciseCatalog = renderExerciseCatalog(exercise, exerciseLibrary);
-  const selectedIndex = exerciseLibrary.findIndex((candidate) => candidate.id === exercise.id);
-  const nextExercise = exerciseLibrary[(selectedIndex + 1) % exerciseLibrary.length] ?? exercise;
 
   return `<!doctype html>
 <html lang="en">
@@ -169,10 +167,14 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
                 <p class="app-eyebrow app-eyebrow-inverse">Live coaching</p>
                 <p id="feedback-message" class="feedback-message" data-session-status="ready" role="status" aria-live="polite">Begin when your input is connected. ${escapeHtml(formatMidiNote(firstEvent.noteNumber))} is first.</p>
                 <p id="persistence-message" class="persistence-message" role="status" aria-live="polite" hidden></p>
+                <div class="next-study-recommendation" id="next-study-recommendation" hidden>
+                  <p class="next-study-kicker" id="next-study-kicker">Suggested next</p>
+                  <p class="next-study-copy"><strong id="next-study-title"></strong> <span id="next-study-reason"></span></p>
+                </div>
               </div>
               <div class="feedback-actions">
                 <button class="app-button app-button-quiet" id="restart-exercise" type="button" data-enhancement hidden>Restart</button>
-                <a class="app-button app-button-cue" id="next-exercise" href="${escapeHtml(exercisePracticeHref(nextExercise))}" hidden>Next study <span aria-hidden="true">→</span></a>
+                <a class="app-button app-button-cue" id="next-exercise" href="/" hidden><span id="next-exercise-label">Exercise library</span> <span aria-hidden="true">→</span></a>
               </div>
             </div>
           </section>

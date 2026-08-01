@@ -1,4 +1,5 @@
 import type { PracticePulseConfig, PracticePulsePort, PracticePulseState } from "../audio/practice-pulse-port.js";
+import { recommendNextStudy, type StudyRecommendation } from "../curriculum/study-recommendation.js";
 import { createEvaluationState, evaluateMidiEvent, type EvaluationFeedback, type EvaluationState } from "../exercises/evaluator.js";
 import type { Exercise } from "../exercises/types.js";
 import type { MidiInputPort } from "../midi/midi-input-port.js";
@@ -8,6 +9,7 @@ import { summarizePracticeHistory, type PracticeHistorySummary } from "./persist
 
 export type PracticeSessionStatus = "ready" | "in-progress" | "completed" | "interrupted";
 export type PracticeHistoryStatus = "loading" | "ready" | "unavailable";
+export type PracticeRecommendationStatus = "loading" | "ready" | "unavailable";
 
 export interface PracticeSnapshot {
   readonly exercise: Exercise;
@@ -22,6 +24,8 @@ export interface PracticeSnapshot {
   readonly activeNoteNumbers: readonly number[];
   readonly historyStatus: PracticeHistoryStatus;
   readonly history: PracticeHistorySummary;
+  readonly recommendationStatus: PracticeRecommendationStatus;
+  readonly recommendation: StudyRecommendation | null;
   readonly persistenceMessage: string | null;
 }
 
@@ -34,6 +38,7 @@ export interface PracticeControllerOptions {
   readonly monotonicNow?: () => number;
   readonly createAttemptId?: () => string;
   readonly createPulse?: (config: PracticePulseConfig) => PracticePulsePort;
+  readonly exerciseLibrary?: readonly Exercise[];
 }
 
 const EMPTY_HISTORY: PracticeHistorySummary = {
@@ -47,6 +52,7 @@ export class PracticeController {
   private readonly monotonicNow: () => number;
   private readonly createAttemptId: () => string;
   private readonly createPulse: ((config: PracticePulseConfig) => PracticePulsePort) | undefined;
+  private readonly exerciseLibrary: readonly Exercise[];
   private inputKind: AttemptInputKind = "mock";
   private activePort: MidiInputPort;
   private inputs: readonly MidiInputDevice[] = [];
@@ -61,6 +67,9 @@ export class PracticeController {
   private historyStatus: PracticeHistoryStatus = "loading";
   private history = EMPTY_HISTORY;
   private historyRecords: readonly CompletedAttemptRecord[] = [];
+  private recommendationStatus: PracticeRecommendationStatus = "loading";
+  private recommendationRecords: readonly CompletedAttemptRecord[] = [];
+  private latestCompletedAttempt: CompletedAttemptRecord | null = null;
   private persistenceMessage: string | null = null;
   private attemptStartedAt: Date | null = null;
   private latestEventTimestamp: number | null = null;
@@ -83,6 +92,7 @@ export class PracticeController {
     this.monotonicNow = options.monotonicNow ?? defaultMonotonicNow;
     this.createAttemptId = options.createAttemptId ?? (() => globalThis.crypto.randomUUID());
     this.createPulse = options.createPulse;
+    this.exerciseLibrary = options.exerciseLibrary ?? [exercise];
     this.activePort = ports.mock;
     this.connection = this.activePort.getState();
     this.tempoBpm = exercise.timing?.defaultBpm ?? null;
@@ -96,11 +106,15 @@ export class PracticeController {
     this.subscribeToPulse();
     this.render();
 
-    await Promise.all([this.refreshInputs(), this.loadHistory()]);
+    await Promise.all([this.refreshInputs(), this.loadHistory(), this.loadRecommendationHistory()]);
   }
 
   public getSnapshot(): PracticeSnapshot {
     const history = this.historyStatus === "ready" ? summarizePracticeHistory(this.historyRecords, this.now()) : this.history;
+    const recommendation =
+      this.sessionStatus === "completed" && this.recommendationStatus === "ready"
+        ? recommendNextStudy(this.exerciseLibrary, this.recommendationEvidence(), this.exercise.id)
+        : null;
     return {
       exercise: this.exercise,
       inputKind: this.inputKind,
@@ -114,6 +128,8 @@ export class PracticeController {
       activeNoteNumbers: [...this.activeNoteNumbers],
       historyStatus: this.historyStatus,
       history,
+      recommendationStatus: this.recommendationStatus,
+      recommendation,
       persistenceMessage: this.persistenceMessage,
     };
   }
@@ -444,11 +460,12 @@ export class PracticeController {
     };
 
     this.attemptStartedAt = null;
+    this.latestCompletedAttempt = record;
     this.persistenceWork = this.persistenceWork.then(async () => {
       try {
         await this.attempts.save(record);
         this.persistenceMessage = null;
-        await this.loadHistory();
+        await Promise.all([this.loadHistory(), this.loadRecommendationHistory()]);
       } catch (error: unknown) {
         this.historyStatus = "unavailable";
         this.persistenceMessage = describeError(error, "The sequence is complete, but history could not be saved in this browser.");
@@ -469,6 +486,26 @@ export class PracticeController {
       this.historyStatus = "unavailable";
     }
     this.render();
+  }
+
+  private async loadRecommendationHistory(): Promise<void> {
+    try {
+      const records = await Promise.all(this.exerciseLibrary.map((exercise) => this.attempts.list(exercise.id, exercise.revision)));
+      this.recommendationRecords = records.flat();
+      this.recommendationStatus = "ready";
+    } catch {
+      this.recommendationRecords = [];
+      this.recommendationStatus = "unavailable";
+    }
+    this.render();
+  }
+
+  private recommendationEvidence(): readonly CompletedAttemptRecord[] {
+    const latest = this.latestCompletedAttempt;
+    if (latest === null || this.recommendationRecords.some((record) => record.id === latest.id)) {
+      return this.recommendationRecords;
+    }
+    return [latest, ...this.recommendationRecords];
   }
 
   private render(): void {

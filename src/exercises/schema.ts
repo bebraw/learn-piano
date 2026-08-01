@@ -323,9 +323,11 @@ export function parseExerciseLibrary(value: unknown): readonly Exercise[] {
   const exercises = value.map((exercise) => parseExercise(exercise));
   const exerciseIds = new Set<string>();
   const issues: ExerciseValidationIssue[] = [];
+  let hasDuplicateIds = false;
 
   for (const [index, exercise] of exercises.entries()) {
     if (exerciseIds.has(exercise.id)) {
+      hasDuplicateIds = true;
       issues.push({
         path: `library[${index}].id`,
         message: `duplicates exercise ID ${JSON.stringify(exercise.id)}`,
@@ -334,9 +336,69 @@ export function parseExerciseLibrary(value: unknown): readonly Exercise[] {
     exerciseIds.add(exercise.id);
   }
 
+  for (const [exerciseIndex, exercise] of exercises.entries()) {
+    for (const [prerequisiteIndex, prerequisiteId] of exercise.prerequisites.entries()) {
+      if (!exerciseIds.has(prerequisiteId)) {
+        issues.push({
+          path: `library[${exerciseIndex}].prerequisites[${prerequisiteIndex}]`,
+          message: `references unknown exercise ID ${JSON.stringify(prerequisiteId)}`,
+        });
+      }
+    }
+  }
+
+  if (!hasDuplicateIds) {
+    issues.push(...findPrerequisiteCycleIssues(exercises));
+  }
+
   if (issues.length > 0) {
     throw new ExerciseValidationError(issues);
   }
 
   return exercises;
+}
+
+function findPrerequisiteCycleIssues(exercises: readonly Exercise[]): readonly ExerciseValidationIssue[] {
+  const exerciseIndexesById = new Map(exercises.map((exercise, index) => [exercise.id, index] as const));
+  const states = new Map<string, "visiting" | "visited">();
+  const activePath: string[] = [];
+  const issues: ExerciseValidationIssue[] = [];
+
+  function visit(exerciseIndex: number): void {
+    const exercise = exercises[exerciseIndex]!;
+    const exerciseId = exercise.id;
+    states.set(exerciseId, "visiting");
+    activePath.push(exerciseId);
+
+    for (const [prerequisiteIndex, prerequisiteId] of exercise.prerequisites.entries()) {
+      const prerequisiteExerciseIndex = exerciseIndexesById.get(prerequisiteId);
+      if (prerequisiteExerciseIndex === undefined) {
+        continue;
+      }
+
+      const prerequisiteState = states.get(prerequisiteId);
+      if (prerequisiteState === "visiting") {
+        const cycleStart = activePath.indexOf(prerequisiteId);
+        const cycle = [...activePath.slice(cycleStart), prerequisiteId];
+        issues.push({
+          path: `library[${exerciseIndex}].prerequisites[${prerequisiteIndex}]`,
+          message: `creates a prerequisite cycle: ${cycle.map((id) => JSON.stringify(id)).join(" -> ")}`,
+        });
+      } else if (prerequisiteState !== "visited") {
+        visit(prerequisiteExerciseIndex);
+      }
+    }
+
+    activePath.pop();
+    states.set(exerciseId, "visited");
+  }
+
+  for (const [exerciseIndex, exercise] of exercises.entries()) {
+    if (states.has(exercise.id)) {
+      continue;
+    }
+    visit(exerciseIndex);
+  }
+
+  return issues;
 }

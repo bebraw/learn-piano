@@ -4,20 +4,21 @@
 
 ### Context
 
-The learner wants practical technique, reading, rhythm, coordination, harmony, and motivating music without a game-like progression or a rigid conservatory sequence. The curriculum therefore describes four parallel tracks and the competencies that bridge beginner exercises toward long-term repertoire interests. It guides exercise metadata and future recommendations while leaving pacing and choice with the learner.
+The learner wants practical technique, reading, rhythm, coordination, harmony, and motivating music without a game-like progression or a rigid conservatory sequence. The curriculum therefore describes four parallel tracks and the competencies that bridge beginner exercises toward long-term repertoire interests. It guides exercise metadata and the current advisory recommendation while leaving pacing and choice with the learner.
 
 ### Current Scope
 
-- The curriculum is a documented domain model and metadata vocabulary, not a fully implemented planner or adaptive recommendation engine.
+- The four-track curriculum remains a documented domain model and metadata vocabulary rather than a complete planner or adaptive recommendation engine. A first deterministic advisory recommender is implemented over the canonical exercise library and local completion evidence.
 - The eight canonical beginner exercises cover right- and left-hand C-position ascents and descents, a C-E-D-F-G step-and-skip pattern for each hand, and one C-D-E-F-G steady-quarter study for each hand.
 - Ascents and descents support keyboard geography and five-finger-pattern work; step-and-skip variants add interval recognition and focused coordination-pattern practice. Every exercise also presents its supported natural pitches on a pitch-only treble or bass staff guide, giving visual exposure to the current clef positions. The steady-quarter variants add bounded evidence for a 4/4 quarter-note pulse from 40–100 BPM. Every variant remains hands-separate work.
-- The six original exercises are untimed and provide evidence only for pitch order. The two steady-quarter completions add MIDI onset-interval evidence after the first correct note anchors timing, using a ±0.2-beat tolerance. Hand assignment remains instructional and is not verified by MIDI; seeing the staff guide does not prove that the learner read it, and no result establishes note duration, velocity quality, dynamics, staff-reading mastery, fingering quality, or physical technique.
+- The six pitch-pattern exercises are untimed and provide evidence only for pitch order. The two steady-quarter completions add MIDI onset-interval evidence after the first correct note anchors timing, using a ±0.2-beat tolerance. Hand assignment remains instructional and is not verified by MIDI; seeing the staff guide does not prove that the learner read it, and no result establishes note duration, velocity quality, dynamics, staff-reading mastery, fingering quality, or physical technique.
 - Named artists, protected pieces, and game themes are represented only as future repertoire-goal metadata and competency pathways.
 - No copyrighted score, MIDI transcription, recording, lyrics, or substantial melodic reproduction is bundled by this slice.
+- After a completed practice attempt, the application suggests one next study or review from declared exercise prerequisites, exact-current-revision retained history, and the current in-memory completion. The recommendation is explained and never limits learner choice.
 
 ### Future Scope
 
-- A deterministic recommender may use completed attempts, declared prerequisites, recent difficulty, and learner choice to suggest one appropriate next exercise.
+- Later recommendation versions may use learner-selected goals, recent difficulty, repeated attempts, tempo progression, or track balance only after those evidence and explanation contracts are explicit.
 - Later slices may add original or lawfully sourced content for duration, velocity, rests, eighth notes, chords, arpeggios, syncopation, odd meters, hands-together independence, adaptive tempo, phrasing, and pedal coordination.
 - Public-domain, licensed, and user-imported material may be added only with explicit source and rights metadata. MusicXML, full notation frameworks, cloud sync, and AI coaching require separate decisions.
 
@@ -25,10 +26,10 @@ The learner wants practical technique, reading, rhythm, coordination, harmony, a
 
 - **Parallel tracks:** Curriculum nodes may belong to more than one track. Tracks organize competencies; they do not form four mutually exclusive ladders.
 - **Progression unit:** A node has a stable ID, track tags, competency tags, difficulty, prerequisite node or competency IDs, lawful-content metadata, and one or more canonical exercise IDs when exercises exist.
-- **Recommendation boundary:** Future recommendation consumes curriculum metadata and local attempt summaries. It does not modify evaluator results or invent exercises whose data is absent.
+- **Recommendation boundary:** Current recommendation consumes the ordered validated canonical exercise library, declared prerequisite IDs, retained exact-current-revision completed attempts, and an optional just-completed in-memory record. It returns one canonical exercise and structured reason, does not modify evaluator results, and does not invent absent exercises.
 - **Learner control:** Recommendations are suggestions. The learner may repeat, skip, change tracks, or choose motivating material without losing progress or being punished.
 - **Staff-reading evidence boundary:** The current pitch guide is a presentation aid, not an assessed curriculum result. MIDI completion may support the exercise's existing pitch/order and optional steady-pulse evidence but cannot reveal whether the learner used note names, keyboard cues, memory, or staff positions.
-- **Dependencies:** Curriculum references canonical exercise IDs; exercises do not depend on UI or staff position. Attempt history may inform future recommendations but curriculum remains usable without history.
+- **Dependencies:** Curriculum references canonical exercise IDs; exercises do not depend on UI or staff position. Recommendation depends on canonical exercise and typed attempt data rather than DOM or storage iteration order, and the curriculum and complete chooser remain usable without recommendation history.
 
 ### Track 1: Notes and Reading
 
@@ -90,16 +91,22 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 
 - Prerequisites express needed competencies, not mandatory time served or a single global level.
 - Difficulty is descriptive and may vary by tempo, hand assignment, rhythmic complexity, range, or coordination demand.
-- A future recommender should prefer the smallest useful next step and identify why it was suggested.
-- Recent difficulty may lead to a simpler prerequisite, hands-separate variant, or repeat; consistent success may open a modest increase in complexity.
-- Recommendations must avoid streak pressure, punitive regression, opaque scores, or claims of mastery based on one attempt.
-- If no eligible next exercise exists, the system offers a known review choice or explains the gap instead of fabricating content.
+- A prerequisite is satisfied for recommendation only by a retained completion whose exercise ID and revision match the current canonical prerequisite exactly, or by the current page's just-completed matching record.
+- After completion, prefer the first eligible uncompleted direct dependent of the just-completed exercise. Every prerequisite on the candidate must be satisfied; sharing only that prerequisite is insufficient.
+- If no direct dependent qualifies, suggest the first eligible uncompleted exercise in canonical library order. With readable empty current history, this is the first prerequisite-free exercise.
+- If all current exercises have matching completion evidence, suggest the exercise practiced least recently; canonical library order resolves equal completion timestamps.
+- Error counts, timing classifications, tempo, velocity, and input kind do not affect this first recommendation version. A completion is evidence of sequence completion, not mastery or quality.
+- Missing prerequisite references, prerequisite cycles, unavailable history, or an unresolved candidate yield no recommendation and a neutral complete-library fallback.
+- Recommendations identify why they were suggested and avoid streak pressure, punitive regression, opaque scores, unlock language, or mastery claims. The learner may always select, repeat, or skip any exercise.
 
 ### Edge Cases
 
 - Curriculum validation rejects duplicate node IDs, missing exercise references, unknown prerequisite references, and prerequisite cycles.
 - A node can appear in several tracks without being duplicated or producing conflicting progress records.
-- Missing local history yields neutral beginner or learner-selected choices, not a negative assessment.
+- Readable history with no current-revision evidence yields the first prerequisite-free beginner study; unavailable history yields the complete learner-selected library, never a negative assessment.
+- An attempt for an old exercise revision does not satisfy the current revision's prerequisite or completed status.
+- Bounded local retention may evict an old completion; once absent, it no longer contributes evidence and an earlier exercise may be suggested without describing lost mastery or regression.
+- A history read failure, missing prerequisite reference, or direct or transitive prerequisite cycle leaves recommendation unavailable while preserving the learner's selected exercise and complete chooser.
 - A repertoire goal without lawful exercise content remains visible as a goal but cannot be launched as an exercise.
 - A learner may choose a harder or personally motivating node; the system can show prerequisites without blocking access unless a later safety or content constraint is documented.
 - An untimed exercise result cannot satisfy a timing-specific, velocity-specific, pedaling, staff-reading, or hands-together competency.
@@ -116,6 +123,7 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 - Do not copy protected repertoire into “inspired-by” exercises through recognizable melodies, substantial passages, transcriptions, recordings, or lyrics.
 - Do not assume public-domain status without checking the composition, edition, arrangement, recording, and applicable jurisdiction.
 - Do not let recommendation logic bypass canonical exercise IDs, prerequisites, or source metadata.
+- Do not derive recommendation order from rendered cards or persisted-record iteration, use error or timing totals as hidden readiness thresholds, or turn advice into exercise locks.
 - Do not present the curriculum as a replacement for a qualified piano teacher.
 
 ## Contract
@@ -130,7 +138,8 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 - [ ] Long-term repertoire interests are represented as competency pathways and metadata only.
 - [ ] Curriculum and exercise references use stable canonical IDs.
 - [ ] Rights/source metadata gates launchable content.
-- [ ] Future recommendation rules remain deterministic, explainable, local-first, and learner-overridable.
+- [ ] Current recommendation rules remain deterministic, explainable, local-first, exact-revision scoped, and learner-overridable.
+- [ ] Eligible direct dependents, eligible canonical-order fallback, empty-history start, all-completed review, invalid graph, and unavailable storage behavior match the study-recommendation contract.
 - [ ] The spec is updated in the same change set when tracks, progression, or recommendation contracts change.
 - [ ] Validation tests cover references, cycles, multi-track membership, and content eligibility when curriculum runtime data is introduced.
 
@@ -145,13 +154,14 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 - Every launchable curriculum exercise must resolve to a validated canonical exercise and lawful source metadata.
 - Prerequisite graphs must remain acyclic and missing references must fail validation.
 - Recommendations must be explainable from declared metadata and local evidence, with no remote AI dependency in the live practice loop.
+- Recommendation must never confer curriculum mastery, alter evaluator evidence, hide an exercise, or make performance error and timing fields into version-one progression gates.
 - Learner choice must remain available without streak loss or punitive progression state.
 
 ### Verification
 
 - **Current documentation checks:** Review the track vocabulary, eight-exercise mappings, pitch-guide exposure boundary, steady-quarter evidence boundary, Hanon position, repertoire competency pathways, and explicit current exclusions.
-- **Future model tests:** Validate IDs, exercise references, prerequisites, cycles, multi-track membership, rights eligibility, and deterministic recommendation tie-breaking.
-- **Behavior tests:** Prove that untimed completion updates only supported pitch/pattern competencies, timed completion adds only bounded steady-quarter evidence, and missing history or eligible content has a neutral fallback.
+- **Model tests:** Validate IDs, exercise references, prerequisites, cycles, multi-track membership, rights eligibility, exact-revision evidence, and deterministic recommendation tie-breaking.
+- **Behavior tests:** Prove that untimed completion updates only supported pitch/pattern competencies, timed completion adds only bounded steady-quarter evidence, recommendation ignores performance-quality fields, and missing or evicted history and invalid graphs have a neutral fallback.
 - **Coverage target:** When curriculum code exists, all validation failures and recommendation branches remain exercised directly rather than through UI snapshots.
 
 ### Scenarios
@@ -192,14 +202,32 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 - When: the pathway is displayed before lawful exercise content exists
 - Then: it shows prerequisite competencies and goal metadata but offers no unlicensed score, MIDI, audio, lyrics, or substantial melody
 
-**Scenario: Recommendation has no eligible new exercise**
+**Scenario: Recommend a direct next study**
 
-- Given: no uncompleted exercise satisfies the learner's current prerequisites and lawful-content rules
-- When: a future recommendation is requested
-- Then: the system suggests a known review option or explains the gap rather than inventing or unlocking unsupported content
+- Given: the learner just completed the current revision of an exercise and the first uncompleted direct dependent has every prerequisite satisfied
+- When: recommendation is requested
+- Then: the direct dependent is suggested with an explanation that it builds on the completed study, while every other exercise remains selectable
+
+**Scenario: Review after completing the library**
+
+- Given: every current exercise revision has retained completion evidence
+- When: recommendation is requested
+- Then: the exercise whose newest matching completion is oldest is suggested for review, with canonical library order breaking timestamp ties
+
+**Scenario: Ignore quality fields in the first recommender**
+
+- Given: two histories have the same completion identities and timestamps but different error counts, timing classifications, tempo, or input kinds
+- When: each history is evaluated
+- Then: both produce the same recommendation because this version does not infer readiness or mastery from performance quality
+
+**Scenario: Retained evidence disappears**
+
+- Given: a prior exact-revision completion was evicted from bounded local history
+- When: recommendation is requested again
+- Then: the missing completion no longer satisfies a prerequisite and the learner receives a neutral available choice without regression or lost-mastery language
 
 **Scenario: Curriculum contains a prerequisite cycle**
 
 - Given: two or more curriculum nodes depend on each other transitively
 - When: curriculum data is validated
-- Then: validation fails before recommendation or launch
+- Then: validation fails before recommendation, no partial route is guessed, and direct exercise choice remains available

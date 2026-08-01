@@ -7,6 +7,7 @@ import type {
   PracticePulseUnsubscribe,
 } from "../audio/practice-pulse-port.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
+import { exerciseLibrary } from "../exercises/library/index.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import type { MidiInputPort } from "../midi/midi-input-port.js";
 import { MOCK_MIDI_INPUT_ID, MockMidiInputPort } from "../midi/mock-midi-input-port.js";
@@ -25,6 +26,7 @@ class MemoryAttemptRepository implements AttemptRepository {
   public readonly records: CompletedAttemptRecord[] = [];
   public failList = false;
   public failSave = false;
+  public saveGate: Promise<void> | null = null;
 
   public async list(exerciseId: string, exerciseRevision: number): Promise<readonly CompletedAttemptRecord[]> {
     if (this.failList) {
@@ -39,6 +41,9 @@ class MemoryAttemptRepository implements AttemptRepository {
       throw new Error("Storage full");
     }
 
+    if (this.saveGate !== null) {
+      await this.saveGate;
+    }
     this.records.push(attempt);
   }
 }
@@ -236,6 +241,83 @@ describe("PracticeController", () => {
     ]);
   });
 
+  it("recommends the direct dependent before persistence resolves and retains it after refresh", async () => {
+    const repository = new MemoryAttemptRepository();
+    const saveGate = deferred<void>();
+    repository.saveGate = saveGate.promise;
+    const { controller, mock, view } = createController(repository, { exerciseLibrary });
+    await controller.initialize();
+    await controller.connect(MOCK_MIDI_INPUT_ID);
+
+    for (const event of fiveNoteAscentExercise.expectedEvents) {
+      mock.tapNote(event.noteNumber);
+    }
+
+    expect(repository.records).toEqual([]);
+    expect(view.latest()).toMatchObject({
+      sessionStatus: "completed",
+      recommendationStatus: "ready",
+      recommendation: {
+        kind: "new-study",
+        exercise: { id: exerciseLibrary[1]!.id },
+        reason: {
+          kind: "direct-dependent",
+          prerequisiteExerciseIds: [fiveNoteAscentExercise.id],
+        },
+      },
+    });
+
+    saveGate.resolve(undefined);
+    await controller.waitForPersistence();
+
+    expect(repository.records).toHaveLength(1);
+    expect(view.latest()).toMatchObject({
+      recommendationStatus: "ready",
+      recommendation: {
+        kind: "new-study",
+        exercise: { id: exerciseLibrary[1]!.id },
+        reason: { kind: "direct-dependent" },
+      },
+    });
+  });
+
+  it("uses retained all-study history to recommend the least-recently practiced review", async () => {
+    const repository = new MemoryAttemptRepository();
+    repository.records.push(
+      ...exerciseLibrary.map((exercise, index): CompletedAttemptRecord => ({
+        schemaVersion: 1,
+        id: `retained-${exercise.id}`,
+        exerciseId: exercise.id,
+        exerciseRevision: exercise.revision,
+        startedAt: `2026-08-01T08:${String(index).padStart(2, "0")}:00.000Z`,
+        completedAt: `2026-08-01T08:${String(index).padStart(2, "0")}:30.000Z`,
+        inputKind: "mock",
+        status: "completed",
+        errorCounts: { outOfOrder: 0, repeated: 0, wrong: 0 },
+      })),
+    );
+    const { controller, mock, view } = createController(repository, { exerciseLibrary });
+    await controller.initialize();
+    await controller.connect(MOCK_MIDI_INPUT_ID);
+
+    for (const event of fiveNoteAscentExercise.expectedEvents) {
+      mock.tapNote(event.noteNumber);
+    }
+    await controller.waitForPersistence();
+
+    expect(view.latest()).toMatchObject({
+      recommendationStatus: "ready",
+      recommendation: {
+        kind: "review",
+        exercise: { id: exerciseLibrary[1]!.id },
+        reason: {
+          kind: "least-recently-practiced",
+          lastCompletedAt: "2026-08-01T08:01:30.000Z",
+        },
+      },
+    });
+  });
+
   it("restarts an incomplete attempt without creating history", async () => {
     const { controller, mock, repository, view } = createController();
     await controller.initialize();
@@ -277,10 +359,10 @@ describe("PracticeController", () => {
     expect(repository.records).toHaveLength(1);
   });
 
-  it("keeps musical completion visible when persistence fails", async () => {
+  it("keeps musical completion and its advisory recommendation visible when persistence fails", async () => {
     const repository = new MemoryAttemptRepository();
     repository.failSave = true;
-    const { controller, mock, view } = createController(repository);
+    const { controller, mock, view } = createController(repository, { exerciseLibrary });
     await controller.initialize();
     await controller.connect(MOCK_MIDI_INPUT_ID);
 
@@ -289,20 +371,41 @@ describe("PracticeController", () => {
     }
     await controller.waitForPersistence();
 
-    expect(view.latest().sessionStatus).toBe("completed");
-    expect(view.latest().historyStatus).toBe("unavailable");
+    expect(view.latest()).toMatchObject({
+      sessionStatus: "completed",
+      historyStatus: "unavailable",
+      recommendationStatus: "ready",
+      recommendation: {
+        kind: "new-study",
+        exercise: { id: exerciseLibrary[1]!.id },
+        reason: { kind: "direct-dependent" },
+      },
+    });
     expect(view.latest().persistenceMessage).toContain("history could not be saved");
   });
 
   it("reports unavailable history without preventing input setup", async () => {
     const repository = new MemoryAttemptRepository();
     repository.failList = true;
-    const { controller, view } = createController(repository);
+    const { controller, mock, view } = createController(repository, { exerciseLibrary });
 
     await controller.initialize();
 
     expect(view.latest().historyStatus).toBe("unavailable");
+    expect(view.latest().recommendationStatus).toBe("unavailable");
     expect(view.latest().inputs).toHaveLength(1);
+
+    await controller.connect(MOCK_MIDI_INPUT_ID);
+    for (const event of fiveNoteAscentExercise.expectedEvents) {
+      mock.tapNote(event.noteNumber);
+    }
+    await controller.waitForPersistence();
+
+    expect(view.latest()).toMatchObject({
+      sessionStatus: "completed",
+      recommendationStatus: "unavailable",
+      recommendation: null,
+    });
   });
 
   it("switches ports, exposes selection failures, and disposes once", async () => {
