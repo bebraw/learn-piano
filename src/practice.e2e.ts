@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { defaultExercise, exerciseLibrary } from "./exercises/library/index.js";
 import { formatMidiNote } from "./exercises/evaluator.js";
 import { evenEighthsRightHandExercise } from "./exercises/library/even-eighth-exercises.js";
+import { mixedEighthPatternRightHandExercise } from "./exercises/library/mixed-eighth-pattern-exercises.js";
 import { orderedChordTonesRightHandExercise } from "./exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "./exercises/library/repeated-note-exercises.js";
 import { ATTEMPT_STORAGE_KEY } from "./client/persistence/attempt-repository.js";
@@ -170,14 +171,14 @@ test("keeps Reading Focus transient while preserving staff progress and accessib
   await expect(page.locator("#next-note")).toBeVisible();
 });
 
-test("keeps the staff pitch guide inside the practice stage on desktop, iPad, and narrow screens", async ({ page }) => {
+test("keeps the eight-event staff pitch guide inside the practice stage on desktop, iPad, and narrow screens", async ({ page }) => {
   for (const viewport of [
     { width: 1440, height: 1000 },
     { width: 1194, height: 834 },
     { width: 320, height: 700 },
   ]) {
     await page.setViewportSize(viewport);
-    await page.goto("/practice");
+    await page.goto(exercisePracticeHref(mixedEighthPatternRightHandExercise));
 
     const layout = await page.locator("[data-staff-pitch-guide]").evaluate((guide) => {
       const stage = guide.closest("#practice-stage");
@@ -382,6 +383,51 @@ test("advances adjacent repeated-note occurrences over shared physical keys", as
     return value === null ? null : (JSON.parse(value) as { attempts?: Array<{ exerciseId?: string }> }).attempts?.[0]?.exerciseId;
   }, ATTEMPT_STORAGE_KEY);
   expect(storedExerciseId).toBe(exercise.id);
+});
+
+test("completes and persists an eight-onset mixed pattern", async ({ page }) => {
+  const exercise = mixedEighthPatternRightHandExercise;
+  await page.goto(exercisePracticeHref(exercise));
+
+  await expect(page.getByRole("heading", { level: 1, name: exercise.title })).toBeVisible();
+  await expect(page.locator(".practice-score-task")).toContainText("Count 1 & 2 & 3 & 4 &.");
+  await expect(page.locator("[data-staff-note]")).toHaveCount(8);
+  await expect(page.locator("[data-practice-key]")).toHaveCount(5);
+
+  const staffNotes = exercise.expectedEvents.map((event) => page.locator(`#staff-note-${event.id}`));
+  const dKey = page.locator('[data-practice-key][data-note-number="62"]');
+
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await page.locator("#pulse-tempo").selectOption("100");
+  await page.getByRole("button", { name: "Start pulse" }).click();
+  await expect(page.locator("#practice-stage")).toHaveAttribute("data-pulse-status", "running", { timeout: 5_000 });
+
+  for (const [index, event] of exercise.expectedEvents.entries()) {
+    await playNote(page, event.noteNumber);
+    await expect(staffNotes[index]!).toHaveAttribute("data-note-state", "accepted");
+    if (index === 2) {
+      await expect(staffNotes[3]!).toHaveAttribute("data-note-state", "expected");
+      await expect(dKey).toHaveAttribute("data-note-state", "expected");
+    }
+  }
+
+  await expect(page.getByText("8 of 8 notes")).toBeVisible();
+  await expect(page.getByText("1 attempt completed today")).toBeVisible();
+
+  const attempt = await page.evaluate((storageKey) => {
+    const value = localStorage.getItem(storageKey);
+    return value === null
+      ? null
+      : (
+          JSON.parse(value) as {
+            attempts?: Array<{ exerciseId?: string; timing?: { assessedIntervals?: number } }>;
+          }
+        ).attempts?.[0];
+  }, ATTEMPT_STORAGE_KEY);
+  expect(attempt).toMatchObject({
+    exerciseId: exercise.id,
+    timing: { assessedIntervals: 7 },
+  });
 });
 
 test("uses the injected iPad bridge through the shared practice flow", async ({ page }) => {

@@ -5,6 +5,7 @@ import {
   stepSkipLeftHandExercise,
 } from "../exercises/library/beginner-five-note-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
+import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-eighth-pattern-exercises.js";
 import type { ExerciseExpectedEvent } from "../exercises/types.js";
 import { projectStaffPitchGuide, STAFF_PITCH_GUIDE_SUPPORTED_RANGES } from "./staff-pitch-guide.js";
 
@@ -75,6 +76,18 @@ describe("projectStaffPitchGuide", () => {
     ]);
     expect(guide?.notes[0]).not.toHaveProperty("duration");
     expect(guide?.notes[0]).not.toHaveProperty("stem");
+  });
+
+  it("projects eight mixed-pattern occurrences into distinct horizontal positions", () => {
+    const guide = projectStaffPitchGuide(mixedEighthPatternRightHandExercise.expectedEvents);
+
+    expect(guide?.notes).toHaveLength(8);
+    expect(guide?.notes[0]?.x).toBe(180);
+    expect(guide?.notes[7]?.x).toBe(548);
+    expect(guide?.notes.map(({ x }) => x).every((x, index, positions) => index === 0 || x > positions[index - 1]!)).toBe(true);
+    expect(guide?.notes[2]?.noteNumber).toBe(62);
+    expect(guide?.notes[3]?.noteNumber).toBe(62);
+    expect(guide?.notes[2]?.x).not.toBe(guide?.notes[3]?.x);
   });
 
   it("documents the conservative ranges covered by the current guide", () => {

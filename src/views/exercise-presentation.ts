@@ -9,6 +9,8 @@ const CATEGORY_LABELS: Readonly<Record<string, string>> = {
 };
 
 const NATURAL_PITCH_CLASSES = new Set([0, 2, 4, 5, 7, 9, 11]);
+const EVEN_EIGHTH_PRACTICE_TASK =
+  "After the count-in, play on the eighth-note grid: each click is a numbered beat, and the “and” count falls halfway between.";
 
 export type ExerciseRhythmKind = "untimed" | "steady-quarter" | "even-eighth" | "timed";
 export type PracticeKeyboardNoteState = "accepted" | "expected" | "idle" | "remaining";
@@ -36,8 +38,7 @@ const RHYTHM_PRESENTATIONS: Readonly<Record<ExerciseRhythmKind, ExerciseRhythmPr
   "even-eighth": {
     kind: "even-eighth",
     label: "Eighth-note grid",
-    practiceTask:
-      "After the count-in, play on the eighth-note grid: each click is a numbered beat, and the “and” count falls halfway between. Count 1 & 2 & 3.",
+    practiceTask: EVEN_EIGHTH_PRACTICE_TASK,
     staffLabel: "Pitch order · Even eighth-note onsets",
   },
   timed: {
@@ -107,16 +108,24 @@ export function getExerciseRhythmPresentation(exercise: Exercise): ExerciseRhyth
     return RHYTHM_PRESENTATIONS.untimed;
   }
 
-  const usesQuarterNoteBeat = exercise.timing?.beatUnit === 4;
+  const timing = exercise.timing;
+  const usesQuarterNoteBeat = timing?.beatUnit === 4;
   if (usesQuarterNoteBeat && exercise.expectedEvents.every((event, index) => event.beatOffset === index)) {
     return RHYTHM_PRESENTATIONS["steady-quarter"];
   }
 
   if (usesQuarterNoteBeat && exercise.expectedEvents.every((event, index) => event.beatOffset === index / 2)) {
-    return RHYTHM_PRESENTATIONS["even-eighth"];
+    return {
+      ...RHYTHM_PRESENTATIONS["even-eighth"],
+      practiceTask: `${EVEN_EIGHTH_PRACTICE_TASK} Count ${formatEvenEighthCount(exercise.expectedEvents.length, timing.beatsPerMeasure)}.`,
+    };
   }
 
   return RHYTHM_PRESENTATIONS.timed;
+}
+
+function formatEvenEighthCount(eventCount: number, beatsPerMeasure: number): string {
+  return Array.from({ length: eventCount }, (_, index) => (index % 2 === 0 ? String(((index / 2) % beatsPerMeasure) + 1) : "&")).join(" ");
 }
 
 export function formatExerciseTimingLabel(exercise: Exercise, includeMeter = false): string {

@@ -3,6 +3,7 @@ import type { NormalizedMidiEvent } from "../midi/types.js";
 import { createEvaluationState, evaluateMidiEvent } from "./evaluator.js";
 import { evenEighthsRightHandExercise } from "./library/even-eighth-exercises.js";
 import { fiveNoteAscentExercise } from "./library/five-note-ascent.js";
+import { mixedEighthPatternRightHandExercise } from "./library/mixed-eighth-pattern-exercises.js";
 import { repeatedNotesRightHandExercise } from "./library/repeated-note-exercises.js";
 import { steadyQuarterRightHandExercise, steadyQuarterStepSkipRightHandExercise } from "./library/steady-quarter-exercises.js";
 import { parseExercise } from "./schema.js";
@@ -183,6 +184,38 @@ describe("timed ordered-note evaluation", () => {
         onPulse: 4,
         early: 0,
         late: 0,
+      },
+    });
+  });
+
+  it("evaluates an eight-onset mixed pattern across a complete four-beat grid", () => {
+    let state = createEvaluationState(mixedEighthPatternRightHandExercise);
+
+    for (const [index, event] of mixedEighthPatternRightHandExercise.expectedEvents.entries()) {
+      const transition = evaluateMidiEvent(mixedEighthPatternRightHandExercise, state, noteOn(event.noteNumber, 2_000 + index * 500));
+      expect(transition.feedback?.classification).toBe("correct");
+      state = transition.state;
+    }
+
+    expect(mixedEighthPatternRightHandExercise.expectedEvents.map(({ noteNumber }) => noteNumber)).toEqual([
+      60, 64, 62, 62, 65, 67, 64, 60,
+    ]);
+    expect(mixedEighthPatternRightHandExercise.expectedEvents.map(({ beatOffset }) => beatOffset)).toEqual([
+      0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5,
+    ]);
+    expect(state).toMatchObject({
+      nextExpectedIndex: 8,
+      counts: { correct: 8, repeated: 0, outOfOrder: 0, wrong: 0 },
+      completed: true,
+      completionSummary: {
+        errorFree: true,
+        timing: {
+          assessedIntervals: 7,
+          onPulse: 7,
+          early: 0,
+          late: 0,
+          meanAbsoluteErrorMs: 0,
+        },
       },
     });
   });

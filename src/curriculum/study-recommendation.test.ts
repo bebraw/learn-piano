@@ -4,6 +4,10 @@ import { STEP_SKIP_LEFT_HAND_EXERCISE_ID, STEP_SKIP_RIGHT_HAND_EXERCISE_ID } fro
 import { EVEN_EIGHTHS_LEFT_HAND_EXERCISE_ID, EVEN_EIGHTHS_RIGHT_HAND_EXERCISE_ID } from "../exercises/library/even-eighth-exercises.js";
 import { exerciseLibrary } from "../exercises/library/index.js";
 import {
+  MIXED_EIGHTH_PATTERN_LEFT_HAND_EXERCISE_ID,
+  MIXED_EIGHTH_PATTERN_RIGHT_HAND_EXERCISE_ID,
+} from "../exercises/library/mixed-eighth-pattern-exercises.js";
+import {
   ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
   ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
 } from "../exercises/library/ordered-chord-tone-exercises.js";
@@ -302,6 +306,45 @@ describe("recommendNextStudy", () => {
       reason: {
         kind: "direct-dependent",
         prerequisiteExerciseIds: [evenEighths.id],
+      },
+    });
+  });
+
+  it.each([
+    {
+      repeatedNotesId: REPEATED_NOTES_RIGHT_HAND_EXERCISE_ID,
+      chordTonesId: ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
+      mixedPatternId: MIXED_EIGHTH_PATTERN_RIGHT_HAND_EXERCISE_ID,
+    },
+    {
+      repeatedNotesId: REPEATED_NOTES_LEFT_HAND_EXERCISE_ID,
+      chordTonesId: ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
+      mixedPatternId: MIXED_EIGHTH_PATTERN_LEFT_HAND_EXERCISE_ID,
+    },
+  ])("gates $mixedPatternId on repeated-note and ordered-chord-tone practice", ({ repeatedNotesId, chordTonesId, mixedPatternId }) => {
+    const repeatedNotes = requireLibraryExercise(repeatedNotesId);
+    const chordTones = requireLibraryExercise(chordTonesId);
+    const mixedPattern = requireLibraryExercise(mixedPatternId);
+
+    expect(recommendNextStudy(exerciseLibrary, [attempt(repeatedNotes, "2026-08-01T08:00:00.000Z")], repeatedNotes.id)?.exercise).not.toBe(
+      mixedPattern,
+    );
+    expect(recommendNextStudy(exerciseLibrary, [attempt(chordTones, "2026-08-01T08:05:00.000Z")], chordTones.id)?.exercise).not.toBe(
+      mixedPattern,
+    );
+
+    expect(
+      recommendNextStudy(
+        exerciseLibrary,
+        [attempt(repeatedNotes, "2026-08-01T08:00:00.000Z"), attempt(chordTones, "2026-08-01T08:05:00.000Z")],
+        chordTones.id,
+      ),
+    ).toEqual({
+      kind: "new-study",
+      exercise: mixedPattern,
+      reason: {
+        kind: "direct-dependent",
+        prerequisiteExerciseIds: [repeatedNotes.id, chordTones.id],
       },
     });
   });

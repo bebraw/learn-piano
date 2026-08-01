@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
+import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-eighth-pattern-exercises.js";
 import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
@@ -96,6 +97,47 @@ describe("exercise presentation", () => {
         (exercise) => !getExerciseRhythmPresentation(exercise).practiceTask.includes("key stays lit"),
       ),
     ).toBe(true);
+  });
+
+  it("derives the practice count from every onset in a strict half-beat grid", () => {
+    expect(getExerciseRhythmPresentation(evenEighthsRightHandExercise).practiceTask).toBe(
+      "After the count-in, play on the eighth-note grid: each click is a numbered beat, and the “and” count falls halfway between. Count 1 & 2 & 3.",
+    );
+    expect(getExerciseRhythmPresentation(mixedEighthPatternRightHandExercise)).toMatchObject({
+      kind: "even-eighth",
+      practiceTask:
+        "After the count-in, play on the eighth-note grid: each click is a numbered beat, and the “and” count falls halfway between. Count 1 & 2 & 3 & 4 &.",
+      staffLabel: "Pitch order · Even eighth-note onsets",
+    });
+  });
+
+  it("wraps a strict half-beat count at the exercise's measure boundary", () => {
+    const threeFourGrid: Exercise = {
+      ...mixedEighthPatternRightHandExercise,
+      id: "three-four-eight-event-grid",
+      timing: { ...mixedEighthPatternRightHandExercise.timing!, beatsPerMeasure: 3 },
+    };
+
+    expect(getExerciseRhythmPresentation(threeFourGrid).practiceTask).toBe(
+      "After the count-in, play on the eighth-note grid: each click is a numbered beat, and the “and” count falls halfway between. Count 1 & 2 & 3 & 1 &.",
+    );
+  });
+
+  it("keeps an irregular eight-event grid on the generic timed fallback", () => {
+    const irregularGrid: Exercise = {
+      ...mixedEighthPatternRightHandExercise,
+      id: "irregular-eight-event-grid",
+      expectedEvents: mixedEighthPatternRightHandExercise.expectedEvents.map((event, index) =>
+        index === 7 ? { ...event, beatOffset: 3.75 } : event,
+      ),
+    };
+
+    expect(getExerciseRhythmPresentation(irregularGrid)).toMatchObject({
+      kind: "timed",
+      label: "Timed study",
+      practiceTask: "After the count-in, follow the study's timing guide.",
+      staffLabel: "Pitch order · Timing shown separately",
+    });
   });
 
   it("does not name subdivisions without a quarter-note beat unit", () => {

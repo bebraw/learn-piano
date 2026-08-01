@@ -3,6 +3,7 @@ import { defaultExercise, exerciseLibrary } from "../exercises/library/index.js"
 import { stepSkipRightHandExercise } from "../exercises/library/beginner-five-note-exercises.js";
 import { evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
+import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-eighth-pattern-exercises.js";
 import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises.js";
 import { steadyQuarterStepSkipRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
@@ -66,7 +67,7 @@ describe("renderPracticePage", () => {
     expect(html).toContain('<option value="60" selected>60 BPM</option>');
     expect(html.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).toContain("hidden");
     expect(html).not.toContain("The next expected key stays lit.");
-    expect(exerciseLibrary).toHaveLength(16);
+    expect(exerciseLibrary).toHaveLength(18);
   });
 
   it("derives the rendered sequence and physical key order from the supplied exercise", () => {
@@ -143,6 +144,21 @@ describe("renderPracticePage", () => {
     }
     expect(html.match(/data-staff-note/g)).toHaveLength(5);
     for (const event of repeatedNotesRightHandExercise.expectedEvents) {
+      expect(html).toContain(`data-event-id="${event.id}"`);
+    }
+  });
+
+  it("renders a full mixed pattern as eight staff events over one five-key position", () => {
+    const html = renderPracticePage(mixedEighthPatternRightHandExercise, exerciseLibrary);
+    const keyboardStart = html.indexOf('class="practice-keyboard"');
+    const keyboardEnd = html.indexOf("</div>", keyboardStart);
+    const keyboardMarkup = html.slice(keyboardStart, keyboardEnd);
+
+    expect(html).toContain("C4 · E4 · D4 · D4 · F4 · G4 · E4 · C4");
+    expect(html).toContain("Count 1 &amp; 2 &amp; 3 &amp; 4 &amp;.");
+    expect(keyboardMarkup.match(/data-practice-key/g)).toHaveLength(5);
+    expect(html.match(/data-staff-note/g)).toHaveLength(8);
+    for (const event of mixedEighthPatternRightHandExercise.expectedEvents) {
       expect(html).toContain(`data-event-id="${event.id}"`);
     }
   });
