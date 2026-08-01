@@ -240,7 +240,7 @@ function createCompletionSummary(counts: EvaluationCounts, timing: TimingEvaluat
     observations.push({
       classification: "repeated",
       count: counts.repeated,
-      message: counts.repeated === 1 ? "You repeated a note once." : `You repeated notes ${counts.repeated} times.`,
+      message: counts.repeated === 1 ? "You added one extra repeat." : `You added ${counts.repeated} extra repeats.`,
     });
   }
   if (counts.wrong > 0) {

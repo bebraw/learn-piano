@@ -168,7 +168,7 @@ describe("evaluateMidiEvent", () => {
         {
           classification: "repeated",
           count: 1,
-          message: "You repeated a note once.",
+          message: "You added one extra repeat.",
         },
       ],
     });
@@ -194,7 +194,7 @@ describe("evaluateMidiEvent", () => {
       {
         classification: "repeated",
         count: 2,
-        message: "You repeated notes 2 times.",
+        message: "You added 2 extra repeats.",
       },
     ]);
     expect(state.counts.wrong).toBe(2);

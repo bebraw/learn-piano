@@ -1,6 +1,6 @@
 # Piano Practice
 
-Piano Practice is a personal, local-first browser application for focused piano exercises, with a thin native wrapper for dependable MIDI input on iPad. The current vertical slice offers fourteen original beginner studies, seven per hand: eight untimed C-position patterns plus straight steady-quarter, timed step-and-skip, and even-eighth pairs. Every study includes a server-rendered treble or bass pitch guide and immediate deterministic pitch and order feedback; the six timed studies add bounded onset-timing feedback. Completed-attempt history stays in the current browser or web view, and completion can show one explainable next-study suggestion.
+Piano Practice is a personal, local-first browser application for focused piano exercises, with a thin native wrapper for dependable MIDI input on iPad. The current vertical slice offers sixteen original beginner studies, eight per hand: eight untimed C-position patterns plus straight steady-quarter, timed step-and-skip, even-eighth, and repeated-note pairs. Every study includes a server-rendered treble or bass pitch guide and immediate deterministic pitch and order feedback; the eight timed studies add bounded onset-timing feedback. Completed-attempt history stays in the current browser or web view, and completion can show one explainable next-study suggestion.
 
 The application runs as a Cloudflare Worker through Wrangler. It renders useful HTML on the server, then progressively enhances the practice page with small typed browser modules. There is no client framework, account, cloud database, generative feedback loop, percentage grade, or streak mechanic.
 
@@ -8,21 +8,22 @@ The application runs as a Cloudflare Worker through Wrangler. It renders useful 
 
 ## Current Practice Slice
 
-- Choose from fourteen canonical exercises on the home or practice page, even when JavaScript or MIDI is unavailable.
+- Choose from sixteen canonical exercises on the home or practice page, even when JavaScript or MIDI is unavailable.
 - Open `/practice` for the default right-hand ascent, or use `?exercise=<id>` to link directly to another exercise.
 - Read the current natural-note sequence on a pitch-only staff guide: treble for the right-hand C4-G4 studies and bass for the left-hand C3-G3 studies. Ordered note text remains alongside it as the accessible fallback.
 - On a supported staff guide, use the enhanced `Reading focus` presentation to reduce visible instructions, note names, next-pitch text, and the expected-key answer while keeping staff progress, rhythm guidance, keyboard operation, and accessible semantics. The server-rendered default remains fully guided, and the page-local choice resets on navigation or reload.
-- Use the on-screen natural-note span for a deterministic hardware-free flow. Every current C-position study shows C through G once each; repeated C or E occurrences reuse the same physical key.
+- Use the on-screen natural-note span for a deterministic hardware-free flow. Full C-position studies show C through G once each, while repeated-pair studies use C through E. Repeated occurrences always reuse the same physical key.
 - On a supported desktop browser, select and connect a Web MIDI input.
 - On iPadOS 17 or later, use the native wrapper to select one USB or paired Bluetooth CoreMIDI source.
 - See the next expected note, accepted notes, active notes, and calm feedback for correct, repeated, out-of-order, and wrong input.
 - Practice the paired untimed C-major chord-tone studies as the ordered sequence C-E-G-E-C. Their five event occurrences retain separate progress and staff markers while the on-screen keyboard reuses its C and E controls; the sequence does not ask for simultaneous notes.
-- For any of the six timed studies, choose 40–100 BPM (60 by default), hear a four-beat 4/4 count-in and quarter-note click, and receive “on time,” “early,” or “late” feedback after the first correct note anchors the attempt. Four studies place C-D-E-F-G or C-E-D-F-G on quarter-note beats with a ±0.2-beat window. The `Eighth-note grid` pair places C-D-E-F-G at beat offsets 0, 0.5, 1, 1.5, and 2 with a ±0.1-beat window while the learner subdivides between quarter-note clicks; its staff label says `Pitch order · Even eighth-note onsets` without drawing rhythmic notation.
+- Practice repeated-note onsets with the timed C-C-D-D-E pair. Five staff events reuse three physical keys, and the matching ascending C-D-E-F-G even-eighth study is its advisory prerequisite.
+- For any of the eight timed studies, choose 40–100 BPM (60 by default), hear a four-beat 4/4 count-in and quarter-note click, and receive “on time,” “early,” or “late” feedback after the first correct note anchors the attempt. Four studies place C-D-E-F-G or C-E-D-F-G on quarter-note beats with a ±0.2-beat window. Four `Eighth-note grid` studies place either C-D-E-F-G or C-C-D-D-E at beat offsets 0, 0.5, 1, 1.5, and 2 with a ±0.1-beat window while the learner subdivides between quarter-note clicks; their staff label says `Pitch order · Even eighth-note onsets` without drawing rhythmic notation.
 - Restart cleanly after a disconnect or whenever you want to begin again.
 - After completion, receive one advisory next-study or review suggestion based on declared prerequisites and retained exact-revision history. The suggestion explains its reason, while the complete exercise library remains available as the override.
 - Keep compact completed-attempt history scoped to each exercise ID and revision in a versioned, bounded `localStorage` record. Timed completions may include their tempo, interval classifications, and mean absolute error; incomplete and interrupted attempts are not saved, and evicted history no longer contributes to recommendations.
 
-The staff guide supports gradual pitch-position reading, but its markers do not encode note duration or a complete score, and MIDI completion cannot establish that the learner read it. Reading focus is a learner-controlled visual presentation, not an assessment: correct feedback avoids revealing the next pitch, while explicit errors may name the actual and expected pitches as a correction, and no focus choice is stored with an attempt. MIDI can confirm note pitch and order for every exercise and assess onset intervals for the six timed studies. Fractional beat offsets locate expected onsets; they do not establish how long a note was held, encode rests or written notation, or imply simultaneity. Likewise, completing C-E-G-E-C confirms only an ordered pitch pattern; it does not establish blocked-chord playing, harmony recognition, voicing, or simultaneous performance. MIDI cannot verify which hand played, assess posture, tension, fingering, velocity quality, or touch, or replace a qualified piano teacher. A recommendation likewise does not mean an exercise was mastered or unlocked; this first version deliberately ignores error totals, timing quality, tempo, and velocity when choosing what to suggest.
+The staff guide supports gradual pitch-position reading, but its markers do not encode note duration or a complete score, and MIDI completion cannot establish that the learner read it. Reading focus is a learner-controlled visual presentation, not an assessment: correct feedback avoids revealing the next pitch, while explicit errors may name the actual and expected pitches as a correction, and no focus choice is stored with an attempt. MIDI can confirm note pitch and order for every exercise and assess onset intervals for the eight timed studies. Fractional beat offsets locate expected onsets; they do not establish how long a note was held, encode rests or written notation, or imply simultaneity. Completing C-C-D-D-E confirms repeated note-on occurrences and their onset placement, not key release, articulation, fingering, relaxation, or physical control. Likewise, completing C-E-G-E-C confirms only an ordered pitch pattern; it does not establish blocked-chord playing, harmony recognition, voicing, or simultaneous performance. MIDI cannot verify which hand played, assess posture, tension, fingering, velocity quality, or touch, or replace a qualified piano teacher. A recommendation likewise does not mean an exercise was mastered or unlocked; this first version deliberately ignores error totals, timing quality, tempo, and velocity when choosing what to suggest.
 
 ## Run Locally
 
@@ -73,7 +74,7 @@ The local recommender uses only canonical library order, prerequisites, retained
 
 ## Routes
 
-- `GET /` — application overview and fourteen-exercise beginner library
+- `GET /` — application overview and sixteen-exercise beginner library
 - `GET /practice` — the default right-hand C4-to-G4 ascent
 - `GET /practice?exercise=<id>` — a selected canonical exercise; unknown IDs return `404`
 - `GET /styles.css` and `GET /client/*.js` — generated same-origin browser assets
@@ -109,4 +110,4 @@ The application screenshot is committed at `docs/screenshots/home.png` and refre
 
 ## Next Slice
 
-Possible next slices include a focused repeated-note control study. Full score notation, note duration, velocity, rests, syncopation, simultaneous chord events, hands-together work, adaptive tempo, quality-sensitive recommendations, protected repertoire content, cloud sync, and iPad release distribution remain separate decisions.
+Possible next slices include an original syncopation study or a longer mixed-pattern phrase. Full score notation, note duration, velocity, rests, simultaneous chord events, hands-together work, adaptive tempo, quality-sensitive recommendations, protected repertoire content, cloud sync, and iPad release distribution remain separate decisions.

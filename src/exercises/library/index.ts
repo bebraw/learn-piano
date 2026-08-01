@@ -15,6 +15,7 @@ import {
 } from "./steady-quarter-exercises.js";
 import { evenEighthsLeftHandExercise, evenEighthsRightHandExercise } from "./even-eighth-exercises.js";
 import { orderedChordTonesLeftHandExercise, orderedChordTonesRightHandExercise } from "./ordered-chord-tone-exercises.js";
+import { repeatedNotesLeftHandExercise, repeatedNotesRightHandExercise } from "./repeated-note-exercises.js";
 import { parseExerciseLibrary } from "../schema.js";
 
 export const DEFAULT_EXERCISE_ID = FIVE_NOTE_ASCENT_EXERCISE_ID;
@@ -34,6 +35,8 @@ export const exerciseLibrary: readonly Exercise[] = Object.freeze([
   evenEighthsLeftHandExercise,
   orderedChordTonesRightHandExercise,
   orderedChordTonesLeftHandExercise,
+  repeatedNotesRightHandExercise,
+  repeatedNotesLeftHandExercise,
 ]);
 
 parseExerciseLibrary(exerciseLibrary);

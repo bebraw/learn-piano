@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered-chord-tone-exercises.js";
+import { repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import type { Exercise } from "../exercises/types.js";
 import {
@@ -127,6 +128,7 @@ describe("exercise presentation", () => {
     };
 
     expect(projectPracticeKeyboardNotes(orderedChordTonesRightHandExercise)).toEqual([60, 62, 64, 65, 67]);
+    expect(projectPracticeKeyboardNotes(repeatedNotesRightHandExercise)).toEqual([60, 62, 64]);
     expect(projectPracticeKeyboardNotes(chromaticFixture)).toEqual([61, 62, 64, 65, 67]);
     expect(projectPracticeKeyboardNotes({ ...fiveNoteAscentExercise, expectedEvents: [] })).toEqual([]);
   });

@@ -4,7 +4,7 @@
 
 ### Context
 
-The learner has fourteen short exercises across pitch, pattern, ordered chord-tone, hand, steady-pulse, and onset-subdivision work. The exercise library already declares prerequisites, and completed attempts already carry stable exercise IDs and revisions in local history. The practice flow should use that evidence to suggest one understandable next study instead of advancing by a circular UI position, while preserving the learner's freedom to choose any exercise.
+The learner has sixteen short exercises across pitch, pattern, ordered chord-tone, repeated-note, hand, steady-pulse, and onset-subdivision work. The exercise library already declares prerequisites, and completed attempts already carry stable exercise IDs and revisions in local history. The practice flow should use that evidence to suggest one understandable next study instead of advancing by a circular UI position, while preserving the learner's freedom to choose any exercise.
 
 A recommendation is practice guidance, not an evaluator result, unlock, grade, or mastery claim. The first implementation therefore uses only completion identity and recency. Pitch-error counts, timing classifications, tempo, velocity, and inferred physical technique do not affect this version.
 
@@ -17,6 +17,7 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - Each timed step-and-skip study is eligible only after both its matching untimed step-and-skip study and its matching straight steady-quarter study have exact-current-revision completion evidence.
 - Each even-eighth study is eligible after its matching straight steady-quarter study has exact-current-revision completion evidence; it does not require the matching untimed step-and-skip study.
 - Each ordered chord-tone study is eligible after its matching untimed step-and-skip study has exact-current-revision completion evidence; that matching study is its sole prerequisite.
+- Each repeated-note study is eligible after its matching ascending even-eighth study has exact-current-revision completion evidence; that matching study is its sole prerequisite.
 - When every current exercise has exact-revision completion evidence, the service recommends the least recently practiced exercise. Equal recency is resolved by canonical library order.
 - When readable history contains no current-revision completions, the service recommends the first prerequisite-free exercise in canonical library order.
 - The practice page explains why the study was suggested and always keeps the complete exercise library available as the fallback and override.
@@ -102,7 +103,7 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 ### Verification
 
 - **Graph tests:** Accept the current library; reject missing prerequisite IDs, self-cycles, and multi-node cycles without returning a partial recommendation.
-- **Rule tests:** Cover direct dependent, an unmet additional prerequisite, ordered chord-tone eligibility from its sole step-and-skip prerequisite, eligible non-dependent fallback, canonical-order tie-break, empty history, all-completed review, and equal recency.
+- **Rule tests:** Cover direct dependent, an unmet additional prerequisite, ordered chord-tone eligibility from its sole step-and-skip prerequisite, repeated-note eligibility from its sole ascending even-eighth prerequisite, eligible non-dependent fallback, canonical-order tie-break, empty history, all-completed review, and equal recency.
 - **Evidence tests:** Cover current versus old revision, duplicate completions, unknown exercise history, bounded-history disappearance, and a just-completed transient record.
 - **Exclusion tests:** Changing error counts, timing classifications, tempo, and input kind on otherwise equivalent completed records does not change the recommendation.
 - **Controller tests:** Recommendation loads independently of practice, recalculates optimistically on completion, refreshes after save, and preserves the in-session suggestion while surfacing save failure honestly.
@@ -140,6 +141,12 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - Given: `step-skip-c-major-right-hand` has exact-current-revision completion evidence and `ordered-chord-tones-c-major-right-hand` is uncompleted
 - When: recommendation considers the ordered chord-tone study
 - Then: it is eligible from that sole declared prerequisite, remains freely selectable without it, and receives no chord-mastery or readiness claim
+
+**Scenario: Suggest repeated notes after matching even-eighth work**
+
+- Given: `even-eighths-c-major-right-hand` has exact-current-revision completion evidence and `repeated-note-eighths-c-major-right-hand` is uncompleted
+- When: recommendation considers the repeated-note study
+- Then: it is eligible from that sole declared prerequisite, remains freely selectable without it, and receives no technique-mastery or readiness claim
 
 **Scenario: Fall back to another eligible study**
 

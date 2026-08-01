@@ -4,7 +4,7 @@
 
 ### Context
 
-The current practice stage names every expected pitch and shows its piano key, but the learner also wants gradual exposure to staff reading. All fourteen current exercises use a small, single-hand, natural-note range, so they can share a useful pitch-position guide without adopting a general score engine or pretending that the application can assess whether the learner actually read it.
+The current practice stage names every expected pitch and shows its piano key, but the learner also wants gradual exposure to staff reading. All sixteen current exercises use a small, single-hand, natural-note range, so they can share a useful pitch-position guide without adopting a general score engine or pretending that the application can assess whether the learner actually read it.
 
 The first notation surface must preserve the server-rendered, progressively enhanced application model and the canonical exercise boundary. It must not invent note duration, rhythmic value, or a second exercise identity merely to draw the current pitches.
 
@@ -14,7 +14,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 - The supported subset is deliberately narrow: single-hand exercises containing the current natural notes C4-G4 for right-hand treble display or C3-G3 for left-hand bass display.
 - The guide shows five staff lines, the appropriate clef, ordered pitch markers, and any ledger line required by the supported range.
 - Pitch markers represent vertical staff position and canonical event order only. They have no stem, beam, rest, articulation, duration, velocity, fingering, or performance-timing semantics.
-- Timed staff metadata may name the separate onset contract. The even-eighth pair uses `Pitch order · Even eighth-note onsets`; that text does not turn the pitch markers or their horizontal spacing into written rhythmic notation.
+- Timed staff metadata may name the separate onset contract. The ascending even-eighth and repeated-note pairs use `Pitch order · Even eighth-note onsets`; that text does not turn the pitch markers or their horizontal spacing into written rhythmic notation.
 - The selected exercise's existing semantic note sequence remains adjacent to the SVG as the accessible and unsupported-content fallback.
 - Progressive enhancement marks accepted, next, and remaining canonical events in the guide from the same evaluator progress that drives the textual next-note cue and keyboard.
 - The ordered C-major chord-tone pair renders five markers for C-E-G-E-C. Repeated C and E occurrences retain separate expected-event IDs and horizontal positions even though they share staff pitch positions and physical keyboard controls.
@@ -52,11 +52,11 @@ The first notation surface must preserve the server-rendered, progressively enha
 
 - A descending or step-and-skip exercise retains canonical event order horizontally even though vertical pitch position moves independently.
 - Middle C in the supported right-hand range receives its ledger line; no other ledger line is fabricated.
-- A repeated pitch in the current ordered chord-tone pair retains separate markers because canonical event IDs, not MIDI note number alone, identify positions in the sequence.
+- A repeated pitch in the current ordered chord-tone or repeated-note pair retains separate markers because canonical event IDs, not MIDI note number alone, identify positions in the sequence. Adjacent equal-pitch markers share a vertical position but remain independently accepted, expected, or remaining.
 - C-E-G-E-C remains five equally presentation-spaced, individual pitch markers. Shared pitch positions do not stack markers into chords or add simultaneity, duration, voicing, or harmony-assessment meaning.
 - If exercise data falls outside the supported subset, the renderer returns the explicit unsupported result and the page continues with semantic text rather than partial or misleading notation.
 - Timed exercise progress may update the same pitch markers, but beat offsets and timing feedback do not change their pitch-only meaning.
-- Fractional beat offsets in an even-eighth exercise do not alter marker spacing, create beams, imply held duration, or introduce rests between markers.
+- Fractional beat offsets in a half-beat exercise do not alter marker spacing, create beams, imply held duration or key release, or introduce rests between markers.
 - Reading focus may be toggled during progress without changing marker identity or state. Unsupported notation has no toggle and remains fully guided.
 
 ### Anti-Patterns
@@ -77,6 +77,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 
 - [ ] Every current exercise renders the complete ordered pitch guide in the server response from its canonical expected events.
 - [ ] Each ordered chord-tone study renders five occurrence-based markers for C-E-G-E-C while the keyboard separately reuses one C control and one E control from the same canonical data.
+- [ ] Each repeated-note study renders five occurrence-based markers for C-C-D-D-E while the keyboard separately reuses one C, D, and E control from the same canonical data.
 - [ ] Right-hand C4-G4 material renders on treble staff and left-hand C3-G3 material renders on bass staff, with the supported middle-C ledger line.
 - [ ] The guide distinguishes accepted, next, and remaining events from evaluator progress without advancing evaluation itself.
 - [ ] A validated supported guide can enter reading focus, hiding visible pitch labels and answer cues while retaining semantic equivalents and occurrence progress; unsupported and no-JavaScript pages remain guided.
@@ -137,6 +138,12 @@ The first notation surface must preserve the server-rendered, progressively enha
 - Given: `ordered-chord-tones-c-major-right-hand` contains C4-E4-G4-E4-C4 as five expected-event IDs
 - When: its treble guide is rendered and progress advances
 - Then: five separate markers retain occurrence-specific accepted, next, and remaining state at their canonical horizontal positions, while repeated vertical pitch positions add no simultaneity or chord notation
+
+**Scenario: Preserve adjacent repeated-note occurrences**
+
+- Given: `repeated-note-eighths-c-major-right-hand` contains C4-C4-D4-D4-E4 as five expected-event IDs
+- When: its treble guide is rendered and the first C4 is accepted
+- Then: five separate markers retain occurrence-specific state, the second C4 marker becomes expected, and their shared vertical position adds no duration, release, or articulation notation
 
 **Scenario: Keep timed meaning separate**
 

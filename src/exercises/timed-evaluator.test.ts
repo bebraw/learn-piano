@@ -3,6 +3,7 @@ import type { NormalizedMidiEvent } from "../midi/types.js";
 import { createEvaluationState, evaluateMidiEvent } from "./evaluator.js";
 import { evenEighthsRightHandExercise } from "./library/even-eighth-exercises.js";
 import { fiveNoteAscentExercise } from "./library/five-note-ascent.js";
+import { repeatedNotesRightHandExercise } from "./library/repeated-note-exercises.js";
 import { steadyQuarterRightHandExercise, steadyQuarterStepSkipRightHandExercise } from "./library/steady-quarter-exercises.js";
 import { parseExercise } from "./schema.js";
 
@@ -160,6 +161,61 @@ describe("timed ordered-note evaluation", () => {
         early: 0,
         late: 0,
         meanAbsoluteErrorMs: 0,
+      },
+    });
+  });
+
+  it("accepts adjacent repeated-note occurrences on the eighth-note grid", () => {
+    let state = createEvaluationState(repeatedNotesRightHandExercise);
+
+    for (const [index, event] of repeatedNotesRightHandExercise.expectedEvents.entries()) {
+      const transition = evaluateMidiEvent(repeatedNotesRightHandExercise, state, noteOn(event.noteNumber, 2_000 + index * 500));
+      expect(transition.feedback?.classification).toBe("correct");
+      state = transition.state;
+    }
+
+    expect(state).toMatchObject({
+      nextExpectedIndex: 5,
+      counts: { correct: 5, repeated: 0, outOfOrder: 0, wrong: 0 },
+      completed: true,
+      timing: {
+        assessedIntervals: 4,
+        onPulse: 4,
+        early: 0,
+        late: 0,
+      },
+    });
+  });
+
+  it("keeps an extra same-pitch onset outside the canonical repeated pair off the timing grid", () => {
+    let state = createEvaluationState(repeatedNotesRightHandExercise);
+    state = evaluateMidiEvent(repeatedNotesRightHandExercise, state, noteOn(60, 2_000)).state;
+    state = evaluateMidiEvent(repeatedNotesRightHandExercise, state, noteOn(60, 2_500)).state;
+
+    const extraC = evaluateMidiEvent(repeatedNotesRightHandExercise, state, noteOn(60, 2_700));
+    const expectedD = evaluateMidiEvent(repeatedNotesRightHandExercise, extraC.state, noteOn(62, 3_000));
+    const secondD = evaluateMidiEvent(repeatedNotesRightHandExercise, expectedD.state, noteOn(62, 3_500));
+    const finalE = evaluateMidiEvent(repeatedNotesRightHandExercise, secondD.state, noteOn(64, 4_000));
+
+    expect(extraC.feedback).toMatchObject({
+      classification: "repeated",
+      actualNoteNumber: 60,
+      expectedNoteNumber: 62,
+    });
+    expect(extraC.feedback?.timing).toBeUndefined();
+    expect(extraC.state).toMatchObject({
+      nextExpectedIndex: 2,
+      timing: { anchorTimestamp: 2_000, assessedIntervals: 1, onPulse: 1 },
+    });
+    expect(expectedD.feedback).toMatchObject({ classification: "correct", timing: { classification: "on-pulse", deviationMs: 0 } });
+    expect(finalE.state).toMatchObject({
+      completed: true,
+      counts: { correct: 5, repeated: 1, outOfOrder: 0, wrong: 0 },
+      completionSummary: {
+        errorFree: false,
+        message: "Sequence complete.",
+        observations: [{ classification: "repeated", count: 1, message: "You added one extra repeat." }],
+        timing: { assessedIntervals: 4, onPulse: 4, early: 0, late: 0 },
       },
     });
   });

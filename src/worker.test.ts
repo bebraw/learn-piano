@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defaultExercise, exerciseLibrary } from "./exercises/library";
 import { steadyQuarterStepSkipRightHandExercise } from "./exercises/library/steady-quarter-exercises";
 import { orderedChordTonesRightHandExercise } from "./exercises/library/ordered-chord-tone-exercises";
+import { repeatedNotesRightHandExercise } from "./exercises/library/repeated-note-exercises";
 import { exercisePracticeHref } from "./views/exercise-presentation";
 import worker, { handleRequest } from "./worker";
 import { ensureGeneratedStylesheet } from "./test-support";
@@ -22,9 +23,9 @@ describe("worker", () => {
     expect(body).toContain("Piano Practice");
     expect(body).toContain(exercisePracticeHref(defaultExercise));
     expect(body).toContain("Choose your next study");
-    expect(exerciseLibrary).toHaveLength(14);
+    expect(exerciseLibrary).toHaveLength(16);
     expect(body.match(/class="folio-card group"/g)).toHaveLength(exerciseLibrary.length);
-    expect(body.match(/data-mode="timed"/g)).toHaveLength(6);
+    expect(body.match(/data-mode="timed"/g)).toHaveLength(8);
     expect(body).toContain("/api/health");
   });
 
@@ -66,6 +67,19 @@ describe("worker", () => {
     expect(body.match(/data-note-number="60"/g)).toHaveLength(1);
     expect(body).toContain('data-note-number="62"\n        data-note-state="idle"');
     expect(body).toContain('data-note-number="65"\n        data-note-state="idle"');
+  });
+
+  it("renders adjacent repeated notes as separate events over shared physical keys", async () => {
+    const response = await handleRequest(new Request(`http://example.com${exercisePracticeHref(repeatedNotesRightHandExercise)}`));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain('aria-label="Pitch order: C4 · C4 · D4 · D4 · E4"');
+    expect(body.match(/data-staff-note/g)).toHaveLength(5);
+    expect(body.match(/data-practice-key/g)).toHaveLength(3);
+    for (const noteNumber of [60, 62, 64]) {
+      expect(body.match(new RegExp(`data-note-number="${noteNumber}"`, "g"))).toHaveLength(1);
+    }
   });
 
   it("renders steady-pulse controls and timing facts for a timed exercise", async () => {

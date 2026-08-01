@@ -10,6 +10,7 @@ import {
 import { EVEN_EIGHTHS_LEFT_HAND_EXERCISE_ID, EVEN_EIGHTHS_RIGHT_HAND_EXERCISE_ID } from "./even-eighth-exercises.js";
 import { DEFAULT_EXERCISE_ID, defaultExercise, exerciseLibrary, findExerciseById } from "./index.js";
 import { ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID, ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID } from "./ordered-chord-tone-exercises.js";
+import { REPEATED_NOTES_LEFT_HAND_EXERCISE_ID, REPEATED_NOTES_RIGHT_HAND_EXERCISE_ID } from "./repeated-note-exercises.js";
 import {
   STEADY_QUARTER_LEFT_HAND_EXERCISE_ID,
   STEADY_QUARTER_RIGHT_HAND_EXERCISE_ID,
@@ -32,6 +33,8 @@ const EXPECTED_SEQUENCES = new Map<string, readonly number[]>([
   [EVEN_EIGHTHS_LEFT_HAND_EXERCISE_ID, [48, 50, 52, 53, 55]],
   [ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID, [60, 64, 67, 64, 60]],
   [ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID, [48, 52, 55, 52, 48]],
+  [REPEATED_NOTES_RIGHT_HAND_EXERCISE_ID, [60, 60, 62, 62, 64]],
+  [REPEATED_NOTES_LEFT_HAND_EXERCISE_ID, [48, 48, 50, 50, 52]],
 ]);
 
 const EXPECTED_FINGERINGS = new Map<string, string>([
@@ -49,14 +52,21 @@ const EXPECTED_FINGERINGS = new Map<string, string>([
   [EVEN_EIGHTHS_LEFT_HAND_EXERCISE_ID, "5-4-3-2-1"],
   [ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID, "1-3-5-3-1"],
   [ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID, "5-3-1-3-5"],
+  [REPEATED_NOTES_RIGHT_HAND_EXERCISE_ID, "1-1-2-2-3"],
+  [REPEATED_NOTES_LEFT_HAND_EXERCISE_ID, "5-5-4-4-3"],
 ]);
 
-const THREE_PITCH_EXERCISE_IDS = new Set([ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID, ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID]);
+const THREE_PITCH_EXERCISE_IDS = new Set([
+  ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
+  ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
+  REPEATED_NOTES_RIGHT_HAND_EXERCISE_ID,
+  REPEATED_NOTES_LEFT_HAND_EXERCISE_ID,
+]);
 
 describe("beginner exercise library", () => {
-  it("exposes fourteen stable identities with the original ascent as default", () => {
+  it("exposes sixteen stable identities with the original ascent as default", () => {
     expect(exerciseLibrary.map(({ id, revision }) => [id, revision])).toEqual([...EXPECTED_SEQUENCES.keys()].map((id) => [id, 1]));
-    expect(new Set(exerciseLibrary.map(({ id }) => id))).toHaveLength(14);
+    expect(new Set(exerciseLibrary.map(({ id }) => id))).toHaveLength(16);
     expect(DEFAULT_EXERCISE_ID).toBe("five-note-ascent-c-major-right-hand");
     expect(defaultExercise.id).toBe(DEFAULT_EXERCISE_ID);
     expect(findExerciseById(DEFAULT_EXERCISE_ID)).toBe(defaultExercise);
@@ -110,11 +120,11 @@ describe("beginner exercise library", () => {
     }
   });
 
-  it("covers both hands, ascending and descending motion, step-skip patterns, subdivision, and returning chord tones", () => {
+  it("covers both hands, motion, step-skip patterns, subdivision, repeated pairs, and returning chord tones", () => {
     const rightHandExercises = exerciseLibrary.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "right"));
     const leftHandExercises = exerciseLibrary.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "left"));
-    expect(rightHandExercises).toHaveLength(7);
-    expect(leftHandExercises).toHaveLength(7);
+    expect(rightHandExercises).toHaveLength(8);
+    expect(leftHandExercises).toHaveLength(8);
 
     expect(findExerciseById(FIVE_NOTE_DESCENT_RIGHT_HAND_EXERCISE_ID)?.expectedEvents.map(({ noteNumber }) => noteNumber)).toEqual([
       67, 65, 64, 62, 60,
@@ -136,7 +146,7 @@ describe("beginner exercise library", () => {
       expect(intervals.some((interval) => interval >= 3)).toBe(true);
     }
 
-    expect(exerciseLibrary.filter(({ evaluationMode }) => evaluationMode === "timed-ordered-notes")).toHaveLength(6);
+    expect(exerciseLibrary.filter(({ evaluationMode }) => evaluationMode === "timed-ordered-notes")).toHaveLength(8);
     expect(exerciseLibrary.filter(({ evaluationMode }) => evaluationMode === "untimed-ordered-notes")).toHaveLength(8);
   });
 
@@ -163,6 +173,19 @@ describe("beginner exercise library", () => {
       prerequisite: STEADY_QUARTER_LEFT_HAND_EXERCISE_ID,
     },
   ])("requires the matching straight steady-quarter study for $id", ({ id, prerequisite }) => {
+    expect(findExerciseById(id)?.prerequisites).toEqual([prerequisite]);
+  });
+
+  it.each([
+    {
+      id: REPEATED_NOTES_RIGHT_HAND_EXERCISE_ID,
+      prerequisite: EVEN_EIGHTHS_RIGHT_HAND_EXERCISE_ID,
+    },
+    {
+      id: REPEATED_NOTES_LEFT_HAND_EXERCISE_ID,
+      prerequisite: EVEN_EIGHTHS_LEFT_HAND_EXERCISE_ID,
+    },
+  ])("requires the matching even-eighth study for $id", ({ id, prerequisite }) => {
     expect(findExerciseById(id)?.prerequisites).toEqual([prerequisite]);
   });
 

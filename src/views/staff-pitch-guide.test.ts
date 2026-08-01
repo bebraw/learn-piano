@@ -3,6 +3,7 @@ import { fiveNoteDescentLeftHandExercise } from "../exercises/library/beginner-f
 import { evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered-chord-tone-exercises.js";
+import { repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import type { Exercise } from "../exercises/types.js";
 import { renderStaffPitchGuide } from "./staff-pitch-guide.js";
@@ -65,6 +66,19 @@ describe("renderStaffPitchGuide", () => {
     }
     expect(html.match(/data-note-state="expected"/g)).toHaveLength(1);
     expect(html.match(/data-note-state="remaining"/g)).toHaveLength(4);
+  });
+
+  it("keeps adjacent repeated-note onsets as separate event markers", () => {
+    const html = renderStaffPitchGuide(repeatedNotesRightHandExercise);
+    const eventIds = repeatedNotesRightHandExercise.expectedEvents.map(({ id }) => id);
+
+    expect(html).toContain("Pitch order · Even eighth-note onsets");
+    expect(html.match(/data-staff-note/g)).toHaveLength(5);
+    for (const eventId of eventIds) {
+      expect(html).toContain(`id="staff-note-${eventId}"`);
+    }
+    expect(eventIds[0]).not.toBe(eventIds[1]);
+    expect(eventIds[2]).not.toBe(eventIds[3]);
   });
 
   it("does not claim one note per beat for another supported timed pattern", () => {

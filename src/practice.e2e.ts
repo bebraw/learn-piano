@@ -3,6 +3,7 @@ import { defaultExercise, exerciseLibrary } from "./exercises/library/index.js";
 import { formatMidiNote } from "./exercises/evaluator.js";
 import { evenEighthsRightHandExercise } from "./exercises/library/even-eighth-exercises.js";
 import { orderedChordTonesRightHandExercise } from "./exercises/library/ordered-chord-tone-exercises.js";
+import { repeatedNotesRightHandExercise } from "./exercises/library/repeated-note-exercises.js";
 import { ATTEMPT_STORAGE_KEY } from "./client/persistence/attempt-repository.js";
 import { exercisePracticeHref } from "./views/exercise-presentation.js";
 
@@ -339,6 +340,48 @@ test("counts in an even-eighth study and persists its MIDI-relative timing summa
     ].sort(),
   );
   expect((attempt?.timing?.onPulse ?? 0) + (attempt?.timing?.early ?? 0) + (attempt?.timing?.late ?? 0)).toBe(4);
+});
+
+test("advances adjacent repeated-note occurrences over shared physical keys", async ({ page }) => {
+  const exercise = repeatedNotesRightHandExercise;
+  await page.goto(exercisePracticeHref(exercise));
+
+  const staffNotes = exercise.expectedEvents.map((event) => page.locator(`#staff-note-${event.id}`));
+  const cKey = page.locator('[data-practice-key][data-note-number="60"]');
+  const dKey = page.locator('[data-practice-key][data-note-number="62"]');
+
+  await expect(page.locator("[data-practice-key]")).toHaveCount(3);
+  await expect(staffNotes[0]!).toHaveAttribute("data-note-state", "expected");
+  await expect(staffNotes[1]!).toHaveAttribute("data-note-state", "remaining");
+
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await page.locator("#pulse-tempo").selectOption("100");
+  await page.getByRole("button", { name: "Start pulse" }).click();
+  await expect(page.locator("#practice-stage")).toHaveAttribute("data-pulse-status", "running", { timeout: 5_000 });
+
+  await playNote(page, 60);
+  await expect(staffNotes[0]!).toHaveAttribute("data-note-state", "accepted");
+  await expect(staffNotes[1]!).toHaveAttribute("data-note-state", "expected");
+  await expect(cKey).toHaveAttribute("data-note-state", "expected");
+  await expect(cKey).toHaveAttribute("aria-label", "C4, next note");
+
+  await playNote(page, 60);
+  await expect(staffNotes[1]!).toHaveAttribute("data-note-state", "accepted");
+  await expect(staffNotes[2]!).toHaveAttribute("data-note-state", "expected");
+  await expect(cKey).toHaveAttribute("data-note-state", "accepted");
+  await expect(dKey).toHaveAttribute("data-note-state", "expected");
+
+  await playNote(page, 62);
+  await playNote(page, 62);
+  await playNote(page, 64);
+
+  await expect(page.getByText("5 of 5 notes")).toBeVisible();
+  await expect(page.getByText("1 attempt completed today")).toBeVisible();
+  const storedExerciseId = await page.evaluate((storageKey) => {
+    const value = localStorage.getItem(storageKey);
+    return value === null ? null : (JSON.parse(value) as { attempts?: Array<{ exerciseId?: string }> }).attempts?.[0]?.exerciseId;
+  }, ATTEMPT_STORAGE_KEY);
+  expect(storedExerciseId).toBe(exercise.id);
 });
 
 test("uses the injected iPad bridge through the shared practice flow", async ({ page }) => {

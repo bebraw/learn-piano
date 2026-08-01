@@ -8,6 +8,10 @@ import {
   ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
 } from "../exercises/library/ordered-chord-tone-exercises.js";
 import {
+  REPEATED_NOTES_LEFT_HAND_EXERCISE_ID,
+  REPEATED_NOTES_RIGHT_HAND_EXERCISE_ID,
+} from "../exercises/library/repeated-note-exercises.js";
+import {
   STEADY_QUARTER_LEFT_HAND_EXERCISE_ID,
   STEADY_QUARTER_RIGHT_HAND_EXERCISE_ID,
   STEADY_QUARTER_STEP_SKIP_LEFT_HAND_EXERCISE_ID,
@@ -275,6 +279,29 @@ describe("recommendNextStudy", () => {
       reason: {
         kind: "direct-dependent",
         prerequisiteExerciseIds: [pattern.id],
+      },
+    });
+  });
+
+  it.each([
+    {
+      evenEighthsId: EVEN_EIGHTHS_RIGHT_HAND_EXERCISE_ID,
+      repeatedNotesId: REPEATED_NOTES_RIGHT_HAND_EXERCISE_ID,
+    },
+    {
+      evenEighthsId: EVEN_EIGHTHS_LEFT_HAND_EXERCISE_ID,
+      repeatedNotesId: REPEATED_NOTES_LEFT_HAND_EXERCISE_ID,
+    },
+  ])("recommends $repeatedNotesId directly after its even-eighth prerequisite", ({ evenEighthsId, repeatedNotesId }) => {
+    const evenEighths = requireLibraryExercise(evenEighthsId);
+    const repeatedNotes = requireLibraryExercise(repeatedNotesId);
+
+    expect(recommendNextStudy(exerciseLibrary, [attempt(evenEighths, "2026-08-01T08:00:00.000Z")], evenEighths.id)).toEqual({
+      kind: "new-study",
+      exercise: repeatedNotes,
+      reason: {
+        kind: "direct-dependent",
+        prerequisiteExerciseIds: [evenEighths.id],
       },
     });
   });

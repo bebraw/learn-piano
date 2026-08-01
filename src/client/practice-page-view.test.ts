@@ -3,6 +3,7 @@ import type { PracticePulseState, PracticePulseStatus } from "../audio/practice-
 import { fiveNoteDescentRightHandExercise } from "../exercises/library/beginner-five-note-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered-chord-tone-exercises.js";
+import { repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import { createEvaluationState, evaluateMidiEvent } from "../exercises/evaluator.js";
 import type { Exercise } from "../exercises/types.js";
@@ -285,6 +286,56 @@ describe("createPracticePageView", () => {
 
     render(null, []);
     expect(staffNotes.every((note) => note.getAttribute("data-note-active") === "false")).toBe(true);
+  });
+
+  it("keeps the shared key expected between adjacent repeated-note occurrences", () => {
+    const exercise = repeatedNotesRightHandExercise;
+    const { elements, keys, staffNotes } = createElements(exercise);
+    const view = createPracticePageView(elements);
+    let evaluation = createEvaluationState(exercise);
+
+    const render = (): void => {
+      view.render(
+        timedSnapshot({
+          exercise,
+          connection: connection("connected", "mock-midi-input"),
+          sessionStatus: evaluation.nextExpectedIndex === 0 ? "ready" : "in-progress",
+          pulse: pulse("running"),
+          evaluation,
+        }),
+      );
+    };
+
+    render();
+    expect(keys).toHaveLength(3);
+    expect(keys.map(({ dataset }) => dataset.noteState)).toEqual(["expected", "remaining", "remaining"]);
+
+    evaluation = evaluateMidiEvent(exercise, evaluation, {
+      type: "note-on",
+      channel: 1,
+      noteNumber: 60,
+      velocity: 72,
+      timestamp: 1_000,
+    }).state;
+    render();
+
+    expect(keys.map(({ dataset }) => dataset.noteState)).toEqual(["expected", "remaining", "remaining"]);
+    expect(keys[0]?.getAttribute("aria-label")).toBe("C4, next note");
+    expect(staffNotes[0]?.getAttribute("data-note-state")).toBe("accepted");
+    expect(staffNotes[1]?.getAttribute("data-note-state")).toBe("expected");
+
+    evaluation = evaluateMidiEvent(exercise, evaluation, {
+      type: "note-on",
+      channel: 1,
+      noteNumber: 60,
+      velocity: 72,
+      timestamp: 1_500,
+    }).state;
+    render();
+
+    expect(keys.map(({ dataset }) => dataset.noteState)).toEqual(["accepted", "expected", "remaining"]);
+    expect(staffNotes[1]?.getAttribute("data-note-state")).toBe("accepted");
+    expect(staffNotes[2]?.getAttribute("data-note-state")).toBe("expected");
   });
 
   it("keeps a stopped timed study gated until an input is connected and the pulse starts", () => {
