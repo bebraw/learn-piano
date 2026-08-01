@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { NormalizedMidiEvent } from "../midi/types.js";
 import { createEvaluationState, evaluateMidiEvent } from "./evaluator.js";
 import { fiveNoteAscentExercise } from "./library/five-note-ascent.js";
-import { steadyQuarterRightHandExercise } from "./library/steady-quarter-exercises.js";
+import { steadyQuarterRightHandExercise, steadyQuarterStepSkipRightHandExercise } from "./library/steady-quarter-exercises.js";
 import { parseExercise } from "./schema.js";
 
 function noteOn(noteNumber: number, timestamp: number): NormalizedMidiEvent {
@@ -119,6 +119,26 @@ describe("timed ordered-note evaluation", () => {
         late: 0,
         meanAbsoluteErrorMs: 0,
         message: "All 4 intervals stayed on the pulse at 60 BPM.",
+      },
+    });
+  });
+
+  it("keeps step-and-skip pitch order on successive canonical beats", () => {
+    let state = createEvaluationState(steadyQuarterStepSkipRightHandExercise);
+
+    for (const [index, event] of steadyQuarterStepSkipRightHandExercise.expectedEvents.entries()) {
+      state = evaluateMidiEvent(steadyQuarterStepSkipRightHandExercise, state, noteOn(event.noteNumber, 2_000 + index * 1_000)).state;
+    }
+
+    expect(steadyQuarterStepSkipRightHandExercise.expectedEvents.map(({ noteNumber }) => noteNumber)).toEqual([60, 64, 62, 65, 67]);
+    expect(state.completionSummary).toMatchObject({
+      errorFree: true,
+      timing: {
+        assessedIntervals: 4,
+        onPulse: 4,
+        early: 0,
+        late: 0,
+        meanAbsoluteErrorMs: 0,
       },
     });
   });

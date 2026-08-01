@@ -4,13 +4,13 @@
 
 ### Context
 
-The README is the first surface for a learner or contributor. It must identify the current Piano Practice product, explain the eight-exercise beginner slice, pitch-only staff guide, timing and platform limits, provide accurate local commands and architecture orientation, and preserve the repository's documentation contract. The committed screenshot should stay representative without adding screenshot automation to routine development or CI.
+The README is the first surface for a learner or contributor. It must identify the current Piano Practice product, explain the ten-exercise beginner slice, pitch-only staff guide, timing and platform limits, provide accurate local commands and architecture orientation, and preserve the repository's documentation contract. The committed screenshot should stay representative without adding screenshot automation to routine development or CI.
 
 ### Architecture
 
 - **Primary document:** `README.md`
 - **Committed screenshot:** `docs/screenshots/home.png`
-- **Product summary:** eight-exercise selection, server-rendered treble and bass pitch guides, local-first practice behavior, bounded timing feedback, per-exercise persistence, input choices, and explicit limitations
+- **Product summary:** ten-exercise selection, server-rendered treble and bass pitch guides, local-first practice behavior, bounded timing feedback, per-exercise persistence, input choices, and explicit limitations
 - **Developer summary:** runtime, default and query-selected practice routes, source layout, generated assets, verification, and authoritative documentation locations
 - **Screenshot refresh:** a manual developer action after material UI changes
 - **Non-goal:** no local or remote screenshot workflow in the automated build, development loop, or CI
@@ -32,7 +32,7 @@ The README is the first surface for a learner or contributor. It must identify t
 ### Definition of Done
 
 - [ ] The README identifies Piano Practice as a local-first Cloudflare Worker application near the top.
-- [ ] It describes all eight right- and left-hand exercises, including the two steady-quarter studies, direct exercise selection, progressive enhancement, input options, per-exercise history, and feedback boundaries.
+- [ ] It describes all ten right- and left-hand exercises, including the two straight and two step-and-skip steady-quarter studies, direct exercise selection, progressive enhancement, input options, per-exercise history, and feedback boundaries.
 - [ ] It explains that every current exercise has a supported server-rendered treble or bass pitch guide with semantic note text, no duration semantics, and no staff-reading mastery inference.
 - [ ] It states the desktop Web MIDI dependency and explains the implemented native iPad wrapper, including its operator-owned signing and physical-device verification steps.
 - [ ] Runtime, build, verification, route, and source-layout details match the repository.
@@ -44,7 +44,7 @@ The README is the first surface for a learner or contributor. It must identify t
 - `README.md` must reference the existing `docs/screenshots/home.png` asset.
 - A new reader must understand the current product and server-rendered/progressively enhanced model before exploring the source tree.
 - The README must identify `/practice` as the canonical default and `?exercise=<id>` as direct selection, including the `404` behavior for unknown IDs.
-- The six untimed exercises must remain distinct from the two steady-quarter exercises; none may be described as percentage-scored, AI-evaluated, or cloud-backed.
+- The six untimed exercises must remain distinct from the four steady-quarter exercises; none may be described as percentage-scored, AI-evaluated, or cloud-backed.
 - The current pitch guide must not be described as a complete score, a duration model, or evidence that the learner read the staff.
 - Input support and iPad limitations must remain accurate when platform adapters change.
 - The documented build must identify `.generated/browser/` as ignored generated output.
@@ -67,7 +67,7 @@ The README is the first surface for a learner or contributor. It must identify t
 
 - Given: the repository is viewed locally or on Git hosting
 - When: the learner reads the opening sections
-- Then: they understand the eight exercises available now, how the staff pitch guide, selection, timing, input, and per-exercise history work, and what the application cannot assess
+- Then: they understand the ten exercises available now, how the staff pitch guide, selection, timing, input, and per-exercise history work, and what the application cannot assess
 
 **Scenario: Contributor runs the application**
 

@@ -8,7 +8,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 
 ### Current Scope
 
-- The validated library contains eight canonical, original beginner exercises: right-hand C4-G4 ascent and descent, left-hand C3-G3 ascent and descent, a C-E-D-F-G step-and-skip pattern for each hand, and one C-D-E-F-G steady-quarter study for each hand.
+- The validated library contains ten canonical, original beginner exercises: right-hand C4-G4 ascent and descent, left-hand C3-G3 ascent and descent, an untimed C-E-D-F-G step-and-skip pattern for each hand, one straight C-D-E-F-G steady-quarter study for each hand, and one timed C-E-D-F-G step-and-skip study for each hand.
 - `GET /practice` returns the default right-hand ascent. `GET /practice?exercise=<id>` returns the selected canonical exercise, while an unknown, empty, or duplicated exercise parameter returns `404` instead of silently changing the learner's task.
 - The home and practice pages render the complete exercise chooser on the server. The selected title, instructions, expected notes, pitch-only staff guide, chooser, and basic limitation text remain meaningful without JavaScript; connecting input, live highlighting, evaluation, completion, and local history are progressive enhancements.
 - Every current exercise receives a supported inline-SVG pitch guide derived from its canonical expected events: treble for the single-hand right-hand C4-G4 natural-note range and bass for the single-hand left-hand C3-G3 natural-note range. Adjacent ordered note text remains the semantic fallback, and the guide adds no duration, rhythm, or staff-reading evidence.
@@ -17,6 +17,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - Only completed attempts are persisted in this slice. History is filtered by exercise ID and revision; an incomplete, restarted, disconnected, or abandoned attempt does not appear as a completed history item. A timed completion may include its fixed tempo, four interval classifications, and mean absolute error while existing untimed records omit timing.
 - Native MIDI completions use the `native-midi` adapter kind; they do not have a separate evaluator, completion rule, or history model.
 - The completion UI suggests an eligible uncompleted direct dependent first, then an eligible uncompleted exercise in canonical library order. When every current exercise has exact-revision completion evidence, it suggests the least recently practiced review. The learner can always ignore it and use the complete exercise chooser.
+- Each timed step-and-skip study declares both its matching untimed step-and-skip and straight steady-quarter studies as prerequisites. Those declarations affect advisory eligibility only and never block a direct selection.
 
 ### Future Scope
 
@@ -109,7 +110,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 
 ### Definition of Done
 
-- [ ] `/practice` returns the canonical default, and `?exercise=<id>` selects each of the eight validated exercises without requiring client JavaScript.
+- [ ] `/practice` returns the canonical default, and `?exercise=<id>` selects each of the ten validated exercises without requiring client JavaScript.
 - [ ] Unknown, empty, and duplicated supplied exercise parameters return `404`.
 - [ ] The server-rendered chooser identifies the selected exercise and links to every library entry.
 - [ ] Every current exercise server-renders the supported treble or bass pitch guide and adjacent semantic note text from its canonical expected events.
@@ -162,7 +163,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - **Unit tests:** Session state transitions, note-off filtering, restart invalidation, disconnect interruption, completion idempotence, tempo boundaries, four-beat count-in scheduling, audio cleanup, fixed MIDI timing anchor, optional timing-summary validation, local-day summary, empty history, corrupt-record isolation, persistence failure, pitch-guide state projection, optimistic post-completion recommendation, retained-history refresh, and unavailable recommendation fallback.
 - **Integration tests:** Exercise-library selection, supported staff rendering, canonical timed and untimed exercises, evaluator, audio guidance, mock port, and attempt repository cooperate without DOM-derived data, notation-derived identity, or cross-clock comparison; unknown IDs fail closed.
 - **Native adapter tests:** Validated native replies, state changes, and normalized events drive the same controller; malformed payloads, stale callbacks, disconnect, and disposal cannot advance or complete an attempt.
-- **Browser tests:** Playwright opens the default, a left-hand untimed exercise, and a timed exercise; verifies server-rendered pitch guides, ordered text, instructions, and chooser behavior; selects mock input; observes matching staff and keyboard progress; changes tempo; starts the count-in; plays canonical timestamped fixtures; observes pitch and timing feedback; completes; sees the explained direct-dependent suggestion while the full chooser remains available; reloads; and sees only successfully retained exact-revision history.
+- **Browser tests:** Playwright opens the default, a left-hand untimed exercise, and a timed step-and-skip exercise; verifies server-rendered pitch guides, ordered text, instructions, and chooser behavior; selects mock input; observes matching staff and keyboard progress; changes tempo; starts the count-in; plays canonical timestamped fixtures; observes pitch and timing feedback; completes; sees the explained direct-dependent suggestion while the full chooser remains available; reloads; and sees only successfully retained exact-revision history.
 - **Coverage target:** Every session transition and persistence failure branch remains exercised; snapshots alone are insufficient evidence.
 
 ### Scenarios
@@ -171,13 +172,13 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 
 - Given: client scripting is disabled or fails to load
 - When: the learner opens `/practice`
-- Then: the default C-D-E-F-G right-hand instructions, expected notes, and eight-exercise chooser remain visible, and history says JavaScript is required instead of claiming the history is empty
+- Then: the default C-D-E-F-G right-hand instructions, expected notes, and ten-exercise chooser remain visible, and history says JavaScript is required instead of claiming the history is empty
 
 **Scenario: Select another exercise without JavaScript**
 
 - Given: client scripting is disabled
 - When: the learner opens `/practice?exercise=five-note-ascent-c-major-left-hand`
-- Then: the left-hand C3-D3-E3-F3-G3 exercise is selected and fully readable with a bass pitch guide, ordered note text, and links to the other seven exercises
+- Then: the left-hand C3-D3-E3-F3-G3 exercise is selected and fully readable with a bass pitch guide, ordered note text, and links to the other nine exercises
 
 **Scenario: Read right-hand staff positions without JavaScript**
 
@@ -268,6 +269,12 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - Given: the learner selected `steady-quarter-c-major-right-hand`, connected an input, and left tempo at 60 BPM
 - When: they start the timed exercise
 - Then: the page presents four 4/4 quarter-note count-in beats, continues quarter-note click guidance, and waits for the first accepted C4 to establish MIDI time zero
+
+**Scenario: Practice step-and-skip motion on the pulse**
+
+- Given: the learner selected `steady-quarter-step-skip-c-major-right-hand`, connected an input, and left tempo at 60 BPM
+- When: they start the timed exercise and play C4-E4-D4-F4-G4 on successive quarter-note beats
+- Then: the same count-in, click, fixed MIDI anchor, pitch feedback, and four timing classifications apply without treating pitch distance as elapsed time
 
 **Scenario: Keep staff markers pitch-only during timed practice**
 

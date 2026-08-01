@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { defaultExercise, exerciseLibrary } from "./exercises/library";
+import { steadyQuarterStepSkipRightHandExercise } from "./exercises/library/steady-quarter-exercises";
 import { exercisePracticeHref } from "./views/exercise-presentation";
 import worker, { handleRequest } from "./worker";
 import { ensureGeneratedStylesheet } from "./test-support";
@@ -20,9 +21,9 @@ describe("worker", () => {
     expect(body).toContain("Piano Practice");
     expect(body).toContain(exercisePracticeHref(defaultExercise));
     expect(body).toContain("Choose your next study");
-    expect(exerciseLibrary).toHaveLength(8);
+    expect(exerciseLibrary).toHaveLength(10);
     expect(body.match(/class="folio-card group"/g)).toHaveLength(exerciseLibrary.length);
-    expect(body.match(/data-mode="timed"/g)).toHaveLength(2);
+    expect(body.match(/data-mode="timed"/g)).toHaveLength(4);
     expect(body).toContain("/api/health");
   });
 
@@ -54,13 +55,13 @@ describe("worker", () => {
   });
 
   it("renders steady-pulse controls and timing facts for a timed exercise", async () => {
-    const timedExercise = exerciseLibrary.find((exercise) => exercise.evaluationMode === "timed-ordered-notes");
-    expect(timedExercise).toBeDefined();
-
-    const response = await handleRequest(new Request(`http://example.com${exercisePracticeHref(timedExercise!)}`));
+    const response = await handleRequest(new Request(`http://example.com${exercisePracticeHref(steadyQuarterStepSkipRightHandExercise)}`));
 
     expect(response.status).toBe(200);
     const body = await response.text();
+    expect(body).toContain(steadyQuarterStepSkipRightHandExercise.instructions);
+    expect(body).toContain(`data-exercise-id="${steadyQuarterStepSkipRightHandExercise.id}"`);
+    expect(body).toContain('aria-label="Pitch order: C4 · E4 · D4 · F4 · G4"');
     expect(body.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).not.toContain("hidden");
     expect(body).toContain('id="pulse-tempo"');
     expect(body).toContain("60 BPM · 4/4 · Four-beat count-in before your first note.");

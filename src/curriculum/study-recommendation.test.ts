@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { CompletedAttemptRecord } from "../client/persistence/attempt-repository.js";
+import { STEP_SKIP_LEFT_HAND_EXERCISE_ID, STEP_SKIP_RIGHT_HAND_EXERCISE_ID } from "../exercises/library/beginner-five-note-exercises.js";
 import { exerciseLibrary } from "../exercises/library/index.js";
+import {
+  STEADY_QUARTER_LEFT_HAND_EXERCISE_ID,
+  STEADY_QUARTER_RIGHT_HAND_EXERCISE_ID,
+  STEADY_QUARTER_STEP_SKIP_LEFT_HAND_EXERCISE_ID,
+  STEADY_QUARTER_STEP_SKIP_RIGHT_HAND_EXERCISE_ID,
+} from "../exercises/library/steady-quarter-exercises.js";
 import type { Exercise } from "../exercises/types.js";
 import { recommendNextStudy, type StudyAttemptEvidence } from "./study-recommendation.js";
 
@@ -183,7 +190,52 @@ describe("recommendNextStudy", () => {
     expect(recommendation?.exercise).toBe(exerciseLibrary[1]);
     expect(recommendation?.reason.kind).toBe("direct-dependent");
   });
+
+  it.each([
+    {
+      patternId: STEP_SKIP_RIGHT_HAND_EXERCISE_ID,
+      straightPulseId: STEADY_QUARTER_RIGHT_HAND_EXERCISE_ID,
+      combinedId: STEADY_QUARTER_STEP_SKIP_RIGHT_HAND_EXERCISE_ID,
+    },
+    {
+      patternId: STEP_SKIP_LEFT_HAND_EXERCISE_ID,
+      straightPulseId: STEADY_QUARTER_LEFT_HAND_EXERCISE_ID,
+      combinedId: STEADY_QUARTER_STEP_SKIP_LEFT_HAND_EXERCISE_ID,
+    },
+  ])("gates $combinedId on both its untimed pattern and straight-pulse prerequisite", ({ patternId, straightPulseId, combinedId }) => {
+    const pattern = requireLibraryExercise(patternId);
+    const straightPulse = requireLibraryExercise(straightPulseId);
+    const combined = requireLibraryExercise(combinedId);
+
+    const patternOnly = recommendNextStudy(exerciseLibrary, [attempt(pattern, "2026-08-01T08:00:00.000Z")], pattern.id);
+    const straightPulseOnly = recommendNextStudy(exerciseLibrary, [attempt(straightPulse, "2026-08-01T08:05:00.000Z")], straightPulse.id);
+    expect(patternOnly?.exercise).not.toBe(combined);
+    expect(straightPulseOnly?.exercise).not.toBe(combined);
+
+    expect(
+      recommendNextStudy(
+        exerciseLibrary,
+        [attempt(pattern, "2026-08-01T08:00:00.000Z"), attempt(straightPulse, "2026-08-01T08:05:00.000Z")],
+        straightPulse.id,
+      ),
+    ).toEqual({
+      kind: "new-study",
+      exercise: combined,
+      reason: {
+        kind: "direct-dependent",
+        prerequisiteExerciseIds: [pattern.id, straightPulse.id],
+      },
+    });
+  });
 });
+
+function requireLibraryExercise(id: string): Exercise {
+  const exercise = exerciseLibrary.find((candidate) => candidate.id === id);
+  if (exercise === undefined) {
+    throw new Error(`Missing canonical exercise ${id}`);
+  }
+  return exercise;
+}
 
 function exercise(id: string, prerequisites: readonly string[] = [], revision = 1): Exercise {
   return {

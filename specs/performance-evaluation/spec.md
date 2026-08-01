@@ -11,7 +11,7 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - Evaluation supports canonical `untimed-ordered-notes` and `timed-ordered-notes` modes for individual notes.
 - It classifies each relevant note-on as correct, repeated, out of order, or wrong.
 - It advances only on the next expected pitch and completes after all five expected notes have been accepted.
-- For the two steady-quarter studies, the first accepted correct note anchors timing and each later accepted correct note is additionally classified as on pulse, early, or late against its canonical beat gap with an inclusive ±0.2-beat tolerance.
+- For the four steady-quarter studies—straight and step-and-skip for each hand—the first accepted correct note anchors timing and each later accepted correct note is additionally classified as on pulse, early, or late against its canonical beat gap with an inclusive ±0.2-beat tolerance.
 - Pitch and order are evaluated for every exercise. Timing is evaluated only for `timed-ordered-notes`; duration, velocity quality, fingering, articulation, dynamics, and physical technique are not evaluated.
 - Feedback is deterministic, brief, calm, specific about actual and expected notes, and limited to the next useful correction.
 
@@ -35,7 +35,7 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - **Timing anchor:** The first accepted correct note records its normalized MIDI timestamp and canonical beat offset as the fixed anchor. It advances pitch progress but is not itself classified as early, late, or on pulse.
 - **Timing comparison:** For each later accepted correct note, observed elapsed milliseconds from the anchor are compared with the note's canonical beat gap from the anchored event. Absolute error at or below `timingWindowBeats × millisecondsPerBeat` is on pulse; a more negative error is early and a more positive error is late.
 - **Pitch-error isolation:** Wrong, repeated, and out-of-order events never create, replace, or move the timing anchor and receive no timing classification. When the correct expected pitch arrives, its own MIDI timestamp is compared with the original anchor.
-- **Timing summary:** Completed timed state exposes the selected tempo, number of assessed intervals, on-pulse, early, and late counts, and mean absolute error in milliseconds. Those classification counts sum to assessed intervals; a five-note steady-quarter study assesses four intervals.
+- **Timing summary:** Completed timed state exposes the selected tempo, number of assessed intervals, on-pulse, early, and late counts, and mean absolute error in milliseconds. Those classification counts sum to assessed intervals; each current five-note steady-quarter study assesses four intervals regardless of pitch order.
 - **Feedback projection:** Domain feedback contains stable classifications plus actual and expected pitch or timing facts. Learner-facing copy is deterministic and may include note labels and signed timing error. Completion distinguishes an error-free sequence from one completed with pitch corrections and may summarize pulse evidence without producing a percentage grade.
 - **Audio boundary:** Web Audio schedules count-in and click guidance outside the evaluator. Audio times, wall-clock receipt times, and latency estimates are never inputs to timing classification.
 - **Dependencies:** The evaluator depends only on exercise-domain and normalized-MIDI types. Session, persistence, and views depend on evaluator results.
@@ -166,6 +166,12 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - Given: the 60 BPM right-hand steady-quarter study expects C4 at beat 0 followed by D4 at beat 1
 - When: C4 is accepted at MIDI timestamp 5,000 ms and D4 is accepted at 6,000 ms
 - Then: C4 establishes the anchor without a timing classification and D4 is on pulse with zero timing error
+
+**Scenario: Keep step-and-skip timing canonical**
+
+- Given: the 60 BPM right-hand timed step-and-skip study expects C4-E4-D4-F4-G4 at beat offsets 0–4
+- When: those pitches are accepted in order at one-second MIDI intervals
+- Then: C4 establishes the anchor and the four later intervals are on pulse because timing follows each event's canonical beat offset rather than pitch distance
 
 **Scenario: Include the tolerance boundary**
 

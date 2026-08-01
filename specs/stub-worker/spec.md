@@ -4,13 +4,13 @@
 
 ### Context
 
-The repository has evolved from a runnable template stub into a personal piano-practice application while retaining the lightweight Cloudflare Worker baseline. The shell must serve a useful server-rendered eight-exercise library, a stable health route, and same-origin generated assets without turning practice into a client framework application.
+The repository has evolved from a runnable template stub into a personal piano-practice application while retaining the lightweight Cloudflare Worker baseline. The shell must serve a useful server-rendered ten-exercise library, a stable health route, and same-origin generated assets without turning practice into a client framework application.
 
 ### Architecture
 
 - **Entry point:** Wrangler starts `src/worker.ts`, which owns top-level routing.
 - **Source layout:** `src/api/` contains API handlers, `src/views/` contains HTML renderers, and browser behavior remains in typed modules under `src/client/`.
-- **Routes:** `/` renders the application overview and eight-exercise library, `/practice` renders the canonical default, `/practice?exercise=<id>` renders an exact library selection, `/api/health` returns stable JSON, and unknown paths or supplied exercise IDs return a non-indexable 404 document.
+- **Routes:** `/` renders the application overview and ten-exercise library, `/practice` renders the canonical default, `/practice?exercise=<id>` renders an exact library selection, `/api/health` returns stable JSON, and unknown paths or supplied exercise IDs return a non-indexable 404 document.
 - **Asset pipeline:** `src/tailwind-input.css` and the browser TypeScript graph compile into `.generated/browser/`. Selective Worker-first routing preserves the `/styles.css` response contract, while Wrangler's static asset binding serves `/client/*.js` directly.
 - **Rendering boundary:** The Worker provides the document shell and meaningful initial content. Small same-origin ESM modules progressively enhance interactive practice behavior.
 - **Visual-system boundary:** Server-rendered views share the responsive practice-desk shell and token-driven visual system from `src/tailwind-input.css`. The active practice surface leads the document hierarchy; setup, exercise selection, history, and utility routes remain supporting content without changing the semantic order when the layout stacks.
@@ -33,7 +33,7 @@ The repository has evolved from a runnable template stub into a personal piano-p
 ### Definition of Done
 
 - [ ] Wrangler starts the application without additional scaffolding.
-- [ ] `/` returns the current Piano Practice overview and visible links to all eight canonical exercises.
+- [ ] `/` returns the current Piano Practice overview and visible links to all ten canonical exercises.
 - [ ] `/practice` returns useful canonical default-exercise content before client enhancement.
 - [ ] Home, practice, and not-found documents share the finished application identity, responsive layout rules, and accessible interaction sizing rather than presenting disconnected prototype screens.
 - [ ] The practice document keeps the active score, keyboard, cue, and feedback visually primary at desktop and iPad sizes, then stacks supporting setup, chooser, and history content after the stage on narrow screens.
@@ -46,7 +46,7 @@ The repository has evolved from a runnable template stub into a personal piano-p
 
 ### Regression Guardrails
 
-- `GET /` must return HTML with the Piano Practice heading and visible links to all eight exercises.
+- `GET /` must return HTML with the Piano Practice heading and visible links to all ten exercises.
 - `GET /practice` must include the default exercise title, instructions, expected note sequence, limitation text, server-rendered chooser, and same-origin module entry point.
 - `GET /practice?exercise=<id>` must keep the URL selection, rendered content, and embedded canonical identity aligned without client JavaScript.
 - A present but empty or unknown exercise ID, or a duplicated exercise parameter, must return `404` rather than fall back to the default.
@@ -72,13 +72,13 @@ The repository has evolved from a runnable template stub into a personal piano-p
 
 - Given: the Worker is running locally
 - When: the learner visits `/`
-- Then: they see the Piano Practice overview and can open any of the eight beginner exercises
+- Then: they see the Piano Practice overview and can open any of the ten beginner exercises
 
 **Scenario: Exercise document loads without enhancement**
 
 - Given: client scripting is unavailable
 - When: the learner visits `/practice`
-- Then: the default exercise title, instructions, notes, eight-exercise chooser, and limitation text remain visible
+- Then: the default exercise title, instructions, notes, ten-exercise chooser, and limitation text remain visible
 
 **Scenario: Learner follows a direct exercise link**
 

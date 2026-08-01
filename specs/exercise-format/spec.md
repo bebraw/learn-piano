@@ -8,7 +8,7 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 
 ### Current Library Scope
 
-- The validated library contains eight schema-version-1, revision-1 exercises:
+- The validated library contains ten schema-version-1, revision-1 exercises:
   - `five-note-ascent-c-major-right-hand`: C4-D4-E4-F4-G4
   - `five-note-descent-c-major-right-hand`: G4-F4-E4-D4-C4
   - `five-note-ascent-c-major-left-hand`: C3-D3-E3-F3-G3
@@ -17,12 +17,14 @@ Exercises need one canonical representation so instructions, visual guidance, ev
   - `step-skip-c-major-left-hand`: C3-E3-D3-F3-G3
   - `steady-quarter-c-major-right-hand`: C4-D4-E4-F4-G4 at quarter-note beat offsets 0–4
   - `steady-quarter-c-major-left-hand`: C3-D3-E3-F3-G3 at quarter-note beat offsets 0–4
-- Every current exercise contains exactly five distinct pitches and remains compatible with the five-key practice view. The six pitch-pattern studies use `untimed-ordered-notes`; the two steady-quarter studies use `timed-ordered-notes`.
+  - `steady-quarter-step-skip-c-major-right-hand`: C4-E4-D4-F4-G4 at quarter-note beat offsets 0–4
+  - `steady-quarter-step-skip-c-major-left-hand`: C3-E3-D3-F3-G3 at quarter-note beat offsets 0–4
+- Every current exercise contains exactly five distinct pitches and remains compatible with the five-key practice view. The six pitch-pattern studies use `untimed-ordered-notes`; the four steady-quarter studies use `timed-ordered-notes`.
 - The original right-hand ascent remains the default so existing links and attempt identity stay stable. The library API exposes `exerciseLibrary`, `defaultExercise`, `DEFAULT_EXERCISE_ID`, and nullable lookup by stable ID.
 - Canonical library order is deterministic recommendation policy: it resolves candidate and equal-recency ties, but it is not exercise identity and must not be inferred from rendered card or storage order.
 - Each exercise has learner-facing title and instructions, beginner difficulty, explicit hand and prerequisite metadata, curriculum tags, and source metadata identifying it as original project material.
 - Titles name the assigned hand consistently. Instructions offer concise conventional C-position fingering as optional learner guidance; MIDI evaluation checks only the canonical pitch order and cannot verify which fingers were used.
-- Each steady-quarter exercise requires the matching untimed ascent, belongs to the `rhythm-and-coordination.steady-quarter-notes` curriculum competency, and defines a 40–100 BPM range with 60 BPM default, 4/4 meter, quarter-note beat unit, four-beat count-in, and ±0.2-beat timing window.
+- Each straight steady-quarter exercise requires the matching untimed ascent. Each timed step-and-skip exercise requires, in canonical prerequisite order, its matching untimed step-and-skip exercise and matching straight steady-quarter exercise. All four belong to the `rhythm-and-coordination.steady-quarter-notes` curriculum competency and define a 40–100 BPM range with 60 BPM default, 4/4 meter, quarter-note beat unit, four-beat count-in, and ±0.2-beat timing window. The timed step-and-skip pair additionally carries the existing interval-recognition and step-skip-coordination tags.
 - A presentation adapter derives a pitch-only staff guide for all current exercises from their existing event IDs, MIDI note numbers, order, and single-hand assignments. Right-hand C4-G4 natural notes use the supported treble view; left-hand C3-G3 natural notes use the supported bass view.
 - The staff guide adds no notation payload, schema version, exercise revision, evaluator behavior, or attempt identity. The current library still has no written-duration or note-duration target, velocity target, fingering assessment, audio asset, rests, eighth notes, syncopation, chords, hands-together material, adaptive tempo, or bundled repertoire content.
 
@@ -91,9 +93,9 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 ### Definition of Done
 
 - [ ] One validated canonical library defines the available exercises and is consumed by view, evaluator, persistence, fixtures, and curriculum references.
-- [ ] Eight stable exercises cover right and left hands, ascending and descending motion, step-skip coordination, and steady quarter notes while preserving the original right-hand ascent as default.
-- [ ] Every current exercise contains five distinct pitches and remains compatible with the five-key view; exactly two use the timed evaluator.
-- [ ] Both timed studies define beat offsets 0–4, 40–100 BPM with 60 BPM default, 4/4 quarter-note pulse, four-beat count-in, and ±0.2-beat tolerance.
+- [ ] Ten stable exercises cover right and left hands, ascending and descending motion, untimed and timed step-skip coordination, and straight steady quarter notes while preserving the original right-hand ascent as default.
+- [ ] Every current exercise contains five distinct pitches and remains compatible with the five-key view; exactly four use the timed evaluator.
+- [ ] All four timed studies define beat offsets 0–4, 40–100 BPM with 60 BPM default, 4/4 quarter-note pulse, four-beat count-in, and ±0.2-beat tolerance.
 - [ ] The current pitch-guide consumer renders every current canonical sequence from existing event fields while leaving schema version 1 and all exercise revisions unchanged.
 - [ ] Library lookup returns the matching canonical object for a known stable ID and `null` for an unknown ID.
 - [ ] Library validation rejects missing prerequisite references and prerequisite cycles, and canonical order is protected as the recommendation tie-break.
@@ -112,7 +114,7 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - Reordering rendered exercise cards or stored attempt records must not change recommendation priority; changing canonical library order is an explicit policy change.
 - Untimed exercises must remain independent of tempo, duration, inter-event spacing, and velocity.
 - Timed exercises must derive interval targets from canonical beat offsets and a selected tempo inside the declared range; they must not contain runtime audio or MIDI timestamps.
-- The steady-quarter studies must remain hands-separate, single-note, quarter-note material unless a later revision and updated contract explicitly broaden them.
+- The four steady-quarter studies must remain hands-separate, single-note, quarter-note material unless a later revision and updated contract explicitly broaden them.
 - Unsupported schema versions and modes must fail closed instead of being guessed.
 - Existing attempt history must remain attributable to the exact revision performed.
 - Repertoire goals must remain metadata-only until lawful source content is deliberately introduced.
@@ -123,7 +125,7 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 ### Verification
 
 - **Schema tests:** Accept every canonical exercise; reject unknown versions, invalid modes, empty sequences, duplicate IDs, invalid hands, invalid revisions, out-of-range MIDI notes, mode/timing mismatches, invalid tempo ranges, and missing or non-increasing timed beat offsets.
-- **Library tests:** Protect stable identities, default selection, canonical order, valid prerequisite references, and acyclic prerequisites; validate all source metadata, require five distinct pitches per exercise, and prove left-hand, descending, step-skip, and steady-quarter coverage.
+- **Library tests:** Protect stable identities, default selection, canonical order, valid prerequisite references, and acyclic prerequisites; validate all source metadata, require five distinct pitches per exercise, and prove left-hand, descending, untimed step-skip, straight steady-quarter, and timed step-and-skip coverage.
 - **Consumer contract tests:** Rendered guidance and evaluator expectations are derived from the same fixture and identity.
 - **Notation consumer tests:** Protect natural-note pitch mapping, current treble and bass ranges, canonical event order and identity, and explicit unsupported results without schema mutation.
 - **Versioning tests:** A stored attempt continues to resolve its original ID/revision after a newer revision is added.
@@ -133,9 +135,9 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 
 **Scenario: Load the current library**
 
-- Given: eight schema-version-1 documents for the current exercises
+- Given: ten schema-version-1 documents for the current exercises
 - When: the exercise library validates them
-- Then: it exposes eight unique stable IDs, five distinct pitches per exercise, lawful original-source metadata, two timed steady-quarter studies, and the original right-hand ascent as default
+- Then: it exposes ten unique stable IDs, five distinct pitches per exercise, lawful original-source metadata, four timed steady-quarter studies, and the original right-hand ascent as default
 
 **Scenario: Choose left-hand descending work**
 
@@ -145,7 +147,7 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 
 **Scenario: Practice steps and skips**
 
-- Given: the learner selects either step-skip exercise
+- Given: the learner selects either untimed step-and-skip exercise
 - When: its ordered events are inspected
 - Then: the five unique pitches contain both neighboring steps and wider skips without adding timing or velocity scoring
 
@@ -154,6 +156,12 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - Given: the learner selects `steady-quarter-c-major-right-hand`
 - When: the canonical exercise is resolved
 - Then: it exposes C4-D4-E4-F4-G4 at beat offsets 0–4, `timed-ordered-notes`, 40–100 BPM with 60 BPM default, 4/4 quarter pulse, four count-in beats, and a 0.2-beat timing window
+
+**Scenario: Load a timed step-and-skip study**
+
+- Given: the learner selects `steady-quarter-step-skip-c-major-right-hand`
+- When: the canonical exercise is resolved
+- Then: it exposes C4-E4-D4-F4-G4 at beat offsets 0–4 with the existing timed evaluation metadata and requires both `step-skip-c-major-right-hand` and `steady-quarter-c-major-right-hand`
 
 **Scenario: Reject an invalid timed exercise**
 

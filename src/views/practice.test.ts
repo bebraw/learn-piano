@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defaultExercise, exerciseLibrary } from "../exercises/library/index.js";
 import { stepSkipRightHandExercise } from "../exercises/library/beginner-five-note-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
+import { steadyQuarterStepSkipRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import type { Exercise } from "../exercises/types.js";
 import { renderPracticePage } from "./practice.js";
 
@@ -50,7 +51,7 @@ describe("renderPracticePage", () => {
     expect(html.match(/<option value="(?:40|50|60|70|80|90|100)"/g)).toHaveLength(7);
     expect(html).toContain('<option value="60" selected>60 BPM</option>');
     expect(html.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).toContain("hidden");
-    expect(exerciseLibrary).toHaveLength(8);
+    expect(exerciseLibrary).toHaveLength(10);
   });
 
   it("derives the rendered sequence and physical key order from the supplied exercise", () => {
@@ -105,14 +106,15 @@ describe("renderPracticePage", () => {
   });
 
   it("renders useful steady-pulse facts and controls for a timed exercise", () => {
-    const timedExercise = exerciseLibrary.find((exercise) => exercise.evaluationMode === "timed-ordered-notes");
-    expect(timedExercise).toBeDefined();
-
-    const html = renderPracticePage(timedExercise!, exerciseLibrary);
+    const html = renderPracticePage(steadyQuarterStepSkipRightHandExercise, exerciseLibrary);
     const pulseControls = html.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0];
 
     expect(pulseControls).toBeDefined();
     expect(pulseControls).not.toContain("hidden");
+    expect(html).toContain(steadyQuarterStepSkipRightHandExercise.title);
+    expect(html).toContain(steadyQuarterStepSkipRightHandExercise.instructions);
+    expect(html).toContain("C4 · E4 · D4 · F4 · G4");
+    expect(html).toContain(`href="/practice?exercise=${steadyQuarterStepSkipRightHandExercise.id}"`);
     expect(html).toContain("60 BPM · 4/4 · Four-beat count-in before your first note.");
     expect(html).toContain("After the count-in, place one note on each beat.");
     expect(html).toContain("Pitch order · One note per beat");

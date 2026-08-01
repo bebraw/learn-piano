@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { defaultExercise, exerciseLibrary } from "./exercises/library/index.js";
 import { formatMidiNote } from "./exercises/evaluator.js";
-import { steadyQuarterRightHandExercise } from "./exercises/library/steady-quarter-exercises.js";
+import { steadyQuarterStepSkipRightHandExercise } from "./exercises/library/steady-quarter-exercises.js";
 import { ATTEMPT_STORAGE_KEY } from "./client/persistence/attempt-repository.js";
 import { exercisePracticeHref } from "./views/exercise-presentation.js";
 
@@ -115,9 +115,9 @@ test("completes a selected exercise and reloads its persisted history through mo
 });
 
 test("counts in a timed study and persists its MIDI-relative pulse summary", async ({ page }) => {
-  await page.goto(exercisePracticeHref(steadyQuarterRightHandExercise));
+  await page.goto(exercisePracticeHref(steadyQuarterStepSkipRightHandExercise));
 
-  const firstEvent = steadyQuarterRightHandExercise.expectedEvents[0];
+  const firstEvent = steadyQuarterStepSkipRightHandExercise.expectedEvents[0];
   if (firstEvent === undefined) {
     throw new Error("The steady-quarter study requires a first event");
   }
@@ -137,19 +137,29 @@ test("counts in a timed study and persists its MIDI-relative pulse summary", asy
   await expect(stage).toHaveAttribute("data-pulse-status", "running", { timeout: 5_000 });
   await expect(firstKey).toBeEnabled();
 
-  for (const event of steadyQuarterRightHandExercise.expectedEvents) {
+  for (const event of steadyQuarterStepSkipRightHandExercise.expectedEvents) {
     await playNote(page, event.noteNumber);
   }
 
   await expect(page.locator("#feedback-message")).toContainText(/intervals stayed on the pulse at 100 BPM/);
   await expect(page.getByText("1 attempt completed today")).toBeVisible();
 
-  const timing = await page.evaluate((storageKey) => {
+  const attempt = await page.evaluate((storageKey) => {
     const value = localStorage.getItem(storageKey);
-    return value === null ? null : (JSON.parse(value) as { attempts?: Array<{ timing?: Record<string, number> }> }).attempts?.[0]?.timing;
+    return value === null
+      ? null
+      : (
+          JSON.parse(value) as {
+            attempts?: Array<{ exerciseId?: string; exerciseRevision?: number; timing?: Record<string, number> }>;
+          }
+        ).attempts?.[0];
   }, ATTEMPT_STORAGE_KEY);
-  expect(timing).toMatchObject({ tempoBpm: 100, assessedIntervals: 4 });
-  expect((timing?.onPulse ?? 0) + (timing?.early ?? 0) + (timing?.late ?? 0)).toBe(4);
+  expect(attempt).toMatchObject({
+    exerciseId: steadyQuarterStepSkipRightHandExercise.id,
+    exerciseRevision: steadyQuarterStepSkipRightHandExercise.revision,
+    timing: { tempoBpm: 100, assessedIntervals: 4 },
+  });
+  expect((attempt?.timing?.onPulse ?? 0) + (attempt?.timing?.early ?? 0) + (attempt?.timing?.late ?? 0)).toBe(4);
 });
 
 test("uses the injected iPad bridge through the shared practice flow", async ({ page }) => {

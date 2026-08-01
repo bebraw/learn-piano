@@ -9,9 +9,9 @@ The learner wants practical technique, reading, rhythm, coordination, harmony, a
 ### Current Scope
 
 - The four-track curriculum remains a documented domain model and metadata vocabulary rather than a complete planner or adaptive recommendation engine. A first deterministic advisory recommender is implemented over the canonical exercise library and local completion evidence.
-- The eight canonical beginner exercises cover right- and left-hand C-position ascents and descents, a C-E-D-F-G step-and-skip pattern for each hand, and one C-D-E-F-G steady-quarter study for each hand.
-- Ascents and descents support keyboard geography and five-finger-pattern work; step-and-skip variants add interval recognition and focused coordination-pattern practice. Every exercise also presents its supported natural pitches on a pitch-only treble or bass staff guide, giving visual exposure to the current clef positions. The steady-quarter variants add bounded evidence for a 4/4 quarter-note pulse from 40–100 BPM. Every variant remains hands-separate work.
-- The six pitch-pattern exercises are untimed and provide evidence only for pitch order. The two steady-quarter completions add MIDI onset-interval evidence after the first correct note anchors timing, using a ±0.2-beat tolerance. Hand assignment remains instructional and is not verified by MIDI; seeing the staff guide does not prove that the learner read it, and no result establishes note duration, velocity quality, dynamics, staff-reading mastery, fingering quality, or physical technique.
+- The ten canonical beginner exercises cover right- and left-hand C-position ascents and descents, an untimed C-E-D-F-G step-and-skip pattern for each hand, a straight C-D-E-F-G steady-quarter study for each hand, and a timed C-E-D-F-G step-and-skip study for each hand.
+- Ascents and descents support keyboard geography and five-finger-pattern work; step-and-skip variants add interval recognition and focused coordination-pattern practice. Every exercise also presents its supported natural pitches on a pitch-only treble or bass staff guide, giving visual exposure to the current clef positions. The four steady-quarter variants add bounded evidence for a 4/4 quarter-note pulse from 40–100 BPM, while the timed step-and-skip pair combines that pulse with an already-practiced interval pattern. Every variant remains hands-separate work.
+- The six pitch-pattern exercises are untimed and provide evidence only for pitch order. The four steady-quarter completions add MIDI onset-interval evidence after the first correct note anchors timing, using a ±0.2-beat tolerance. Hand assignment remains instructional and is not verified by MIDI; seeing the staff guide does not prove that the learner read it, and no result establishes note duration, velocity quality, dynamics, staff-reading mastery, fingering quality, or physical technique.
 - Named artists, protected pieces, and game themes are represented only as future repertoire-goal metadata and competency pathways.
 - No copyrighted score, MIDI transcription, recording, lyrics, or substantial melodic reproduction is bundled by this slice.
 - After a completed practice attempt, the application suggests one next study or review from declared exercise prerequisites, exact-current-revision retained history, and the current in-memory completion. The recommendation is explained and never limits learner choice.
@@ -42,7 +42,7 @@ This track develops keyboard and notation fluency through:
 - short sight-reading patterns
 - interval recognition
 
-The current treble C4-G4 and bass C3-G3 pitch guides introduce the staff positions corresponding to the four ascent/descent and two step-and-skip exercises. They connect visible staff position, note name, and keyboard geography, but the persistent note-name and keyboard cues mean completion is not a sight-reading test. The guide has no duration semantics and does not establish general clef fluency, interval reading, or staff-reading mastery.
+The current treble C4-G4 and bass C3-G3 pitch guides introduce the staff positions used by all ten current exercises. They connect visible staff position, note name, and keyboard geography, but the persistent note-name and keyboard cues mean completion is not a sight-reading test. The guide has no duration semantics and does not establish general clef fluency, interval reading, or staff-reading mastery.
 
 ### Track 2: Rhythm and Coordination
 
@@ -56,7 +56,7 @@ This track develops pulse and coordination through:
 - hands together
 - later progression through 3/4, 6/8, 5/4, and 7/4
 
-The two current steady-quarter studies offer hands-separate C-D-E-F-G in 4/4 with a four-beat count-in, quarter-note click, and selectable 40–100 BPM tempo. Their first accepted correct note anchors timing; four later correct-note MIDI timestamp deltas provide on-pulse, early, or late evidence against canonical quarter-beat gaps. Pitch errors do not move the anchor, and Web Audio guides rather than scores. Completion supports only this short steady-quarter competency, not duration, velocity, rests, eighth notes, syncopation, hands together, adaptive tempo, or general rhythm mastery.
+The four current steady-quarter studies offer hands-separate C-D-E-F-G or C-E-D-F-G in 4/4 with a four-beat count-in, quarter-note click, and selectable 40–100 BPM tempo. Their first accepted correct note anchors timing; four later correct-note MIDI timestamp deltas provide on-pulse, early, or late evidence against canonical quarter-beat gaps. The timed step-and-skip pair requires both the matching untimed step-and-skip study and the matching straight steady-quarter study, combining known pitch motion with known pulse behavior without changing the evaluator. Pitch errors do not move the anchor, and Web Audio guides rather than scores. Completion supports only this short steady-quarter competency, not duration, velocity, rests, eighth notes, syncopation, hands together, adaptive tempo, or general rhythm mastery.
 
 ### Track 3: Patterns and Technique
 
@@ -69,7 +69,7 @@ This broader technique track develops:
 - arpeggios
 - evenness and controlled dynamics
 
-The current library contributes short right- and left-hand five-finger ascents, descents, step-and-skip patterns, and steady-quarter variants. These establish small pattern choices and bounded quarter-pulse evidence without claiming the duration, velocity, movement, or sustained consistency required for broader technique assessment.
+The current library contributes short right- and left-hand five-finger ascents, descents, untimed step-and-skip patterns, straight steady-quarter studies, and timed step-and-skip variants. These establish small pattern choices and bounded quarter-pulse evidence without claiming the duration, velocity, movement, or sustained consistency required for broader technique assessment.
 
 Hanon-style patterns are optional tools for coordination, even timing, hand synchronization, controlled velocity, relaxed movement, and gradual tempo development. They do not define the whole curriculum. Progressions should favor short, focused variants such as right hand untimed, left hand untimed, hands separately with pulse, hands together slowly, even-velocity mode, quiet controlled mode, transposition, and evidence of consistent hand-leading or volume imbalance.
 
@@ -131,9 +131,9 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 ### Definition of Done
 
 - [ ] Four parallel tracks and their initial competencies are documented.
-- [ ] The eight current exercises are mapped only to keyboard-geography, interval, hands-separate guidance, pattern, and steady-quarter competencies they actually exercise, without claiming the evaluator verifies hand use.
+- [ ] The ten current exercises are mapped only to keyboard-geography, interval, hands-separate guidance, pattern, and steady-quarter competencies they actually exercise, without claiming the evaluator verifies hand use.
 - [ ] The current treble and bass pitch guides are documented as staff-position exposure only, with no duration meaning or staff-reading evidence inferred from completion.
-- [ ] The two steady-quarter studies require their matching untimed ascents and contribute bounded 4/4 quarter-pulse evidence at the selected 40–100 BPM tempo.
+- [ ] The two straight steady-quarter studies require their matching untimed ascents, while each timed step-and-skip study requires its matching untimed step-and-skip and straight steady-quarter studies; all four contribute bounded 4/4 quarter-pulse evidence at the selected 40–100 BPM tempo.
 - [ ] Hanon-style work remains a selective part of Patterns and Technique with explicit health and scope limitations.
 - [ ] Long-term repertoire interests are represented as competency pathways and metadata only.
 - [ ] Curriculum and exercise references use stable canonical IDs.
@@ -147,7 +147,7 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 
 - Notes and Reading, Rhythm and Coordination, Patterns and Technique, and Repertoire Pathways must remain parallel available tracks.
 - The six untimed exercises must not confer verified hand use, timing, dynamics, staff-reading mastery, pedal, fingering, or physical-technique mastery, even though their staff pitch guides are visible.
-- The two timed studies must not confer verified hand use, note duration, velocity, rests, subdivisions, syncopation, hands-together coordination, adaptive-tempo, or broad rhythm mastery.
+- The four timed studies must not confer verified hand use, note duration, velocity, rests, subdivisions, syncopation, hands-together coordination, adaptive-tempo, or broad rhythm mastery.
 - Neither timed completion nor untimed completion may satisfy a staff-reading competency without a future reading-focused evidence contract.
 - Hanon-style exercises must never become a compulsory whole-curriculum routine.
 - Named repertoire goals must not imply bundled or launchable protected content.
@@ -159,9 +159,9 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 
 ### Verification
 
-- **Current documentation checks:** Review the track vocabulary, eight-exercise mappings, pitch-guide exposure boundary, steady-quarter evidence boundary, Hanon position, repertoire competency pathways, and explicit current exclusions.
+- **Current documentation checks:** Review the track vocabulary, ten-exercise mappings, pitch-guide exposure boundary, steady-quarter evidence boundary, Hanon position, repertoire competency pathways, and explicit current exclusions.
 - **Model tests:** Validate IDs, exercise references, prerequisites, cycles, multi-track membership, rights eligibility, exact-revision evidence, and deterministic recommendation tie-breaking.
-- **Behavior tests:** Prove that untimed completion updates only supported pitch/pattern competencies, timed completion adds only bounded steady-quarter evidence, recommendation ignores performance-quality fields, and missing or evicted history and invalid graphs have a neutral fallback.
+- **Behavior tests:** Prove that untimed completion updates only supported pitch/pattern competencies, timed completion adds only bounded steady-quarter evidence, timed step-and-skip eligibility requires both declared prerequisites, recommendation ignores performance-quality fields, and missing or evicted history and invalid graphs have a neutral fallback.
 - **Coverage target:** When curriculum code exists, all validation failures and recommendation branches remain exercised directly rather than through UI snapshots.
 
 ### Scenarios
@@ -183,6 +183,12 @@ Source status must be verified for the intended jurisdiction and edition; a comp
 - Given: the learner completes a steady-quarter study at a selected tempo from 40 through 100 BPM
 - When: its timing summary is mapped to curriculum evidence
 - Then: it may support the declared hands-separate steady-quarter competency with on-pulse, early, and late interval evidence, but it does not prove hand use, duration, velocity, subdivisions, syncopation, hands-together playing, adaptive-tempo control, or general rhythm mastery
+
+**Scenario: Combine a known pattern with a known pulse**
+
+- Given: the learner has exact-current-revision completions for one hand's untimed step-and-skip and straight steady-quarter studies
+- When: recommendation considers the matching timed step-and-skip study
+- Then: that study is eligible as a direct combination of the two declared prerequisites while remaining freely selectable before either completion
 
 **Scenario: Move between parallel tracks**
 

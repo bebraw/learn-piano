@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { exerciseLibrary } from "./exercises/library/index.js";
+import { steadyQuarterStepSkipRightHandExercise } from "./exercises/library/steady-quarter-exercises.js";
 import { exercisePracticeHref } from "./views/exercise-presentation.js";
 
 test("renders the piano practice home page", async ({ page }) => {
@@ -9,9 +10,9 @@ test("renders the piano practice home page", async ({ page }) => {
   await expect(page.getByText("Small, focused studies for building calm and reliable movement at the keyboard.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Choose your next study" })).toBeVisible();
   const exerciseFolio = page.locator(".folio-grid");
-  expect(exerciseLibrary).toHaveLength(8);
+  expect(exerciseLibrary).toHaveLength(10);
   await expect(exerciseFolio.locator('a[href^="/practice?exercise="]')).toHaveCount(exerciseLibrary.length);
-  await expect(exerciseFolio.locator('[data-mode="timed"]')).toHaveCount(2);
+  await expect(exerciseFolio.locator('[data-mode="timed"]')).toHaveCount(4);
   for (const exercise of exerciseLibrary) {
     await expect(page.getByRole("link", { name: new RegExp(exercise.title) })).toBeVisible();
   }
@@ -19,13 +20,14 @@ test("renders the piano practice home page", async ({ page }) => {
 });
 
 test("shows steady-pulse facts and controls only for timed studies", async ({ page }) => {
-  const timedExercise = exerciseLibrary.find((exercise) => exercise.evaluationMode === "timed-ordered-notes");
   const untimedExercise = exerciseLibrary.find((exercise) => exercise.evaluationMode === "untimed-ordered-notes");
-  expect(timedExercise).toBeDefined();
   expect(untimedExercise).toBeDefined();
 
-  await page.goto(exercisePracticeHref(timedExercise!));
+  await page.goto(exercisePracticeHref(steadyQuarterStepSkipRightHandExercise));
 
+  await expect(page.getByRole("heading", { level: 1, name: steadyQuarterStepSkipRightHandExercise.title })).toBeVisible();
+  await expect(page.getByText(steadyQuarterStepSkipRightHandExercise.instructions)).toBeVisible();
+  await expect(page.getByLabel("Pitch order: C4 · E4 · D4 · F4 · G4")).toBeVisible();
   await expect(page.locator("#pulse-controls")).toBeVisible();
   await expect(page.locator("#pulse-status")).toContainText(/60 BPM.*4-beat count-in/);
   await expect(page.locator("#pulse-tempo")).toHaveValue("60");
