@@ -16,6 +16,7 @@ The canonical library contains twenty-six short studies, thirteen per hand, but 
 - **Hand summary:** A current study contributes to the right- or left-hand total when its canonical events assign that hand; an event assigned to both contributes to both hand summaries. Coverage for each hand remains unique by study.
 - **Recent summary:** The newest valid matching attempt supplies the most-recent study and local completion time. Canonical library order resolves equal timestamps.
 - **Recommendation:** The home page reuses the deterministic local `recommendNextStudy` policy with no just-completed in-memory attempt. Empty readable history therefore receives the first prerequisite-free starting study, while complete current coverage receives the least-recently-practiced review.
+- **Folio filter boundary:** The independent home-folio enhancement may temporarily hide unmatched cards by curriculum focus and hand. It does not change overview totals, badges, recommendation evidence, canonical order, or storage, and remains available when overview history cannot be read.
 - **Failure boundary:** The client reads every current exercise history as one overview operation. If any repository read fails, the whole overview becomes unavailable rather than mixing partial facts with apparently authoritative totals.
 - **Dependencies:** ADR-049 governs local attempt persistence, ADR-052 governs progressive server rendering, and ADR-056 governs recommendation evidence and copy. No new architecture decision or attempt-schema revision is introduced.
 
@@ -34,6 +35,7 @@ The canonical library contains twenty-six short studies, thirteen per hand, but 
 - Do not count old exercise revisions, unknown IDs, malformed timestamps, failed reads, or transient unsaved completions as retained evidence.
 - Do not infer that zero retained matching records means a study was never practiced; history may have been cleared, evicted, revised, or unavailable.
 - Do not make the home library dependent on local storage, client JavaScript, or a valid recommendation graph.
+- Do not make folio filtering dependent on readable history or let it clear completion badges when a card is temporarily hidden.
 
 ## Contract
 
@@ -62,7 +64,7 @@ The canonical library contains twenty-six short studies, thirteen per hand, but 
 - **Repository tests:** Prove one exact-revision read per current exercise and whole-overview rejection when any read fails.
 - **View tests:** Cover loading, empty ready, populated ready, review, stale-state reset, and unavailable rendering, including card badges and practice links.
 - **Server tests:** Prove the named no-JavaScript state, hidden enhancement regions, canonical card identities and revisions, hidden badges, and same-origin module script.
-- **Browser tests:** Prove empty and populated local storage, advisory navigation, exact-revision badge behavior, unavailable storage fallback, and library usability without JavaScript.
+- **Browser tests:** Prove empty and populated local storage, advisory navigation, exact-revision badge behavior across filtering, unavailable storage fallback with independent filtering, and complete library usability without JavaScript.
 - **Coverage target:** All pure summary branches and DOM state transitions remain covered; the browser entry dispatch remains exercised end to end.
 
 ### Scenarios

@@ -1,5 +1,6 @@
 import { formatMidiNote } from "../exercises/evaluator";
 import type { Exercise } from "../exercises/types";
+import { FOLIO_FOCUS_FILTERS, FOLIO_HAND_FILTERS, projectFolioCurriculumFocuses } from "../curriculum/folio-filter";
 import {
   exercisePracticeHref,
   formatExerciseCategory,
@@ -31,14 +32,16 @@ export function renderHomePage(
   const exerciseList = exercises
     .map((exercise, index) => {
       const handLabel = formatExerciseHand(exercise);
+      const hand = handLabel === "Left hand" ? "left" : handLabel === "Right hand" ? "right" : "both";
+      const focuses = projectFolioCurriculumFocuses(exercise.curriculumTags);
       const selected = exercise.id === defaultExercise.id;
       const timingLabel = formatExerciseTimingLabel(exercise, true);
-      return `<li>
+      return `<li data-folio-entry data-hand="${hand}" data-focuses="${focuses.join(" ")}">
         <a
           class="folio-card group"
           data-exercise-id="${escapeHtml(exercise.id)}"
           data-exercise-revision="${exercise.revision}"
-          data-hand="${handLabel === "Left hand" ? "left" : "right"}"
+          data-hand="${hand}"
           data-mode="${exercise.evaluationMode === "timed-ordered-notes" ? "timed" : "untimed"}"
           href="${escapeHtml(exercisePracticeHref(exercise))}"
         >
@@ -160,7 +163,8 @@ export function renderHomePage(
           </div>
           <p class="section-heading-copy">${exercises.length} short patterns for both hands, including pulse and subdivision studies. Each one keeps its own local practice history.</p>
         </div>
-        <ul class="folio-grid">${exerciseList}</ul>
+        ${renderFolioFilters(exercises.length)}
+        <ul class="folio-grid" id="folio-grid">${exerciseList}</ul>
       </section>
 
       <section class="practice-principles" aria-label="Practice approach">
@@ -189,4 +193,38 @@ export function renderHomePage(
     <script type="module" src="/client/main.js"></script>
   </body>
 </html>`;
+}
+
+function renderFolioFilters(studyCount: number): string {
+  return `<div class="folio-filters" id="folio-filters" data-enhancement hidden>
+    <div class="folio-filter-groups">
+      <fieldset class="folio-filter-group">
+        <legend>Focus</legend>
+        <div class="folio-filter-options">${renderFolioFilterOptions("folio-focus", "data-folio-focus-filter", FOLIO_FOCUS_FILTERS)}</div>
+      </fieldset>
+      <fieldset class="folio-filter-group folio-filter-group-hand">
+        <legend>Hand</legend>
+        <div class="folio-filter-options">${renderFolioFilterOptions("folio-hand", "data-folio-hand-filter", FOLIO_HAND_FILTERS)}</div>
+      </fieldset>
+    </div>
+    <div class="folio-filter-summary">
+      <p id="folio-filter-status" role="status" aria-live="polite" aria-atomic="true">Showing ${studyCount} of ${studyCount} studies</p>
+      <button class="folio-filter-reset" id="folio-filter-reset" type="button" disabled>Reset filters</button>
+    </div>
+  </div>`;
+}
+
+function renderFolioFilterOptions(
+  name: string,
+  dataAttribute: string,
+  options: readonly { readonly id: string; readonly label: string }[],
+): string {
+  return options
+    .map(
+      ({ id, label }) => `<label class="folio-filter-option">
+        <input type="radio" name="${name}" value="${id}" ${dataAttribute} aria-controls="folio-grid"${id === "all" ? " checked" : ""}>
+        <span>${escapeHtml(label)}</span>
+      </label>`,
+    )
+    .join("");
 }

@@ -93,6 +93,7 @@ No accepted-only ADRs are currently pending implementation.
 | [ADR-058](./implemented/ADR-058-separate-event-occurrences-from-physical-keys.md)       | Implemented | Separate occurrence progress from pitch-keyed physical controls.                                     |
 | [ADR-059](./implemented/ADR-059-keep-reading-focus-transient-and-presentational.md)     | Implemented | Keep reading focus learner-controlled, page-local, and separate from exercise or attempt evidence.   |
 | [ADR-060](./implemented/ADR-060-drive-pulse-meter-from-exercise-timing.md)              | Implemented | Drive visible and audible pulse-meter guidance from canonical exercise timing.                       |
+| [ADR-061](./implemented/ADR-061-keep-home-folio-filtering-transient.md)                 | Implemented | Keep home folio filters page-local, server-first, and inclusive of every matching curriculum track.  |
 
 ## Creating A New ADR
 

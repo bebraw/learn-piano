@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { exampleRoutes } from "../app-routes";
+import { projectFolioCurriculumFocuses } from "../curriculum/folio-filter";
 import { defaultExercise, exerciseLibrary } from "../exercises/library";
 import { evenEighthsLeftHandExercise, evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises";
 import { fiveFourPulseLeftHandExercise, fiveFourPulseRightHandExercise } from "../exercises/library/five-four-pulse-exercises.js";
@@ -40,18 +41,34 @@ describe("renderHomePage", () => {
     expect(html).toContain('id="home-overview-details" class="home-overview-details" hidden');
     expect(html).toContain('id="home-overview-recent" class="home-overview-recent" hidden');
     expect(html).toContain('id="home-overview-recommendation" class="home-overview-recommendation" hidden');
+    expect(html).toContain('class="folio-filters" id="folio-filters" data-enhancement hidden');
+    expect(html).toContain("<legend>Focus</legend>");
+    expect(html).toContain("<legend>Hand</legend>");
+    expect(html).toContain('id="folio-filter-status" role="status" aria-live="polite"');
+    expect(html).toContain(`Showing ${exerciseLibrary.length} of ${exerciseLibrary.length} studies`);
+    expect(html.match(/data-folio-focus-filter/g)).toHaveLength(4);
+    expect(html.match(/data-folio-hand-filter/g)).toHaveLength(3);
+    expect(html.match(/aria-controls="folio-grid" checked/g)).toHaveLength(2);
+    expect(html.match(/data-folio-entry/g)).toHaveLength(exerciseLibrary.length);
     expect(html).not.toContain("Piano practice companion overview");
     expect(html).not.toContain("Untimed exercises for both hands and varied note order");
     expect(html).toContain("JSON health endpoint for tooling and smoke tests");
     for (const exercise of exerciseLibrary) {
-      expect(html).toContain(exercise.title);
-      expect(html).toContain(`href="${exercisePracticeHref(exercise)}"`);
-      expect(html).toContain(`data-exercise-id="${exercise.id}"`);
-      expect(html).toContain(`data-exercise-revision="${exercise.revision}"`);
+      const cardStart = html.indexOf(`data-exercise-id="${exercise.id}"`);
+      const entryStart = html.lastIndexOf("<li data-folio-entry", cardStart);
+      const entryEnd = html.indexOf("</li>", cardStart);
+      const entry = html.slice(entryStart, entryEnd);
+
+      expect(cardStart, `missing folio card for ${exercise.id}`).toBeGreaterThanOrEqual(0);
+      expect(entry).toContain(exercise.title);
+      expect(entry).toContain(`href="${exercisePracticeHref(exercise)}"`);
+      expect(entry).toContain(`data-exercise-id="${exercise.id}"`);
+      expect(entry).toContain(`data-exercise-revision="${exercise.revision}"`);
+      expect(entry).toContain(`data-focuses="${projectFolioCurriculumFocuses(exercise.curriculumTags).join(" ")}"`);
     }
     expect(html).toContain("cannot assess posture, tension, fingering, or replace a qualified teacher");
     expect(html).toContain('class="home-hero');
-    expect(html).toContain('class="folio-grid"');
+    expect(html).toContain('class="folio-grid" id="folio-grid"');
     expect(html.match(/data-mode="timed"/g)).toHaveLength(18);
     expect(html.match(/Steady pulse · 60 BPM/g)).toHaveLength(10);
     for (const exercise of [
@@ -123,6 +140,6 @@ describe("renderHomePage", () => {
     expect(html.match(/data-completion-badge hidden/g)).toHaveLength(exerciseLibrary.length);
     expect(html).toContain('<script type="module" src="/client/main.js"></script>');
     expect(html).not.toContain("Stryker was here!");
-    expect(html.match(/<li>/g)).toHaveLength(exerciseLibrary.length + 1);
+    expect(html.match(/<li\b/g)).toHaveLength(exerciseLibrary.length + 1);
   });
 });

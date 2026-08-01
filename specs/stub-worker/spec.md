@@ -4,7 +4,7 @@
 
 ### Context
 
-The repository has evolved from a runnable template stub into a personal piano-practice application while retaining the lightweight Cloudflare Worker baseline. The shell must serve a useful server-rendered twenty-six-exercise library with a progressively enhanced local-practice overview, a stable health route, and same-origin generated assets without turning practice into a client framework application.
+The repository has evolved from a runnable template stub into a personal piano-practice application while retaining the lightweight Cloudflare Worker baseline. The shell must serve a useful server-rendered twenty-six-exercise library with a progressively enhanced local-practice overview and transient folio filtering, a stable health route, and same-origin generated assets without turning practice into a client framework application.
 
 ### Architecture
 
@@ -12,7 +12,7 @@ The repository has evolved from a runnable template stub into a personal piano-p
 - **Source layout:** `src/api/` contains API handlers, `src/views/` contains HTML renderers, and browser behavior remains in typed modules under `src/client/`.
 - **Routes:** `/` renders the application overview, local-practice enhancement shell, and twenty-six-exercise library; `/practice` renders the canonical default; `/practice?exercise=<id>` renders an exact library selection; `/api/health` returns stable JSON; and unknown paths or supplied exercise IDs return a non-indexable 404 document.
 - **Asset pipeline:** `src/tailwind-input.css` and the browser TypeScript graph compile into `.generated/browser/`. Selective Worker-first routing preserves the `/styles.css` response contract, while Wrangler's static asset binding serves `/client/*.js` directly.
-- **Rendering boundary:** The Worker provides the document shell and meaningful initial content. Small same-origin ESM modules progressively enhance interactive practice behavior and browser-local practice summaries. Without JavaScript, `/` explains that saved completions cannot be read while preserving every exercise link.
+- **Rendering boundary:** The Worker provides the document shell and meaningful initial content. Small same-origin ESM modules progressively enhance interactive practice behavior, browser-local practice summaries, and transient home-folio filtering. Without JavaScript, `/` explains that saved completions cannot be read, hides non-functional filter controls, and preserves every exercise link.
 - **Guidance boundary:** Every practice response is fully guided and meaningful before enhancement. Reading focus is an optional client-only presentation after supported staff validation; it never changes routing, response identity, canonical exercise content, or the no-JavaScript contract.
 - **Visual-system boundary:** Server-rendered views share the responsive practice-desk shell and token-driven visual system from `src/tailwind-input.css`. The active practice surface leads the document hierarchy; setup, exercise selection, history, and utility routes remain supporting content without changing the semantic order when the layout stacks.
 - **Client code boundary:** Worker-rendered HTML may reference typed same-origin module files but must not embed executable browser code, event-handler attributes, JavaScript URLs, remote scripts, or classic scripts.
@@ -37,6 +37,7 @@ The repository has evolved from a runnable template stub into a personal piano-p
 - [ ] Wrangler starts the application without additional scaffolding.
 - [ ] `/` returns the current Piano Practice overview and visible links to all twenty-six canonical exercises.
 - [ ] The home response names the local-practice region, keeps its data-dependent facts hidden until browser history loads, and preserves the complete library when JavaScript or storage is unavailable.
+- [ ] The home response keeps all canonical cards in server HTML and exposes focus/hand filters only after enhancement; filter state never changes URLs, storage, canonical order, or recommendation behavior.
 - [ ] `/practice` returns useful canonical default-exercise content before client enhancement.
 - [ ] The practice response remains fully guided, while supported client enhancement may expose a transient reading-focus toggle without adding a route, query parameter, or alternate document identity.
 - [ ] Home, practice, and not-found documents share the finished application identity, responsive layout rules, and accessible interaction sizing rather than presenting disconnected prototype screens.
@@ -52,6 +53,7 @@ The repository has evolved from a runnable template stub into a personal piano-p
 ### Regression Guardrails
 
 - `GET /` must return HTML with the Piano Practice heading and visible links to all twenty-six exercises.
+- Enhanced home filtering must begin at All/All on every load, while the no-JavaScript response keeps controls hidden and all links visible.
 - `GET /practice` must include the default exercise title, instructions, expected note sequence, limitation text, server-rendered chooser, and same-origin module entry point.
 - Reading-focus enhancement must leave that guided response content and canonical identity intact; navigation or reload creates a new guided document and no Worker state persists the choice.
 - `GET /practice?exercise=<id>` must keep the URL selection, rendered content, and embedded canonical identity aligned without client JavaScript.
@@ -70,7 +72,7 @@ The repository has evolved from a runnable template stub into a personal piano-p
 
 - **Unit and integration tests:** colocated Vitest files under `src/**/*.test.ts` cover routing, response headers, rendered content, and domain-to-view composition.
 - **Tooling tests:** `scripts/assert-no-worker-client-scripts.test.mjs` exercises accepted and rejected browser-code shapes.
-- **Browser tests:** colocated Playwright files under `src/**/*.e2e.ts` cover the home library, generated assets, health route, default and selected no-JavaScript guided practice documents, transient reading-focus enhancement, and other enhanced practice flows.
+- **Browser tests:** colocated Playwright files under `src/**/*.e2e.ts` cover the home library and its transient filters, generated assets, health route, default and selected no-JavaScript guided practice documents, transient reading-focus enhancement, and other enhanced practice flows.
 - **Coverage target:** Worker, API, view, and non-DOM browser modules remain above repository coverage thresholds.
 
 ### Scenarios

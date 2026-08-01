@@ -30,6 +30,44 @@ test("enhances empty local history without restricting the library", async ({ pa
   await expect(page.locator("#home-overview-recommendation-link")).toHaveAttribute("href", `/practice?exercise=${defaultExercise.id}`);
   await expect(page.locator("[data-completion-badge]:visible")).toHaveCount(0);
   await expect(page.locator(".folio-card")).toHaveCount(exerciseLibrary.length);
+  await expect(page.locator("#folio-filters")).toBeVisible();
+  await expect(page.locator("#folio-filter-status")).toHaveText(`Showing ${exerciseLibrary.length} of ${exerciseLibrary.length} studies`);
+  await expect(page.getByRole("radio", { name: "All" })).toHaveCount(2);
+  await expect(page.getByRole("button", { name: "Reset filters" })).toBeDisabled();
+});
+
+test("filters the complete folio by every matching focus and hand without changing its default", async ({ page }) => {
+  const rhythmStudies = exerciseLibrary.filter((exercise) =>
+    exercise.curriculumTags.some((tag) => tag.startsWith("rhythm-and-coordination.")),
+  );
+  const rightHandRhythmStudies = rhythmStudies.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "right"));
+  await page.goto("/");
+
+  await page.getByRole("radio", { name: "Rhythm & coordination" }).check();
+  await expect(page.locator("[data-folio-entry]:visible")).toHaveCount(rhythmStudies.length);
+  await expect(page.locator("#folio-filter-status")).toHaveText(`Showing ${rhythmStudies.length} of ${exerciseLibrary.length} studies`);
+
+  await page.getByRole("radio", { name: "Right" }).check();
+  await expect(page.locator("[data-folio-entry]:visible")).toHaveCount(rightHandRhythmStudies.length);
+  await expect(page.locator("#folio-filter-status")).toHaveText(
+    `Showing ${rightHandRhythmStudies.length} of ${exerciseLibrary.length} studies`,
+  );
+  expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
+
+  const resetButton = page.getByRole("button", { name: "Reset filters" });
+  await expect(resetButton).toBeEnabled();
+  await resetButton.click();
+  await expect(page.locator("[data-folio-entry]:visible")).toHaveCount(exerciseLibrary.length);
+  await expect(page.locator("#folio-filter-status")).toHaveText(`Showing ${exerciseLibrary.length} of ${exerciseLibrary.length} studies`);
+  await expect(resetButton).toBeDisabled();
+  expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
+
+  await page.getByRole("radio", { name: "Left" }).check();
+  await page.reload();
+  await expect(page.locator("[data-folio-entry]:visible")).toHaveCount(exerciseLibrary.length);
+  await expect(page.getByRole("radio", { name: "All" }).first()).toBeChecked();
+  await expect(page.getByRole("radio", { name: "All" }).last()).toBeChecked();
+  expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
 });
 
 test("projects retained current-revision history into facts and card badges", async ({ page }) => {
@@ -57,6 +95,11 @@ test("projects retained current-revision history into facts and card badges", as
   await expect(page.locator(`[data-exercise-id="${defaultExercise.id}"]`)).toHaveAttribute("data-completed", "true");
   await expect(page.locator(`[data-exercise-id="${defaultExercise.id}"] [data-completion-badge]`)).toHaveText(/Completion saved/);
   await expect(page.locator("[data-completion-badge]:visible")).toHaveCount(1);
+
+  await page.getByRole("radio", { name: "Rhythm & coordination" }).check();
+  await expect(page.locator(`[data-exercise-id="${defaultExercise.id}"]`)).toBeHidden();
+  await page.getByRole("button", { name: "Reset filters" }).click();
+  await expect(page.locator(`[data-exercise-id="${defaultExercise.id}"] [data-completion-badge]`)).toBeVisible();
 });
 
 test("keeps a populated overview contained at desktop, iPad, and narrow widths", async ({ page }) => {
@@ -77,12 +120,16 @@ test("keeps a populated overview contained at desktop, iPad, and narrow widths",
 
     const recommendation = page.locator("#home-overview-recommendation");
     const recommendationLink = page.locator("#home-overview-recommendation-link");
+    const folioFilters = page.locator("#folio-filters");
+    const filterReset = page.locator("#folio-filter-reset");
     await recommendation.scrollIntoViewIfNeeded();
     await expect(recommendation).toBeVisible();
     await expect(recommendationLink).toBeVisible();
+    await expect(folioFilters).toBeVisible();
+    await expect(filterReset).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 
-    for (const locator of [page.locator(".home-overview"), recommendation, recommendationLink]) {
+    for (const locator of [page.locator(".home-overview"), recommendation, recommendationLink, folioFilters, filterReset]) {
       const box = await locator.boundingBox();
       if (box === null) {
         throw new Error("Expected the overview element to have visible geometry");
@@ -110,6 +157,13 @@ test("fails neutral when browser history cannot be read", async ({ page }) => {
   await expect(page.locator("#home-overview-details")).toBeHidden();
   await expect(page.locator("[data-completion-badge]:visible")).toHaveCount(0);
   await expect(page.locator(".folio-card")).toHaveCount(exerciseLibrary.length);
+  await expect(page.locator("#folio-filters")).toBeVisible();
+  await page.getByRole("radio", { name: "Rhythm & coordination" }).check();
+  const rhythmStudyCount = exerciseLibrary.filter((exercise) =>
+    exercise.curriculumTags.some((tag) => tag.startsWith("rhythm-and-coordination.")),
+  ).length;
+  await expect(page.locator("[data-folio-entry]:visible")).toHaveCount(rhythmStudyCount);
+  await expect(page.locator("#folio-filter-status")).toHaveText(`Showing ${rhythmStudyCount} of ${exerciseLibrary.length} studies`);
   await expectFallbackOverviewCollapsed(page);
 });
 
@@ -123,6 +177,7 @@ test.describe("without JavaScript", () => {
     await expect(page.locator("#home-overview-details")).toBeHidden();
     await expect(page.locator(".folio-card")).toHaveCount(exerciseLibrary.length);
     await expect(page.locator(".folio-card").first()).toHaveAttribute("href", `/practice?exercise=${defaultExercise.id}`);
+    await expect(page.locator("#folio-filters")).toBeHidden();
     await expectFallbackOverviewCollapsed(page);
   });
 });

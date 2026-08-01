@@ -1,6 +1,6 @@
 # Piano Practice
 
-Piano Practice is a personal, local-first browser application for focused piano exercises, with a thin native wrapper for dependable MIDI input on iPad. The current vertical slice offers twenty-six original beginner studies, thirteen per hand: eight untimed C-position patterns plus straight steady-quarter, timed step-and-skip, steady broken-chord, 3/4 broken-chord loop, 5/4 pulse, even-eighth, repeated-note, longer mixed-pattern, and offbeat-onset pairs. Every study includes a server-rendered treble or bass pitch guide and immediate deterministic pitch and order feedback; the eighteen timed studies add bounded onset-timing feedback. Completed-attempt history stays in the current browser or web view. The home page summarizes retained current-study completions and suggests one explainable next study, while the practice page keeps each exercise's detailed history.
+Piano Practice is a personal, local-first browser application for focused piano exercises, with a thin native wrapper for dependable MIDI input on iPad. The current vertical slice offers twenty-six original beginner studies, thirteen per hand: eight untimed C-position patterns plus straight steady-quarter, timed step-and-skip, steady broken-chord, 3/4 broken-chord loop, 5/4 pulse, even-eighth, repeated-note, longer mixed-pattern, and offbeat-onset pairs. Every study includes a server-rendered treble or bass pitch guide and immediate deterministic pitch and order feedback; the eighteen timed studies add bounded onset-timing feedback. Completed-attempt history stays in the current browser or web view. The home page offers transient focus and hand filters, summarizes retained current-study completions, and suggests one explainable next study, while the practice page keeps each exercise's detailed history.
 
 The application runs as a Cloudflare Worker through Wrangler. It renders useful HTML on the server, then progressively enhances the practice page with small typed browser modules. There is no client framework, account, cloud database, generative feedback loop, percentage grade, or streak mechanic.
 
@@ -9,6 +9,7 @@ The application runs as a Cloudflare Worker through Wrangler. It renders useful 
 ## Current Practice Slice
 
 - Choose from twenty-six canonical exercises on the home or practice page, even when JavaScript or MIDI is unavailable.
+- On the enhanced home page, narrow the folio by right or left hand and by Notes & reading, Rhythm & coordination, or Patterns & technique. A study can appear under every focus represented in its curriculum tags; filters reset to the complete folio on reload and never change history, recommendations, URLs, or exercise availability.
 - On the enhanced home page, read retained exact-current-revision coverage across the library, right- and left-hand saved-study counts, today's retained completions, the most recent study, and one advisory next action. Matching cards say `Completion saved`; percentages, streaks, grades, and mastery claims are deliberately absent. If browser history cannot be read, the overview fails neutral and the complete library remains available.
 - Open `/practice` for the default right-hand ascent, or use `?exercise=<id>` to link directly to another exercise.
 - Read the current natural-note sequence on a pitch-only staff guide: treble for the right-hand C4-G4 studies and bass for the left-hand C3-G3 studies. Ordered note text remains alongside it as the accessible fallback.
@@ -67,7 +68,7 @@ The wrapper restricts main-frame navigation and native bridge messages to the co
 - `src/client/` owns browser composition, session orchestration, DOM projection, and local persistence.
 - `src/audio/` owns the guidance-only Web Audio count-in and steady-pulse scheduler.
 - `src/notation/` owns the dependency-free pitch-to-staff projection for the current supported guide subset.
-- `src/curriculum/` owns deterministic advisory study selection over canonical prerequisites and local completion evidence.
+- `src/curriculum/` owns deterministic advisory study selection over canonical prerequisites and local completion evidence, plus the inclusive track projection used by the home folio filters.
 - `src/midi/` defines the platform-neutral input contract plus Web MIDI and deterministic mock adapters.
 - `ios/` contains the iPadOS 17+ WKWebView shell, CoreMIDI service, CoreAudioKit pairing UI, and Swift tests.
 - `src/exercises/` contains the validated canonical exercise model and deterministic evaluator.

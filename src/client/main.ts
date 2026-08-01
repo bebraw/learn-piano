@@ -5,6 +5,7 @@ import { MockMidiInputPort } from "../midi/mock-midi-input-port.js";
 import { createNativeMidiBridgeFromHost, NativeMidiInputPort } from "../midi/native-midi-input-port.js";
 import { WebMidiInputPort } from "../midi/web-midi-input-port.js";
 import { projectPracticeKeyboardNotes } from "../views/exercise-presentation.js";
+import { collectHomeFolioFilterElements, initializeHomeFolioFilter } from "./home-folio-filter.js";
 import { collectHomePageElements, createHomePageView } from "./home-page-view.js";
 import type { AttemptInputKind, AttemptRepository } from "./persistence/attempt-repository.js";
 import { LocalStorageAttemptRepository } from "./persistence/local-storage-attempt-repository.js";
@@ -21,6 +22,7 @@ import {
 } from "./practice-page-view.js";
 
 export async function bootstrapHomePage(pageDocument: Document, browserWindow: Window): Promise<void> {
+  initializeHomeFolioFilter(collectHomeFolioFilterElements(pageDocument));
   const view = createHomePageView(collectHomePageElements(pageDocument));
   view.renderLoading();
 
