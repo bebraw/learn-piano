@@ -23,8 +23,8 @@ test("enhances empty local history without restricting the library", async ({ pa
   await expect(page.locator("#home-overview-status")).toHaveText(`Saved completion for 0 of ${exerciseLibrary.length} current studies.`);
   await expect(page.locator("#home-overview-details")).toBeVisible();
   await expect(page.locator("#home-overview-study-count")).toHaveText(`0 of ${exerciseLibrary.length}`);
-  await expect(page.locator("#home-overview-right-count")).toHaveText("0 of 13");
-  await expect(page.locator("#home-overview-left-count")).toHaveText("0 of 13");
+  await expect(page.locator("#home-overview-right-count")).toHaveText("0 of 14");
+  await expect(page.locator("#home-overview-left-count")).toHaveText("0 of 14");
   await expect(page.locator("#home-overview-recent")).toBeHidden();
   await expect(page.locator("#home-overview-recommendation-title")).toHaveText(defaultExercise.title);
   await expect(page.locator("#home-overview-recommendation-link")).toHaveAttribute("href", `/practice?exercise=${defaultExercise.id}`);

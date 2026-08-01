@@ -17,7 +17,12 @@ import { evenEighthsLeftHandExercise, evenEighthsRightHandExercise } from "./eve
 import { fiveFourPulseLeftHandExercise, fiveFourPulseRightHandExercise } from "./five-four-pulse-exercises.js";
 import { mixedEighthPatternLeftHandExercise, mixedEighthPatternRightHandExercise } from "./mixed-eighth-pattern-exercises.js";
 import { offbeatStepSkipLeftHandExercise, offbeatStepSkipRightHandExercise } from "./offbeat-step-skip-exercises.js";
-import { orderedChordTonesLeftHandExercise, orderedChordTonesRightHandExercise } from "./ordered-chord-tone-exercises.js";
+import {
+  orderedChordTonesLeftHandExercise,
+  orderedChordTonesRightHandExercise,
+  orderedDMinorChordTonesLeftHandExercise,
+  orderedDMinorChordTonesRightHandExercise,
+} from "./ordered-chord-tone-exercises.js";
 import { repeatedNotesLeftHandExercise, repeatedNotesRightHandExercise } from "./repeated-note-exercises.js";
 import { steadyBrokenChordLeftHandExercise, steadyBrokenChordRightHandExercise } from "./steady-broken-chord-exercises.js";
 import { threeFourBrokenChordLeftHandExercise, threeFourBrokenChordRightHandExercise } from "./three-four-broken-chord-exercises.js";
@@ -40,6 +45,8 @@ export const exerciseLibrary: readonly Exercise[] = Object.freeze([
   evenEighthsLeftHandExercise,
   orderedChordTonesRightHandExercise,
   orderedChordTonesLeftHandExercise,
+  orderedDMinorChordTonesRightHandExercise,
+  orderedDMinorChordTonesLeftHandExercise,
   steadyBrokenChordRightHandExercise,
   steadyBrokenChordLeftHandExercise,
   threeFourBrokenChordRightHandExercise,

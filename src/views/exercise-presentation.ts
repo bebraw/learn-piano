@@ -101,6 +101,19 @@ export function projectPracticeKeyboardNotes(exercise: Exercise): readonly numbe
   return projectedPitches;
 }
 
+export function formatPracticeKeyboardRange(exercise: Exercise): string {
+  const keyboardNotes = projectPracticeKeyboardNotes(exercise);
+  const firstNote = keyboardNotes[0];
+  const lastNote = keyboardNotes.at(-1);
+  if (firstNote === undefined || lastNote === undefined) {
+    return "Keyboard range";
+  }
+
+  const firstPitch = formatMidiNote(firstNote).replace(/-?\d+$/, "");
+  const lastPitch = formatMidiNote(lastNote).replace(/-?\d+$/, "");
+  return firstNote === lastNote ? `${firstPitch} key` : `${firstPitch}–${lastPitch} range`;
+}
+
 export function formatPracticeKeyboardNoteLabel(noteNumber: number, state: PracticeKeyboardNoteState): string {
   const stateLabel: Readonly<Record<PracticeKeyboardNoteState, string>> = {
     accepted: "completed",

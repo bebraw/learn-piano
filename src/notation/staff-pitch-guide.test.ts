@@ -7,6 +7,10 @@ import {
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-eighth-pattern-exercises.js";
 import { offbeatStepSkipRightHandExercise } from "../exercises/library/offbeat-step-skip-exercises.js";
+import {
+  orderedDMinorChordTonesLeftHandExercise,
+  orderedDMinorChordTonesRightHandExercise,
+} from "../exercises/library/ordered-chord-tone-exercises.js";
 import type { ExerciseExpectedEvent } from "../exercises/types.js";
 import { projectStaffPitchGuide, STAFF_PITCH_GUIDE_SUPPORTED_RANGES } from "./staff-pitch-guide.js";
 
@@ -52,6 +56,28 @@ describe("projectStaffPitchGuide", () => {
       { label: "C3", x: 548, y: 80 },
     ]);
     expect(guide?.notes.every(({ ledgerLines }) => ledgerLines.length === 0)).toBe(true);
+  });
+
+  it("extends the bounded natural-note guide through A for both D-minor studies", () => {
+    const trebleGuide = projectStaffPitchGuide(orderedDMinorChordTonesRightHandExercise.expectedEvents);
+    const bassGuide = projectStaffPitchGuide(orderedDMinorChordTonesLeftHandExercise.expectedEvents);
+
+    expect(trebleGuide?.accessibleLabel).toBe("Treble staff pitch order: D4, F4, A4, F4, D4.");
+    expect(trebleGuide?.notes.map(({ label, y }) => ({ label, y }))).toEqual([
+      { label: "D4", y: 112 },
+      { label: "F4", y: 96 },
+      { label: "A4", y: 80 },
+      { label: "F4", y: 96 },
+      { label: "D4", y: 112 },
+    ]);
+    expect(bassGuide?.accessibleLabel).toBe("Bass staff pitch order: D3, F3, A3, F3, D3.");
+    expect(bassGuide?.notes.map(({ label, y }) => ({ label, y }))).toEqual([
+      { label: "D3", y: 72 },
+      { label: "F3", y: 56 },
+      { label: "A3", y: 40 },
+      { label: "F3", y: 56 },
+      { label: "D3", y: 72 },
+    ]);
   });
 
   it("uses sequence position for horizontal placement and pitch for vertical placement", () => {
@@ -100,8 +126,8 @@ describe("projectStaffPitchGuide", () => {
 
   it("documents the conservative ranges covered by the current guide", () => {
     expect(STAFF_PITCH_GUIDE_SUPPORTED_RANGES).toEqual({
-      treble: { minimumMidiNote: 60, maximumMidiNote: 67 },
-      bass: { minimumMidiNote: 48, maximumMidiNote: 55 },
+      treble: { minimumMidiNote: 60, maximumMidiNote: 69 },
+      bass: { minimumMidiNote: 48, maximumMidiNote: 57 },
     });
   });
 
@@ -111,9 +137,9 @@ describe("projectStaffPitchGuide", () => {
     ["mixed hands", [fiveNoteAscentExercise.expectedEvents[0]!, { ...fiveNoteAscentExercise.expectedEvents[1]!, hand: "left" }]],
     ["a chromatic pitch", [{ ...fiveNoteAscentExercise.expectedEvents[0]!, noteNumber: 61 }]],
     ["a treble pitch below the supported range", [{ ...fiveNoteAscentExercise.expectedEvents[0]!, noteNumber: 59 }]],
-    ["a treble pitch above the supported range", [{ ...fiveNoteAscentExercise.expectedEvents[0]!, noteNumber: 69 }]],
+    ["a treble pitch above the supported range", [{ ...fiveNoteAscentExercise.expectedEvents[0]!, noteNumber: 71 }]],
     ["a bass pitch below the supported range", [{ ...fiveNoteAscentLeftHandExercise.expectedEvents[0]!, noteNumber: 47 }]],
-    ["a bass pitch above the supported range", [{ ...fiveNoteAscentLeftHandExercise.expectedEvents[0]!, noteNumber: 57 }]],
+    ["a bass pitch above the supported range", [{ ...fiveNoteAscentLeftHandExercise.expectedEvents[0]!, noteNumber: 59 }]],
   ] satisfies ReadonlyArray<readonly [string, readonly ExerciseExpectedEvent[]]>)("returns no guide for %s", (_label, events) => {
     expect(projectStaffPitchGuide(events)).toBeNull();
   });

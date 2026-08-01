@@ -18,6 +18,8 @@ import {
 import {
   ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
   ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
+  ORDERED_D_MINOR_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
+  ORDERED_D_MINOR_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
 } from "../exercises/library/ordered-chord-tone-exercises.js";
 import {
   REPEATED_NOTES_LEFT_HAND_EXERCISE_ID,
@@ -305,19 +307,83 @@ describe("recommendNextStudy", () => {
 
   it.each([
     {
+      cMajorId: ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
+      oppositeCMajorId: ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
+      dMinorId: ORDERED_D_MINOR_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
+    },
+    {
+      cMajorId: ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
+      oppositeCMajorId: ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
+      dMinorId: ORDERED_D_MINOR_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
+    },
+  ])("recommends $dMinorId only after its matching C-major chord-tone study", ({ cMajorId, oppositeCMajorId, dMinorId }) => {
+    const cMajor = requireLibraryExercise(cMajorId);
+    const oppositeCMajor = requireLibraryExercise(oppositeCMajorId);
+    const dMinor = requireLibraryExercise(dMinorId);
+
+    expect(
+      recommendNextStudy(exerciseLibrary, [attempt(oppositeCMajor, "2026-08-01T08:00:00.000Z")], oppositeCMajor.id)?.exercise,
+    ).not.toBe(dMinor);
+    expect(recommendNextStudy(exerciseLibrary, [attempt(cMajor, "2026-08-01T08:05:00.000Z")], cMajor.id)).toEqual({
+      kind: "new-study",
+      exercise: dMinor,
+      reason: {
+        kind: "direct-dependent",
+        prerequisiteExerciseIds: [cMajor.id],
+      },
+    });
+  });
+
+  it.each([
+    {
+      cMajorId: ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
+      straightPulseId: STEADY_QUARTER_RIGHT_HAND_EXERCISE_ID,
+      dMinorId: ORDERED_D_MINOR_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
+      brokenChordId: STEADY_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID,
+    },
+    {
+      cMajorId: ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
+      straightPulseId: STEADY_QUARTER_LEFT_HAND_EXERCISE_ID,
+      dMinorId: ORDERED_D_MINOR_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
+      brokenChordId: STEADY_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID,
+    },
+  ])(
+    "prioritizes $dMinorId before eligible timed C-major elaboration after the shared chord-tone prerequisite",
+    ({ cMajorId, straightPulseId, dMinorId, brokenChordId }) => {
+      const cMajor = requireLibraryExercise(cMajorId);
+      const straightPulse = requireLibraryExercise(straightPulseId);
+      const dMinor = requireLibraryExercise(dMinorId);
+      const brokenChord = requireLibraryExercise(brokenChordId);
+      const recommendation = recommendNextStudy(
+        exerciseLibrary,
+        [attempt(cMajor, "2026-08-01T08:00:00.000Z"), attempt(straightPulse, "2026-08-01T08:05:00.000Z")],
+        cMajor.id,
+      );
+
+      expect(recommendation?.exercise).toBe(dMinor);
+      expect(recommendation?.exercise).not.toBe(brokenChord);
+      expect(recommendation?.reason).toEqual({ kind: "direct-dependent", prerequisiteExerciseIds: [cMajor.id] });
+    },
+  );
+
+  it.each([
+    {
       chordTonesId: ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
+      dMinorId: ORDERED_D_MINOR_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
       straightPulseId: STEADY_QUARTER_RIGHT_HAND_EXERCISE_ID,
       brokenChordId: STEADY_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID,
     },
     {
       chordTonesId: ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
+      dMinorId: ORDERED_D_MINOR_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
       straightPulseId: STEADY_QUARTER_LEFT_HAND_EXERCISE_ID,
       brokenChordId: STEADY_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID,
     },
   ])(
     "gates $brokenChordId on matching ordered chord tones and straight steady quarters",
-    ({ chordTonesId, straightPulseId, brokenChordId }) => {
+    ({ chordTonesId, dMinorId, straightPulseId, brokenChordId }) => {
       const chordTones = requireLibraryExercise(chordTonesId);
+      const dMinor = requireLibraryExercise(dMinorId);
       const straightPulse = requireLibraryExercise(straightPulseId);
       const brokenChord = requireLibraryExercise(brokenChordId);
 
@@ -331,7 +397,11 @@ describe("recommendNextStudy", () => {
       expect(
         recommendNextStudy(
           exerciseLibrary,
-          [attempt(chordTones, "2026-08-01T08:00:00.000Z"), attempt(straightPulse, "2026-08-01T08:05:00.000Z")],
+          [
+            attempt(chordTones, "2026-08-01T08:00:00.000Z"),
+            attempt(straightPulse, "2026-08-01T08:05:00.000Z"),
+            attempt(dMinor, "2026-08-01T08:10:00.000Z"),
+          ],
           chordTones.id,
         ),
       ).toEqual({
@@ -466,7 +536,7 @@ describe("recommendNextStudy", () => {
       recommendNextStudy(
         exerciseLibrary,
         [attempt(repeatedNotes, "2026-08-01T08:00:00.000Z"), attempt(chordTones, "2026-08-01T08:05:00.000Z")],
-        chordTones.id,
+        repeatedNotes.id,
       ),
     ).toEqual({
       kind: "new-study",

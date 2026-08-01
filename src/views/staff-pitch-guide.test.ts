@@ -5,7 +5,10 @@ import { fiveFourPulseRightHandExercise } from "../exercises/library/five-four-p
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-eighth-pattern-exercises.js";
 import { offbeatStepSkipRightHandExercise } from "../exercises/library/offbeat-step-skip-exercises.js";
-import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered-chord-tone-exercises.js";
+import {
+  orderedChordTonesRightHandExercise,
+  orderedDMinorChordTonesRightHandExercise,
+} from "../exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises.js";
 import { steadyBrokenChordRightHandExercise } from "../exercises/library/steady-broken-chord-exercises.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
@@ -71,6 +74,17 @@ describe("renderStaffPitchGuide", () => {
     }
     expect(html.match(/data-note-state="expected"/g)).toHaveLength(1);
     expect(html.match(/data-note-state="remaining"/g)).toHaveLength(4);
+  });
+
+  it("renders the D-minor transfer through A as five occurrence markers", () => {
+    const html = renderStaffPitchGuide(orderedDMinorChordTonesRightHandExercise);
+
+    expect(html).toContain("Treble staff · Pitch guide");
+    expect(html).toContain(">A4</text>");
+    expect(html.match(/data-staff-note/g)).toHaveLength(5);
+    for (const event of orderedDMinorChordTonesRightHandExercise.expectedEvents) {
+      expect(html).toContain(`data-event-id="${event.id}"`);
+    }
   });
 
   it("keeps adjacent repeated-note onsets as separate event markers", () => {

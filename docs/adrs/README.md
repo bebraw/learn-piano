@@ -95,6 +95,7 @@ No accepted-only ADRs are currently pending implementation.
 | [ADR-060](./implemented/ADR-060-drive-pulse-meter-from-exercise-timing.md)              | Implemented | Drive visible and audible pulse-meter guidance from canonical exercise timing.                       |
 | [ADR-061](./implemented/ADR-061-keep-home-folio-filtering-transient.md)                 | Implemented | Keep home folio filters page-local, server-first, and inclusive of every matching curriculum track.  |
 | [ADR-062](./implemented/ADR-062-keep-recent-attempt-evidence-factual.md)                | Implemented | Summarize the newest five retained exact-revision attempts as factual categories without grading.    |
+| [ADR-063](./implemented/ADR-063-extend-pitch-guide-through-a.md)                        | Implemented | Extend the bounded natural-note pitch guide through A4 on treble and A3 on bass.                     |
 
 ## Creating A New ADR
 

@@ -4,7 +4,7 @@
 
 ### Context
 
-The canonical library contains twenty-six short studies, thirteen per hand, but per-exercise history alone makes it difficult to understand the retained practice record as a whole. The home page needs one calm, local summary that helps the learner resume deliberately without turning completion records into grades, streaks, or mastery claims.
+The canonical library contains twenty-eight short studies, fourteen per hand, but per-exercise history alone makes it difficult to understand the retained practice record as a whole. The home page needs one calm, local summary that helps the learner resume deliberately without turning completion records into grades, streaks, or mastery claims.
 
 ### Architecture
 
@@ -41,7 +41,7 @@ The canonical library contains twenty-six short studies, thirteen per hand, but 
 
 ### Definition of Done
 
-- [ ] `/` server-renders the complete twenty-six-study library and a useful no-JavaScript overview fallback.
+- [ ] `/` server-renders the complete twenty-eight-study library and a useful no-JavaScript overview fallback.
 - [ ] Readable history renders saved current-study coverage, unique right- and left-hand coverage, today's retained completion count, and the newest matching study when present.
 - [ ] Every card whose canonical ID and revision has retained completion evidence displays `Completion saved`; no other card receives a completion or negative-state claim.
 - [ ] One deterministic advisory next-study or review action uses the existing current-revision recommendation contract and leaves every library card available.
@@ -73,7 +73,7 @@ The canonical library contains twenty-six short studies, thirteen per hand, but 
 
 - Given: browser history is readable and contributes no attempt matching a current exercise revision
 - When: the home enhancement loads
-- Then: it reports zero of twenty-six saved current studies, hides the most-recent row, shows no completion badges, and suggests the first prerequisite-free study without implying a reset or failure
+- Then: it reports zero of twenty-eight saved current studies, hides the most-recent row, shows no completion badges, and suggests the first prerequisite-free study without implying a reset or failure
 
 **Scenario: Summarize repeated practice honestly**
 

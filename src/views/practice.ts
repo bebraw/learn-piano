@@ -7,6 +7,7 @@ import {
   formatExerciseHand,
   formatExerciseNoteOrder,
   formatExerciseTimingLabel,
+  formatPracticeKeyboardRange,
   formatPracticeKeyboardNoteLabel,
   getExerciseRhythmPresentation,
   projectPracticeKeyboardNotes,
@@ -34,6 +35,7 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
   const pulseBeats = renderPulseBeats(timing?.beatsPerMeasure ?? 4);
   const expectedPitches = new Set(exercise.expectedEvents.map(({ noteNumber }) => noteNumber));
   const keyboardNotes = projectPracticeKeyboardNotes(exercise);
+  const keyboardRange = formatPracticeKeyboardRange(exercise);
   const pianoKeys = keyboardNotes
     .map((noteNumber, index) => {
       const noteLabel = formatMidiNote(noteNumber);
@@ -164,7 +166,7 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
 
             <div class="keyboard-case">
               <div class="keyboard-case-topline">
-                <span>${escapeHtml(handLabel)} · C position</span>
+                <span>${escapeHtml(handLabel)} · ${escapeHtml(keyboardRange)}</span>
                 <span class="keyboard-cue-guided">Follow the amber cue</span>
                 <span class="keyboard-cue-reading" aria-hidden="true">Read the staff, then play</span>
               </div>

@@ -37,13 +37,13 @@ export interface StaffPitchGuide {
 }
 
 /**
- * This first projection is intentionally limited to the two five-note
- * positions in the current library. A wider range needs a deliberate layout
+ * This projection is intentionally limited to the natural-note C-through-A
+ * ranges used by the current library. A wider range needs a deliberate layout
  * contract rather than unbounded ledger lines.
  */
 export const STAFF_PITCH_GUIDE_SUPPORTED_RANGES: Readonly<Record<StaffPitchGuideClef, StaffPitchGuidePointRange>> = {
-  treble: { minimumMidiNote: 60, maximumMidiNote: 67 },
-  bass: { minimumMidiNote: 48, maximumMidiNote: 55 },
+  treble: { minimumMidiNote: 60, maximumMidiNote: 69 },
+  bass: { minimumMidiNote: 48, maximumMidiNote: 57 },
 };
 
 const VIEW_BOX: StaffPitchGuideViewBox = { width: 640, height: 168 };

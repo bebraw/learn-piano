@@ -4,7 +4,10 @@ import { fiveFourPulseRightHandExercise } from "./exercises/library/five-four-pu
 import { mixedEighthPatternRightHandExercise } from "./exercises/library/mixed-eighth-pattern-exercises";
 import { offbeatStepSkipRightHandExercise } from "./exercises/library/offbeat-step-skip-exercises";
 import { steadyQuarterStepSkipRightHandExercise } from "./exercises/library/steady-quarter-exercises";
-import { orderedChordTonesRightHandExercise } from "./exercises/library/ordered-chord-tone-exercises";
+import {
+  orderedChordTonesRightHandExercise,
+  orderedDMinorChordTonesRightHandExercise,
+} from "./exercises/library/ordered-chord-tone-exercises";
 import { repeatedNotesRightHandExercise } from "./exercises/library/repeated-note-exercises";
 import { steadyBrokenChordRightHandExercise } from "./exercises/library/steady-broken-chord-exercises.js";
 import { threeFourBrokenChordRightHandExercise } from "./exercises/library/three-four-broken-chord-exercises.js";
@@ -32,7 +35,7 @@ describe("worker", () => {
     expect(body).toContain("Enable JavaScript to read completions saved in this browser.");
     expect(body).toContain("data-home-root");
     expect(body).toContain('type="module" src="/client/main.js"');
-    expect(exerciseLibrary).toHaveLength(26);
+    expect(exerciseLibrary).toHaveLength(28);
     expect(body.match(/class="folio-card group"/g)).toHaveLength(exerciseLibrary.length);
     expect(body.match(/data-completion-badge hidden/g)).toHaveLength(exerciseLibrary.length);
     expect(body.match(/data-mode="timed"/g)).toHaveLength(18);
@@ -78,6 +81,22 @@ describe("worker", () => {
     expect(body.match(/data-note-number="60"/g)).toHaveLength(1);
     expect(body).toContain('data-note-number="62"\n        data-note-state="idle"');
     expect(body).toContain('data-note-number="65"\n        data-note-state="idle"');
+  });
+
+  it("renders the D-minor transfer over a physical D-through-A range", async () => {
+    const response = await handleRequest(
+      new Request(`http://example.com${exercisePracticeHref(orderedDMinorChordTonesRightHandExercise)}`),
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain('aria-label="Pitch order: D4 · F4 · A4 · F4 · D4"');
+    expect(body).toContain("Right hand · D–A range");
+    expect(body.match(/data-staff-note/g)).toHaveLength(5);
+    expect(body.match(/data-practice-key/g)).toHaveLength(5);
+    expect(body.match(/data-note-number="69"/g)).toHaveLength(1);
+    expect(body).toContain('data-note-number="64"\n        data-note-state="idle"');
+    expect(body).toContain('data-note-number="67"\n        data-note-state="idle"');
   });
 
   it("renders adjacent repeated notes as separate events over shared physical keys", async () => {

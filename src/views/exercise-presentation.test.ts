@@ -4,7 +4,10 @@ import { fiveFourPulseRightHandExercise } from "../exercises/library/five-four-p
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-eighth-pattern-exercises.js";
 import { offbeatStepSkipRightHandExercise } from "../exercises/library/offbeat-step-skip-exercises.js";
-import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered-chord-tone-exercises.js";
+import {
+  orderedChordTonesRightHandExercise,
+  orderedDMinorChordTonesRightHandExercise,
+} from "../exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises.js";
 import { steadyBrokenChordRightHandExercise } from "../exercises/library/steady-broken-chord-exercises.js";
 import { steadyQuarterRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
@@ -18,6 +21,7 @@ import {
   formatExerciseNoteOrder,
   formatExerciseTimingLabel,
   formatPracticeKeyboardNoteLabel,
+  formatPracticeKeyboardRange,
   getExerciseRhythmPresentation,
   projectPracticeKeyboardNotes,
 } from "./exercise-presentation.js";
@@ -265,10 +269,23 @@ describe("exercise presentation", () => {
     };
 
     expect(projectPracticeKeyboardNotes(orderedChordTonesRightHandExercise)).toEqual([60, 62, 64, 65, 67]);
+    expect(projectPracticeKeyboardNotes(orderedDMinorChordTonesRightHandExercise)).toEqual([62, 64, 65, 67, 69]);
     expect(projectPracticeKeyboardNotes(threeFourBrokenChordRightHandExercise)).toEqual([60, 62, 64, 65, 67]);
     expect(projectPracticeKeyboardNotes(repeatedNotesRightHandExercise)).toEqual([60, 62, 64]);
     expect(projectPracticeKeyboardNotes(chromaticFixture)).toEqual([61, 62, 64, 65, 67]);
     expect(projectPracticeKeyboardNotes({ ...fiveNoteAscentExercise, expectedEvents: [] })).toEqual([]);
+  });
+
+  it("derives a learner-facing pitch range from the projected physical keys", () => {
+    expect(formatPracticeKeyboardRange(fiveNoteAscentExercise)).toBe("C–G range");
+    expect(formatPracticeKeyboardRange(orderedDMinorChordTonesRightHandExercise)).toBe("D–A range");
+    expect(
+      formatPracticeKeyboardRange({
+        ...fiveNoteAscentExercise,
+        expectedEvents: [fiveNoteAscentExercise.expectedEvents[0]!],
+      }),
+    ).toBe("C key");
+    expect(formatPracticeKeyboardRange({ ...fiveNoteAscentExercise, expectedEvents: [] })).toBe("Keyboard range");
   });
 
   it("names every physical-key state for assistive technology", () => {

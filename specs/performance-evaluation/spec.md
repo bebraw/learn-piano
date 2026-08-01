@@ -11,7 +11,7 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - Evaluation supports canonical `untimed-ordered-notes` and `timed-ordered-notes` modes for individual notes.
 - It classifies each relevant note-on as correct, repeated, out of order, or wrong.
 - It advances only on the next expected pitch and completes after all canonical expected-event occurrences have been accepted.
-- The paired untimed ordered chord-tone studies evaluate C-E-G-E-C one individual note at a time. Later E and C occurrences are correct when they become next despite sharing pitches with earlier accepted events; this adds no simultaneous chord evaluation.
+- The four untimed ordered chord-tone studies evaluate either C-E-G-E-C or D-F-A-F-D one individual note at a time. Returning pitches are correct when they become next despite sharing physical controls with earlier accepted events; this adds no simultaneous-chord or chord-quality evaluation.
 - The paired repeated-note studies evaluate C-C-D-D-E as five individual occurrences. The second adjacent C or D is correct when it is next; an extra third same-pitch onset is `repeated` once the next canonical pitch differs.
 - The paired mixed-pattern studies evaluate C-E-D-D-F-G-E-C as eight individual occurrences. The adjacent D pair and later E and C returns remain distinct expected events, so all eight onsets advance independently when they become next.
 - The paired offbeat studies evaluate C-E-D-F-G as five individual occurrences at offsets 0, 0.5, 1.5, 2.5, and 3.5. The first C is the ungraded MIDI anchor and the four later accepted notes are classified only against their canonical gaps from it.
@@ -70,7 +70,7 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - Vague praise, punishment, percentage grades, ranks, lives, streaks, and ambiguous “almost” results are not part of this mode.
 - Velocity may be shown as captured data but must not be described as proof of strength, tension, relaxation, or technical quality.
 - MIDI-only evaluation must not diagnose posture, fingering, pedaling, injury risk, or whether the learner used the declared hand.
-- Completing an ordered chord-tone study must not be described as evidence of simultaneous chord playing, voicing, harmony recognition, or harmonic understanding.
+- Completing an ordered chord-tone study must not be described as evidence of simultaneous chord playing, voicing, chord-quality or minor-quality recognition, harmony recognition, or harmonic understanding.
 - Completing a repeated-note study must not be described as evidence of key release, duration, articulation, fingering, relaxation, tension, or physical repeated-note control.
 - Completing a mixed-pattern study proves only the accepted pitch order and onset placement. It must not be described as evidence of duration, release, articulation, fingering, declared-hand use, relaxation, reading, or consistency.
 - Completing an offbeat study proves only accepted pitch order and four timing gaps relative to the first accepted MIDI note. It must not be described as proof of audible downbeat or between-click alignment, rests, silence, duration, release, holding, accents, articulation, velocity quality, syncopation, fingering, declared-hand use, reading, relaxation, consistency, or mastery.
@@ -98,6 +98,7 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 
 - [ ] C4-D4-E4-F4-G4 in order advances one event at a time and completes exactly once.
 - [ ] C4-E4-G4-E4-C4 accepts all five occurrence IDs in order, while an extra immediate C4 or G4 remains a non-advancing repeated input when a different pitch is next.
+- [ ] D4-F4-A4-F4-D4 and D3-F3-A3-F3-D3 each accept all five occurrence IDs in order without producing timing, simultaneous-chord, minor-quality, fingering, hand-use, reading, or mastery evidence.
 - [ ] Wrong, repeated, and out-of-order classifications are mutually exclusive and follow the documented precedence.
 - [ ] Errors preserve the next expectation and accepted progress.
 - [ ] Note-off events and post-completion events do not mutate evaluation.
@@ -175,6 +176,12 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - Given: `ordered-chord-tones-c-major-right-hand` expects C4-E4-G4-E4-C4 as five occurrence IDs
 - When: the learner plays those pitches in order
 - Then: both E4 events and both C4 events are accepted when next, progress advances five times, and completion reports only ordered pitch evidence rather than a simultaneous chord
+
+**Scenario: Transfer the ordered contour to D minor**
+
+- Given: `ordered-chord-tones-d-minor-right-hand` expects D4-F4-A4-F4-D4 as five occurrence IDs
+- When: the learner plays those pitches in order
+- Then: both F4 events and both D4 events are accepted when next, progress advances five times, and completion reports only ordered pitch evidence rather than minor-quality recognition, harmonic understanding, simultaneous chord playing, fingering, hand use, reading, or mastery
 
 **Scenario: Classify an extra repeat inside the chord-tone pattern**
 

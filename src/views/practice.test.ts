@@ -6,7 +6,10 @@ import { fiveFourPulseRightHandExercise } from "../exercises/library/five-four-p
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
 import { mixedEighthPatternRightHandExercise } from "../exercises/library/mixed-eighth-pattern-exercises.js";
 import { offbeatStepSkipRightHandExercise } from "../exercises/library/offbeat-step-skip-exercises.js";
-import { orderedChordTonesRightHandExercise } from "../exercises/library/ordered-chord-tone-exercises.js";
+import {
+  orderedChordTonesRightHandExercise,
+  orderedDMinorChordTonesRightHandExercise,
+} from "../exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises.js";
 import { steadyBrokenChordRightHandExercise } from "../exercises/library/steady-broken-chord-exercises.js";
 import { steadyQuarterStepSkipRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
@@ -75,7 +78,8 @@ describe("renderPracticePage", () => {
     expect(html).toContain('<option value="60" selected>60 BPM</option>');
     expect(html.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).toContain("hidden");
     expect(html).not.toContain("The next expected key stays lit.");
-    expect(exerciseLibrary).toHaveLength(26);
+    expect(html).toContain("Right hand · C–G range");
+    expect(exerciseLibrary).toHaveLength(28);
   });
 
   it("derives the rendered sequence and physical key order from the supplied exercise", () => {
@@ -117,7 +121,7 @@ describe("renderPracticePage", () => {
     expect(html.indexOf('id="practice-key-62"')).toBeLessThan(html.indexOf('id="practice-key-64"'));
   });
 
-  it("keeps returning chord tones as five staff events over one five-key C position", () => {
+  it("keeps returning C-major chord tones as five staff events over one five-key range", () => {
     const html = renderPracticePage(orderedChordTonesRightHandExercise, exerciseLibrary);
     const keyboardStart = html.indexOf('class="practice-keyboard"');
     const keyboardEnd = html.indexOf("</div>", keyboardStart);
@@ -137,6 +141,26 @@ describe("renderPracticePage", () => {
     expect(html.match(/data-staff-note/g)).toHaveLength(5);
     expect(html).toContain('data-event-id="right-hand-chord-tone-c4-start"');
     expect(html).toContain('data-event-id="right-hand-chord-tone-c4-return"');
+    expect(html).toContain("Right hand · C–G range");
+  });
+
+  it("renders D-minor chord tones through A over a derived D-to-A range", () => {
+    const html = renderPracticePage(orderedDMinorChordTonesRightHandExercise, exerciseLibrary);
+    const keyboardStart = html.indexOf('class="practice-keyboard"');
+    const keyboardEnd = html.indexOf("</div>", keyboardStart);
+    const keyboardMarkup = html.slice(keyboardStart, keyboardEnd);
+
+    expect(html).toContain("D4 · F4 · A4 · F4 · D4");
+    expect(html).toContain("Right hand · D–A range");
+    expect(keyboardMarkup.match(/data-practice-key/g)).toHaveLength(5);
+    for (const noteNumber of [62, 64, 65, 67, 69]) {
+      expect(keyboardMarkup.match(new RegExp(`data-note-number="${noteNumber}"`, "g"))).toHaveLength(1);
+    }
+    expect(keyboardMarkup).toContain('data-note-number="62"\n        data-note-state="expected"');
+    expect(keyboardMarkup).toContain('data-note-number="64"\n        data-note-state="idle"');
+    expect(keyboardMarkup).toContain('data-note-number="67"\n        data-note-state="idle"');
+    expect(html.match(/data-staff-note/g)).toHaveLength(5);
+    expect(html).toContain('data-event-id="right-hand-chord-tone-d-minor-a4-apex"');
   });
 
   it("renders repeated pairs as five staff events over one three-key span", () => {

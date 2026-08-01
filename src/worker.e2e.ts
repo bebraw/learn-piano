@@ -4,7 +4,10 @@ import { fiveFourPulseRightHandExercise } from "./exercises/library/five-four-pu
 import { exerciseLibrary } from "./exercises/library/index.js";
 import { mixedEighthPatternRightHandExercise } from "./exercises/library/mixed-eighth-pattern-exercises.js";
 import { offbeatStepSkipRightHandExercise } from "./exercises/library/offbeat-step-skip-exercises.js";
-import { orderedChordTonesRightHandExercise } from "./exercises/library/ordered-chord-tone-exercises.js";
+import {
+  orderedChordTonesRightHandExercise,
+  orderedDMinorChordTonesRightHandExercise,
+} from "./exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "./exercises/library/repeated-note-exercises.js";
 import { steadyBrokenChordRightHandExercise } from "./exercises/library/steady-broken-chord-exercises.js";
 import { steadyQuarterStepSkipRightHandExercise } from "./exercises/library/steady-quarter-exercises.js";
@@ -18,12 +21,13 @@ test("renders the piano practice home page", async ({ page }) => {
   await expect(page.getByText("Small, focused studies for building calm and reliable movement at the keyboard.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Choose your next study" })).toBeVisible();
   const exerciseFolio = page.locator(".folio-grid");
-  expect(exerciseLibrary).toHaveLength(26);
+  expect(exerciseLibrary).toHaveLength(28);
   await expect(exerciseFolio.locator('a[href^="/practice?exercise="]')).toHaveCount(exerciseLibrary.length);
   await expect(exerciseFolio.locator('[data-mode="timed"]')).toHaveCount(18);
-  await expect(page.getByText("26 short patterns for both hands, including pulse and subdivision studies.")).toBeVisible();
+  await expect(page.getByText("28 short patterns for both hands, including pulse and subdivision studies.")).toBeVisible();
   await expect(page.getByRole("link", { name: new RegExp(evenEighthsRightHandExercise.title) })).toContainText("Eighth-note grid · 60 BPM");
   await expect(page.getByRole("link", { name: new RegExp(orderedChordTonesRightHandExercise.title) })).toContainText("Untimed");
+  await expect(page.getByRole("link", { name: new RegExp(orderedDMinorChordTonesRightHandExercise.title) })).toContainText("Untimed");
   await expect(page.getByRole("link", { name: new RegExp(repeatedNotesRightHandExercise.title) })).toContainText(
     "Eighth-note grid · 60 BPM",
   );

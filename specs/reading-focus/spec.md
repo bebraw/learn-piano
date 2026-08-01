@@ -9,7 +9,7 @@ The guided practice page intentionally names the exercise sequence, labels staff
 ### Current Scope
 
 - Every practice page is server-rendered in `Guided` presentation with complete selected-exercise instructions, ordered note text, pitch labels, next-pitch cue, and expected-key cue.
-- Typed client enhancement offers a `Reading focus` toggle only after the selected exercise's staff guide has passed the existing supported-subset validation. If the guide is absent or unsupported, guided presentation remains available and no focus toggle is offered.
+- Typed client enhancement offers a `Reading focus` toggle only after the selected exercise's staff guide has passed the existing C4-A4 treble or C3-A3 bass supported-subset validation. If the guide is absent or unsupported, guided presentation remains available and no focus toggle is offered.
 - Reading focus visually hides the selected exercise instructions and ordered sequence, the textual next pitch, visible staff and physical-key pitch labels, and the amber expected-key answer.
 - The same semantic text and ARIA labels remain available to assistive technology. Physical keys remain focusable and playable through the selected input path, and visible keyboard focus and pressed state remain distinct.
 - Occurrence-based accepted, expected, and remaining progress remains visible on the staff. Progress count, pitch-free rhythm task, count-in, pulse state, timing controls and feedback, error correction, restart, completion, history, recommendation, and exercise chooser remain available. For the steady broken-chord pair, the generic one-note-per-beat task applies across all eight event positions without displaying pitch order. For the 3/4 broken-chord pair, the pitch-free task retains the three-beat count-in and complete `1 2 3, 1 2 3, 1` count across seven positions. For the 5/4 pulse pair, it retains the exact six-position task `After the five-beat count-in, place one note on each beat. Count 1 2 3 4 5, 1.` For the offbeat pair, the task includes the first-note-on-1 instruction and complete `1 & 2 & 3 & 4 &` count.
@@ -104,7 +104,7 @@ The guided practice page intentionally names the exercise sequence, labels staff
 - **Unit tests:** Presentation state defaults, support gating, correct/error feedback projection, mid-attempt state preservation, restart lifetime, and unsupported-guide behavior.
 - **View tests:** Guided server HTML contains every cue and accessible hook; enhanced reading-focus selectors target existing semantic content without creating alternate exercise data.
 - **Client tests:** Toggling changes only presentation, preserves evaluator/pulse/input snapshots, keeps physical-key focus and pressed state, retains staff progress, and does not write storage.
-- **Browser tests:** No-JavaScript remains guided; supported exercises can enter and leave reading focus before and during practice; visible cues disappear while accessible names remain; the steady broken-chord study retains its pitch-free eight-position one-note-per-beat task, the 3/4 pair retains its pitch-free three-beat grouped count, the 5/4 pair retains its exact six-position five-beat task, and the offbeat study retains its pitch-free full count; restart preserves focus; reload and exercise navigation restore guided; error correction is specific and correct feedback does not disclose the next pitch.
+- **Browser tests:** No-JavaScript remains guided; supported exercises, including the D-minor studies at the expanded A boundary, can enter and leave reading focus before and during practice; visible cues disappear while accessible names remain; the steady broken-chord study retains its pitch-free eight-position one-note-per-beat task, the 3/4 pair retains its pitch-free three-beat grouped count, the 5/4 pair retains its exact six-position five-beat task, and the offbeat study retains its pitch-free full count; restart preserves focus; reload and exercise navigation restore guided; error correction is specific and correct feedback does not disclose the next pitch.
 - **Documentation checks:** README, architecture, ADR, practice-session, staff-notation, curriculum, and Worker-shell wording agree on the transient presentation and no-mastery boundaries.
 
 ### Scenarios
@@ -120,6 +120,12 @@ The guided practice page intentionally names the exercise sequence, labels staff
 - Given: client enhancement has validated the selected exercise's supported staff guide
 - When: the learner chooses `Reading focus`
 - Then: the selected-exercise instructions and sequence, next pitch, visible staff/key labels, and amber expected-key answer are visually suppressed while staff progress, numeric progress, rhythm guidance, focus, pressed state, operability, and accessible equivalents remain
+
+**Scenario: Keep D minor inside the supported reading range**
+
+- Given: `ordered-chord-tones-d-minor-right-hand` renders its validated D4-F4-A4-F4-D4 guide at the current A4 boundary
+- When: the learner enters Reading Focus and completes the untimed sequence
+- Then: the same five occurrence markers and D-E-F-G-A controls preserve progress and accessible meaning while visible pitch answers are reduced, and completion records no reading-focus, minor-quality, fingering, hand-use, or staff-reading evidence
 
 **Scenario: Retain offbeat count guidance**
 
