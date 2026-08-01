@@ -54,7 +54,7 @@ type FakePracticePageElements = PracticePageElements & {
 
 describe("createPracticePageView", () => {
   it("renders ready mock input, canonical progress, and empty history", () => {
-    const { elements, keys } = createElements();
+    const { elements, keys, staffNotes } = createElements();
     const view = createPracticePageView(elements);
 
     view.render(snapshot());
@@ -79,6 +79,36 @@ describe("createPracticePageView", () => {
     expect(elements.historyCount.textContent).toBe("0 attempts completed today");
     expect(keys[0]?.dataset.noteState).toBe("expected");
     expect(keys[0]?.disabled).toBe(true);
+    expect(staffNotes[0]?.getAttribute("data-note-state")).toBe("expected");
+    expect(staffNotes.slice(1).every((note) => note.getAttribute("data-note-state") === "remaining")).toBe(true);
+  });
+
+  it("keeps text and keyboard enhancement working when no staff guide was rendered", () => {
+    const { elements, keys } = createElements();
+    const view = createPracticePageView({ ...elements, staffNotes: [] });
+
+    expect(() => view.render(snapshot())).not.toThrow();
+    expect(elements.nextNote.textContent).toBe("C4");
+    expect(keys[0]?.dataset.noteState).toBe("expected");
+  });
+
+  it("maps shuffled staff markers by event ID and does not advance them for a wrong note", () => {
+    const { elements, staffNotes } = createElements();
+    const evaluation = createEvaluationState(fiveNoteAscentExercise);
+    const wrongNote = evaluateMidiEvent(fiveNoteAscentExercise, evaluation, {
+      type: "note-on",
+      channel: 1,
+      noteNumber: 61,
+      velocity: 72,
+      timestamp: 1,
+    });
+
+    createPracticePageView({ ...elements, staffNotes: [...elements.staffNotes].reverse() }).render(
+      snapshot({ evaluation: wrongNote.state, feedback: wrongNote.feedback }),
+    );
+
+    expect(staffNotes[0]?.getAttribute("data-note-state")).toBe("expected");
+    expect(staffNotes.slice(1).every((note) => note.getAttribute("data-note-state") === "remaining")).toBe(true);
   });
 
   it("keeps a stopped timed study gated until an input is connected and the pulse starts", () => {
@@ -273,7 +303,7 @@ describe("createPracticePageView", () => {
   });
 
   it("enables on-screen keys and advances calm feedback after a correct note", () => {
-    const { elements, keys } = createElements();
+    const { elements, keys, staffNotes } = createElements();
     const initial = createEvaluationState(fiveNoteAscentExercise);
     const transition = evaluateMidiEvent(fiveNoteAscentExercise, initial, {
       type: "note-on",
@@ -303,6 +333,33 @@ describe("createPracticePageView", () => {
     expect(keys[0]?.dataset.noteState).toBe("accepted");
     expect(keys[0]?.attributes.get("aria-pressed")).toBe("true");
     expect(keys.every((key) => !key.disabled)).toBe(true);
+    expect(staffNotes[0]?.getAttribute("data-note-state")).toBe("accepted");
+    expect(staffNotes[0]?.getAttribute("data-note-active")).toBe("true");
+    expect(staffNotes[1]?.getAttribute("data-note-state")).toBe("expected");
+  });
+
+  it("keeps the staff pitch guide aligned through completion and restart", () => {
+    const { elements, staffNotes } = createElements();
+    const view = createPracticePageView(elements);
+    let evaluation = createEvaluationState(fiveNoteAscentExercise);
+
+    for (const [index, event] of fiveNoteAscentExercise.expectedEvents.entries()) {
+      evaluation = evaluateMidiEvent(fiveNoteAscentExercise, evaluation, {
+        type: "note-on",
+        channel: 1,
+        noteNumber: event.noteNumber,
+        velocity: 72,
+        timestamp: index,
+      }).state;
+    }
+
+    view.render(snapshot({ sessionStatus: "completed", evaluation }));
+    expect(staffNotes.every((note) => note.getAttribute("data-note-state") === "accepted")).toBe(true);
+
+    view.render(snapshot());
+    expect(staffNotes[0]?.getAttribute("data-note-state")).toBe("expected");
+    expect(staffNotes.slice(1).every((note) => note.getAttribute("data-note-state") === "remaining")).toBe(true);
+    expect(staffNotes.every((note) => note.getAttribute("data-note-active") === "false")).toBe(true);
   });
 
   it("asks for only a restart when a connected learner stops an active study", () => {
@@ -422,11 +479,14 @@ describe("createPracticePageView", () => {
 function createElements(exercise: Exercise = fiveNoteAscentExercise): {
   readonly elements: FakePracticePageElements;
   readonly keys: FakeKey[];
+  readonly staffNotes: FakeElement[];
 } {
   const enhancements = [new FakeElement(), new FakeElement()];
   const keys = exercise.expectedEvents.map(() => new FakeKey());
+  const staffNotes = exercise.expectedEvents.map(() => new FakeElement());
   return {
     keys,
+    staffNotes,
     elements: {
       enhancements,
       javascriptStatus: new FakeElement(),
@@ -456,6 +516,10 @@ function createElements(exercise: Exercise = fiveNoteAscentExercise): {
         eventId: event.id,
         noteNumber: event.noteNumber,
         element: keys[index]!,
+      })),
+      staffNotes: exercise.expectedEvents.map((event, index) => ({
+        eventId: event.id,
+        element: staffNotes[index]!,
       })),
     },
   };

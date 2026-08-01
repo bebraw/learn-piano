@@ -18,8 +18,13 @@ test("keeps the exercise useful without JavaScript", async ({ baseURL, browser }
   await expect(page.getByText(defaultExercise.instructions)).toBeVisible();
   const exerciseChooser = page.getByRole("navigation", { name: "Choose an exercise" });
   await expect(
-    page.getByLabel(`Expected notes: ${defaultExercise.expectedEvents.map(({ noteNumber }) => formatMidiNote(noteNumber)).join(" · ")}`),
+    page.getByLabel(`Pitch order: ${defaultExercise.expectedEvents.map(({ noteNumber }) => formatMidiNote(noteNumber)).join(" · ")}`),
   ).toBeVisible();
+  const pitchGuide = page.locator("[data-staff-pitch-guide]");
+  await expect(pitchGuide).toBeVisible();
+  await expect(pitchGuide).toHaveAttribute("aria-hidden", "true");
+  await expect(pitchGuide).toHaveAttribute("data-staff-clef", "treble");
+  await expect(page.locator(`#staff-note-${defaultExercise.expectedEvents[0]!.id}`)).toHaveAttribute("data-note-state", "expected");
   await expect(exerciseChooser.getByRole("link")).toHaveCount(exerciseLibrary.length);
   await expect(exerciseChooser.locator('a[aria-current="page"]')).toHaveCount(1);
   await expect(exerciseChooser.getByRole("link", { name: new RegExp(defaultExercise.title) })).toHaveAttribute("aria-current", "page");
@@ -33,8 +38,41 @@ test("keeps the exercise useful without JavaScript", async ({ baseURL, browser }
   await expect(page.getByText(alternateExercise.instructions)).toBeVisible();
   await expect(exerciseChooser.locator('a[aria-current="page"]')).toHaveCount(1);
   await expect(exerciseChooser.getByRole("link", { name: new RegExp(alternateExercise.title) })).toHaveAttribute("aria-current", "page");
+  await expect(page.locator("[data-staff-pitch-guide]")).toHaveAttribute("data-staff-clef", "bass");
 
   await context.close();
+});
+
+test("keeps the staff pitch guide inside the practice stage on desktop, iPad, and narrow screens", async ({ page }) => {
+  for (const viewport of [
+    { width: 1440, height: 1000 },
+    { width: 1194, height: 834 },
+    { width: 320, height: 700 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/practice");
+
+    const layout = await page.locator("[data-staff-pitch-guide]").evaluate((guide) => {
+      const stage = guide.closest("#practice-stage");
+      if (stage === null) {
+        throw new Error("The staff pitch guide must stay inside the practice stage");
+      }
+
+      const guideBox = guide.getBoundingClientRect();
+      const stageBox = stage.getBoundingClientRect();
+      return {
+        documentFits: document.documentElement.scrollWidth <= window.innerWidth,
+        guideFitsStage: guideBox.left >= stageBox.left && guideBox.right <= stageBox.right,
+        guideHasArea: guideBox.width > 0 && guideBox.height > 0,
+      };
+    });
+
+    expect(layout, `${viewport.width}×${viewport.height}`).toEqual({
+      documentFits: true,
+      guideFitsStage: true,
+      guideHasArea: true,
+    });
+  }
 });
 
 test("completes a selected exercise and reloads its persisted history through mock input", async ({ page }) => {
@@ -42,6 +80,11 @@ test("completes a selected exercise and reloads its persisted history through mo
   await page.goto(exercisePracticeHref(selectedExercise));
 
   await expect(page.getByRole("heading", { level: 1, name: selectedExercise.title })).toBeVisible();
+
+  const firstStaffNote = page.locator(`#staff-note-${selectedExercise.expectedEvents[0]!.id}`);
+  const secondStaffNote = page.locator(`#staff-note-${selectedExercise.expectedEvents[1]!.id}`);
+  await expect(firstStaffNote).toHaveAttribute("data-note-state", "expected");
+  await expect(secondStaffNote).toHaveAttribute("data-note-state", "remaining");
 
   await expect(page.getByLabel("Input method")).toHaveValue("mock");
   await expect(page.getByLabel("Device")).toHaveValue("mock-midi-input");
@@ -57,6 +100,8 @@ test("completes a selected exercise and reloads its persisted history through mo
         throw new Error("The selected canonical exercise requires a second note");
       }
       await expect(page.getByText(`Correct: ${formatMidiNote(noteNumber)}. ${formatMidiNote(nextNote)} is next.`)).toBeVisible();
+      await expect(firstStaffNote).toHaveAttribute("data-note-state", "accepted");
+      await expect(secondStaffNote).toHaveAttribute("data-note-state", "expected");
     }
   }
 
@@ -77,7 +122,7 @@ test("counts in a timed study and persists its MIDI-relative pulse summary", asy
     throw new Error("The steady-quarter study requires a first event");
   }
   const stage = page.locator("#practice-stage");
-  const firstKey = page.locator(`[data-note-number="${firstEvent.noteNumber}"]`);
+  const firstKey = page.locator(`[data-practice-key][data-note-number="${firstEvent.noteNumber}"]`);
   await expect(page.locator("#pulse-controls")).toBeVisible();
   await expect(page.locator("#pulse-tempo")).toHaveValue("60");
   await expect(page.getByRole("button", { name: "Start pulse" })).toBeDisabled();
@@ -171,6 +216,8 @@ test("shows correction feedback and requires restart after an interruption", asy
   const firstNote = expectedNoteNumber(0);
   const secondNote = expectedNoteNumber(1);
   const thirdNote = expectedNoteNumber(2);
+  const firstStaffNote = page.locator(`#staff-note-${defaultExercise.expectedEvents[0]!.id}`);
+  const secondStaffNote = page.locator(`#staff-note-${defaultExercise.expectedEvents[1]!.id}`);
   await playNote(page, firstNote);
   await playNote(page, firstNote);
   await expect(page.getByText(`You repeated ${formatMidiNote(firstNote)}. ${formatMidiNote(secondNote)} is next.`)).toBeVisible();
@@ -183,18 +230,22 @@ test("shows correction feedback and requires restart after an interruption", asy
   await expect(
     page.getByText(`This attempt was interrupted. Reconnect the input, then restart from ${formatMidiNote(firstNote)}.`),
   ).toBeVisible();
+  await expect(firstStaffNote).toHaveAttribute("data-note-state", "accepted");
+  await expect(secondStaffNote).toHaveAttribute("data-note-state", "expected");
   await page.getByRole("button", { name: "Connect", exact: true }).click();
   await playNote(page, secondNote);
   await expect(page.getByText(`1 of ${defaultExercise.expectedEvents.length} notes`)).toBeVisible();
 
   await page.getByRole("button", { name: "Restart" }).click();
   await expect(page.getByText(`0 of ${defaultExercise.expectedEvents.length} notes`)).toBeVisible();
-  await expect(page.locator(`[data-note-number="${firstNote}"]`)).toHaveAttribute("aria-current", "true");
+  await expect(page.locator(`[data-practice-key][data-note-number="${firstNote}"]`)).toHaveAttribute("aria-current", "true");
+  await expect(firstStaffNote).toHaveAttribute("data-note-state", "expected");
+  await expect(secondStaffNote).toHaveAttribute("data-note-state", "remaining");
   await expect(page.getByText("0 attempts completed today")).toBeVisible();
 });
 
 async function playNote(page: import("@playwright/test").Page, noteNumber: number): Promise<void> {
-  await page.locator(`[data-note-number="${noteNumber}"]`).click();
+  await page.locator(`[data-practice-key][data-note-number="${noteNumber}"]`).click();
 }
 
 function expectedNoteNumber(index: number): number {

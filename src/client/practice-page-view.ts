@@ -3,11 +3,14 @@ import type { MidiInputDevice } from "../midi/types.js";
 import type { AttemptTimingSummary } from "./persistence/attempt-repository.js";
 import type { PracticeSnapshot, PracticeView } from "./practice-controller.js";
 
-interface ElementLike {
-  hidden: boolean | string;
-  textContent: string | null;
+interface AttributeElementLike {
   getAttribute(name: string): string | null;
   setAttribute(name: string, value: string): void;
+}
+
+interface ElementLike extends AttributeElementLike {
+  hidden: boolean | string;
+  textContent: string | null;
 }
 
 interface ControlLike extends ElementLike {
@@ -30,6 +33,11 @@ export interface PracticeKeyElement {
   readonly eventId: string;
   readonly noteNumber: number;
   readonly element: KeyLike;
+}
+
+export interface PracticeStaffNoteElement {
+  readonly eventId: string;
+  readonly element: AttributeElementLike;
 }
 
 export interface PracticePageElements {
@@ -58,6 +66,7 @@ export interface PracticePageElements {
   readonly keyboardHelp: ElementLike;
   readonly nextExerciseLink: ElementLike;
   readonly keys: readonly PracticeKeyElement[];
+  readonly staffNotes: readonly PracticeStaffNoteElement[];
 }
 
 export function createPracticePageView(elements: PracticePageElements): PracticeView {
@@ -198,18 +207,16 @@ function renderSession(elements: PracticePageElements, snapshot: PracticeSnapsho
   elements.nextExerciseLink.hidden = snapshot.sessionStatus !== "completed";
 
   for (const [index, event] of snapshot.exercise.expectedEvents.entries()) {
+    const state = practiceNoteState(snapshot, index);
+    const staffNote = elements.staffNotes.find((candidate) => candidate.eventId === event.id);
+    staffNote?.element.setAttribute("data-note-state", state);
+    staffNote?.element.setAttribute("data-note-active", activeNotes.has(event.noteNumber) ? "true" : "false");
+
     const key = elements.keys.find((candidate) => candidate.eventId === event.id);
     if (key === undefined) {
       continue;
     }
 
-    const state = snapshot.evaluation.completed
-      ? "accepted"
-      : index < snapshot.evaluation.nextExpectedIndex
-        ? "accepted"
-        : index === snapshot.evaluation.nextExpectedIndex
-          ? "expected"
-          : "remaining";
     key.element.dataset.noteState = state;
     key.element.disabled = !mockKeysEnabled;
     key.element.setAttribute(
@@ -236,6 +243,13 @@ function renderSession(elements: PracticePageElements, snapshot: PracticeSnapsho
 
   elements.persistenceMessage.hidden = snapshot.persistenceMessage === null;
   setTextContent(elements.persistenceMessage, snapshot.persistenceMessage);
+}
+
+function practiceNoteState(snapshot: PracticeSnapshot, index: number): "accepted" | "expected" | "remaining" {
+  if (snapshot.evaluation.completed || index < snapshot.evaluation.nextExpectedIndex) {
+    return "accepted";
+  }
+  return index === snapshot.evaluation.nextExpectedIndex ? "expected" : "remaining";
 }
 
 function feedbackMessage(snapshot: PracticeSnapshot, nextNoteNumber: number | undefined): string {

@@ -4,7 +4,7 @@
 
 ### Context
 
-Exercises need one canonical representation so instructions, visual guidance, evaluation, persistence, fixtures, curriculum, and a future notation layer cannot drift into separate interpretations of the same musical task. The representation starts with a compact beginner library but must evolve deliberately toward chords, rhythm, technique, and lawfully sourced repertoire.
+Exercises need one canonical representation so instructions, visual guidance, evaluation, persistence, fixtures, curriculum, the current pitch guide, and any future full-notation layer cannot drift into separate interpretations of the same musical task. The representation starts with a compact beginner library but must evolve deliberately toward chords, rhythm, technique, and lawfully sourced repertoire.
 
 ### Current Library Scope
 
@@ -22,13 +22,14 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - Each exercise has learner-facing title and instructions, beginner difficulty, explicit hand and prerequisite metadata, curriculum tags, and source metadata identifying it as original project material.
 - Titles name the assigned hand consistently. Instructions offer concise conventional C-position fingering as optional learner guidance; MIDI evaluation checks only the canonical pitch order and cannot verify which fingers were used.
 - Each steady-quarter exercise requires the matching untimed ascent, belongs to the `rhythm-and-coordination.steady-quarter-notes` curriculum competency, and defines a 40–100 BPM range with 60 BPM default, 4/4 meter, quarter-note beat unit, four-beat count-in, and ±0.2-beat timing window.
-- The current library has no note-duration target, velocity target, fingering assessment, notation payload, audio asset, rests, eighth notes, syncopation, chords, hands-together material, adaptive tempo, or bundled repertoire content.
+- A presentation adapter derives a pitch-only staff guide for all current exercises from their existing event IDs, MIDI note numbers, order, and single-hand assignments. Right-hand C4-G4 natural notes use the supported treble view; left-hand C3-G3 natural notes use the supported bass view.
+- The staff guide adds no notation payload, schema version, exercise revision, evaluator behavior, or attempt identity. The current library still has no written-duration or note-duration target, velocity target, fingering assessment, audio asset, rests, eighth notes, syncopation, chords, hands-together material, adaptive tempo, or bundled repertoire content.
 
 ### Future Scope
 
 - Later schema versions or backward-compatible optional fields may represent chords, both-hand material, note duration, rests, subdivisions, syncopation, fingering suggestions, dynamic targets, adaptive tempo, repertoire-goal tags, and difficulty variants.
-- A later notation system, imported score format, or licensed content source must adapt to this canonical domain model rather than become a parallel exercise identity system.
-- MusicXML parsing, a notation framework, and copyrighted repertoire content are not part of the current library and require separate decisions or lawful input.
+- A later full notation system, imported score format, or licensed content source must adapt to this canonical domain model rather than become a parallel exercise identity system.
+- Accidentals, written durations, key signatures, rests, multiple voices, both-hand grand staff, MusicXML parsing, a general notation framework, and copyrighted repertoire content are not part of the current library and require separate decisions or lawful input.
 
 ### Architecture
 
@@ -42,11 +43,14 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - **Timing metadata:** Positive finite `defaultBpm`, `minBpm`, and `maxBpm` values define an inclusive tempo range; the evaluator accepts integer attempt tempos within it, and the current studies require 40–100 BPM with 60 BPM default. Positive integer `beatsPerMeasure: 4` and `beatUnit: 4` define 4/4, non-negative integer `countInBeats: 4` defines the guidance count-in, and non-negative finite `timingWindowBeats: 0.2` defines the inclusive early/late tolerance around each canonical beat gap.
 - **Source and rights metadata:** Each exercise declares whether it is original, public domain, licensed, or user-provided, plus attribution or license information when applicable. A repertoire-goal tag is motivational metadata and never grants permission to embed the referenced composition.
 - **Validation boundary:** Exercise data is validated at document construction and as a complete library before use. Renderer, evaluator, fixtures, persistence, and curriculum consume the resulting typed exercise and the same canonical ID/revision.
+- **Pitch-guide consumer:** The current notation adapter is a presentation consumer of the typed exercise. It maps the supported single-hand natural MIDI pitches to treble or bass staff geometry and preserves canonical event order and identity; SVG coordinates, glyph choices, and live marker state are not canonical exercise fields.
+- **Unsupported notation:** The adapter must report exercises outside its supported subset instead of transposing, clamping, respelling, omitting events, or deriving missing notation semantics. The semantic ordered-note presentation remains the fallback and practice evaluation remains available.
 - **Dependencies:** Exercise documents contain domain data and no browser, MIDI-device, view, persistence, or framework objects.
 
 ### Versioning Rules
 
 - Correcting prose without changing musical behavior may retain the exercise revision.
+- Adding or replacing a presentation-only projection of already-canonical pitches retains the exercise revision when musical behavior, expected events, and learning intent are unchanged.
 - Changing expected pitches, order, beat offsets, timing metadata, mode, hand assignment, prerequisite meaning, or learning objective increments the exercise revision.
 - A breaking document-shape change increments `schemaVersion`; readers either migrate it explicitly or report it as unsupported.
 - Existing attempt records keep their original ID and revision and are not rewritten to a newer exercise revision.
@@ -57,11 +61,13 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - Unknown schema versions and evaluation modes fail validation with a useful error; they are not partially rendered or evaluated.
 - Missing IDs, duplicate expected-event IDs, duplicate exercise IDs within one library, empty expected-event lists, out-of-range MIDI notes, invalid hand values, and non-positive revisions are invalid.
 - Repeated pitches are valid when represented as separate expected events with distinct event IDs.
+- A notation consumer preserves separate event markers for repeated pitches and canonical horizontal order for descending or step-and-skip patterns; it does not sort or deduplicate the expected-event sequence.
 - The general schema continues to allow repeated pitches, while every exercise in the current five-key library deliberately uses exactly five distinct pitches.
 - Chords are not encoded as adjacent individual notes whose shared timing is merely implied. A future chord event must make simultaneity explicit.
 - Timing metadata or beat offsets on an untimed exercise are invalid rather than silently turning it into a timed exercise.
 - Timed exercises reject missing or non-increasing beat offsets, a non-zero first offset, invalid or inverted tempo bounds, a default tempo outside the declared range, invalid meter/count-in values, and a negative or non-finite timing window.
 - A missing optional repertoire goal never prevents an otherwise valid original exercise from loading.
+- An exercise outside the pitch-guide adapter's supported range, spelling, or hand subset remains a valid canonical exercise even though that adapter declines to draw it.
 
 ### Anti-Patterns
 
@@ -71,6 +77,8 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - Do not encode future chords or rhythms through undocumented array conventions.
 - Do not encode audible click times, MIDI timestamps, or a selected attempt tempo in the canonical exercise; it defines beat-relative intent and allowed tempo only.
 - Do not add platform event objects, callbacks, rendered markup, or persistence handles to exercise documents.
+- Do not add rendered staff coordinates, clef glyphs, SVG state, or a notation library's document objects to exercise documents.
+- Do not infer written duration, rhythm, articulation, dynamics, or staff-reading evidence from pitch-marker shape or spacing.
 - Do not interpret artist names or piece titles as permission to include protected notation, MIDI, audio, lyrics, or substantial melodic material.
 - Do not claim physical fingering, tension, or technique can be inferred from exercise metadata or MIDI alone.
 
@@ -82,6 +90,7 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - [ ] Eight stable exercises cover right and left hands, ascending and descending motion, step-skip coordination, and steady quarter notes while preserving the original right-hand ascent as default.
 - [ ] Every current exercise contains five distinct pitches and remains compatible with the five-key view; exactly two use the timed evaluator.
 - [ ] Both timed studies define beat offsets 0–4, 40–100 BPM with 60 BPM default, 4/4 quarter-note pulse, four-beat count-in, and ±0.2-beat tolerance.
+- [ ] The current pitch-guide consumer renders every current canonical sequence from existing event fields while leaving schema version 1 and all exercise revisions unchanged.
 - [ ] Library lookup returns the matching canonical object for a known stable ID and `null` for an unknown ID.
 - [ ] Schema version, stable exercise ID, and exercise revision have distinct documented meanings.
 - [ ] Invalid or unsupported exercise data fails before a practice session begins.
@@ -102,12 +111,15 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - Existing attempt history must remain attributable to the exact revision performed.
 - Repertoire goals must remain metadata-only until lawful source content is deliberately introduced.
 - Adding future fields must not make existing valid version-1 exercises change meaning.
+- Replacing the pitch-guide implementation must not change canonical IDs, revisions, event order, or historical attempt attribution.
+- Unsupported notation must retain the complete canonical exercise and semantic text fallback rather than approximating or rejecting the exercise itself.
 
 ### Verification
 
 - **Schema tests:** Accept every canonical exercise; reject unknown versions, invalid modes, empty sequences, duplicate IDs, invalid hands, invalid revisions, out-of-range MIDI notes, mode/timing mismatches, invalid tempo ranges, and missing or non-increasing timed beat offsets.
 - **Library tests:** Protect stable identities and default selection, validate all source metadata and prerequisites, require five distinct pitches per exercise, and prove left-hand, descending, step-skip, and steady-quarter coverage.
 - **Consumer contract tests:** Rendered guidance and evaluator expectations are derived from the same fixture and identity.
+- **Notation consumer tests:** Protect natural-note pitch mapping, current treble and bass ranges, canonical event order and identity, and explicit unsupported results without schema mutation.
 - **Versioning tests:** A stored attempt continues to resolve its original ID/revision after a newer revision is added.
 - **Coverage target:** Exercise parsing, validation, and version dispatch branches remain fully exercised.
 
@@ -148,6 +160,18 @@ Exercises need one canonical representation so instructions, visual guidance, ev
 - Given: a canonical exercise is selected
 - When: the page renders instructions and starts evaluation
 - Then: both surfaces use the same canonical exercise ID, revision, and expected-event list
+
+**Scenario: Project the current library into pitch guides**
+
+- Given: a current schema-version-1 single-hand exercise is selected
+- When: the pitch-guide adapter consumes its expected events
+- Then: it derives the supported treble or bass positions and canonical event markers without adding notation fields or changing the exercise revision
+
+**Scenario: Decline unsupported notation without rejecting the exercise**
+
+- Given: a future valid exercise contains an accidental, mixed hands, or a pitch outside the adapter's supported subset
+- When: the pitch-guide adapter consumes it
+- Then: the adapter reports the unsupported presentation while the canonical exercise, semantic ordered notes, and evaluator remain valid
 
 **Scenario: Reject an unknown schema**
 

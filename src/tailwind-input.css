@@ -923,14 +923,141 @@
     line-height: 1.55;
   }
 
+  .staff-pitch-guide {
+    overflow: hidden;
+    margin-top: 0.85rem;
+    border: 1px solid rgb(23 32 29 / 0.09);
+    border-radius: 0.8rem;
+    background: rgb(255 255 255 / 0.48);
+  }
+
+  .staff-pitch-guide-caption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 0.75rem 0.45rem;
+    border-bottom: 1px solid rgb(23 32 29 / 0.075);
+    color: var(--color-app-text-soft);
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.085em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+
+  .staff-pitch-guide-caption span:last-child {
+    color: var(--color-app-accent-strong);
+    text-align: right;
+  }
+
+  .staff-pitch-guide-canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 10.5rem;
+  }
+
+  .staff-pitch-line,
+  .staff-pitch-ledger {
+    stroke: rgb(23 32 29 / 0.62);
+    stroke-linecap: round;
+    stroke-width: 1.25;
+  }
+
+  .staff-pitch-ledger {
+    stroke-width: 1.45;
+  }
+
+  .staff-pitch-clef {
+    fill: var(--color-app-text);
+    font-family: Bravura, "Noto Music", "Apple Symbols", "Segoe UI Symbol", serif;
+    font-size: 4.6rem;
+  }
+
+  .staff-pitch-guide-canvas[data-staff-clef="bass"] .staff-pitch-clef {
+    font-size: 3.7rem;
+  }
+
+  .staff-pitch-note {
+    color: var(--color-app-text);
+  }
+
+  .staff-pitch-note-halo {
+    fill: transparent;
+    stroke: transparent;
+    stroke-width: 1.5;
+    transition:
+      fill 140ms ease,
+      stroke 140ms ease;
+  }
+
+  .staff-pitch-notehead {
+    fill: currentcolor;
+    transition:
+      color 140ms ease,
+      transform 140ms ease;
+    transform: rotate(-12deg);
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .staff-pitch-note-label {
+    fill: var(--color-app-text-soft);
+    font-family: var(--font-ui);
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+  }
+
+  .staff-pitch-note[data-note-state="expected"] {
+    color: var(--color-app-accent-strong);
+  }
+
+  .staff-pitch-note[data-note-state="expected"] .staff-pitch-note-halo {
+    fill: rgb(223 243 107 / 0.72);
+    stroke: var(--color-app-cue-strong);
+  }
+
+  .staff-pitch-note[data-note-state="expected"] .staff-pitch-notehead {
+    transform: rotate(-12deg) scale(1.06);
+  }
+
+  .staff-pitch-note[data-note-state="accepted"] {
+    color: var(--color-app-accent);
+  }
+
+  .staff-pitch-note[data-note-state="accepted"] .staff-pitch-note-halo {
+    fill: rgb(57 117 95 / 0.12);
+    stroke: rgb(57 117 95 / 0.34);
+  }
+
+  .staff-pitch-note[data-note-state="accepted"] .staff-pitch-note-label {
+    fill: var(--color-app-accent-strong);
+  }
+
+  .staff-pitch-note[data-note-active="true"] {
+    color: #713b2a;
+  }
+
+  .staff-pitch-note[data-note-active="true"] .staff-pitch-note-halo {
+    fill: rgb(223 131 94 / 0.28);
+    stroke: var(--color-app-warm);
+  }
+
+  .staff-pitch-note[data-note-active="true"] .staff-pitch-notehead {
+    transform: rotate(-12deg) scale(1.12);
+  }
+
   .practice-score-sequence {
-    margin-top: 0.6rem;
+    margin-top: 0.55rem;
     color: var(--color-app-accent-strong);
     font-family: var(--font-display);
-    font-size: clamp(1.55rem, 3vw, 2.5rem);
+    font-size: clamp(1.15rem, 2vw, 1.55rem);
     font-weight: 700;
     letter-spacing: 0.055em;
     line-height: 1.1;
+    text-align: center;
   }
 
   .pulse-controls {
@@ -1638,7 +1765,17 @@
   }
 
   .practice-score-sequence {
-    font-size: 1.3rem;
+    font-size: 1.12rem;
+  }
+
+  .staff-pitch-guide-caption {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .staff-pitch-guide-caption span:last-child {
+    text-align: left;
   }
 
   .keyboard-case {
@@ -1723,6 +1860,10 @@
 
   .practice-score {
     padding-block: 0.8rem;
+  }
+
+  .staff-pitch-guide-canvas {
+    max-height: 8rem;
   }
 
   .pulse-controls {

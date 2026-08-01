@@ -34,6 +34,10 @@ describe("worker", () => {
     expect(body).toContain("Play C-D-E-F-G in ascending order with your right hand.");
     expect(body).toContain('type="module" src="/client/main.js"');
     expect(body).toContain('data-note-number="60"');
+    expect(body).toContain("data-staff-pitch-guide");
+    expect(body).toContain('data-staff-clef="treble"');
+    expect(body.match(/data-staff-note/g)).toHaveLength(5);
+    expect(body).toContain('aria-label="Pitch order: C4 · D4 · E4 · F4 · G4"');
     expect(body).toContain('id="pulse-controls"');
     expect(body.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).toContain("hidden");
   });

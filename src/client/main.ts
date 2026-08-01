@@ -8,7 +8,12 @@ import { LocalStorageAttemptRepository } from "./persistence/local-storage-attem
 import { PracticeController } from "./practice-controller.js";
 import { resolveRenderedExercise } from "./practice-exercise-resolver.js";
 import { handlePracticePageHide } from "./practice-page-lifecycle.js";
-import { createPracticePageView, type PracticeKeyElement, type PracticePageElements } from "./practice-page-view.js";
+import {
+  createPracticePageView,
+  type PracticeKeyElement,
+  type PracticePageElements,
+  type PracticeStaffNoteElement,
+} from "./practice-page-view.js";
 
 export async function bootstrapPracticePage(pageDocument: Document, browserWindow: Window): Promise<PracticeController> {
   const root = requireElement(pageDocument, "practice-main", HTMLElement);
@@ -112,6 +117,7 @@ function collectPageElements(
   readonly stopPulseButton: HTMLButtonElement;
   readonly feedbackMessage: HTMLElement;
   readonly keys: readonly (PracticeKeyElement & { readonly element: HTMLButtonElement })[];
+  readonly staffNotes: readonly PracticeStaffNoteElement[];
 } {
   const keys = exercise.expectedEvents.map((event) => ({
     eventId: event.id,
@@ -147,7 +153,48 @@ function collectPageElements(
     keyboardHelp: requireElement(pageDocument, "keyboard-help", HTMLElement),
     nextExerciseLink: requireElement(pageDocument, "next-exercise", HTMLAnchorElement),
     keys,
+    staffNotes: collectStaffNotes(pageDocument, exercise),
   };
+}
+
+function collectStaffNotes(pageDocument: Document, exercise: Exercise): readonly PracticeStaffNoteElement[] {
+  const practiceRoot = pageDocument.querySelector("[data-practice-root]");
+  const guide = practiceRoot?.querySelector("[data-staff-pitch-guide]") ?? null;
+  if (guide === null) {
+    return [];
+  }
+
+  const svgNamespace = "http://www.w3.org/2000/svg";
+  if (guide.namespaceURI !== svgNamespace) {
+    guide.setAttribute("hidden", "");
+    return [];
+  }
+
+  const markersByEventId = new Map<string, Element>();
+  for (const marker of guide.querySelectorAll("[data-staff-note]")) {
+    const eventId = marker.getAttribute("data-event-id");
+    if (marker.namespaceURI !== svgNamespace || eventId === null || markersByEventId.has(eventId)) {
+      guide.setAttribute("hidden", "");
+      return [];
+    }
+    markersByEventId.set(eventId, marker);
+  }
+
+  if (markersByEventId.size !== exercise.expectedEvents.length) {
+    guide.setAttribute("hidden", "");
+    return [];
+  }
+
+  const staffNotes: PracticeStaffNoteElement[] = [];
+  for (const event of exercise.expectedEvents) {
+    const element = markersByEventId.get(event.id);
+    if (element === undefined) {
+      guide.setAttribute("hidden", "");
+      return [];
+    }
+    staffNotes.push({ eventId: event.id, element });
+  }
+  return staffNotes;
 }
 
 function requireElement<T extends HTMLElement>(pageDocument: Document, id: string, elementType: { new (): T }): T {

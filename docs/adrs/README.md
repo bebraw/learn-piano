@@ -87,6 +87,7 @@ No accepted-only ADRs are currently pending implementation.
 | [ADR-052](./implemented/ADR-052-retain-lightweight-server-rendered-ui.md)              | Implemented | Retain the Worker-rendered shell and enhance it with small typed client modules.                  |
 | [ADR-053](./implemented/ADR-053-use-a-versioned-canonical-exercise-representation.md)  | Implemented | Share one versioned exercise representation across views, evaluation, and persistence.            |
 | [ADR-054](./implemented/ADR-054-anchor-timing-to-midi-intervals.md)                    | Implemented | Anchor steady-pulse timing to accepted-note MIDI intervals while Web Audio remains guidance-only. |
+| [ADR-055](./implemented/ADR-055-use-a-reversible-inline-svg-pitch-guide.md)            | Implemented | Render the current pitch-only staff subset through a replaceable dependency-free SVG adapter.     |
 
 ## Creating A New ADR
 

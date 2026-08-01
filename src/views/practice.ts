@@ -8,6 +8,7 @@ import {
   formatExerciseNoteOrder,
 } from "./exercise-presentation.js";
 import { escapeHtml, renderAppHeader } from "./shared.js";
+import { renderStaffPitchGuide } from "./staff-pitch-guide.js";
 
 export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly Exercise[]): string {
   const firstEvent = exercise.expectedEvents[0];
@@ -51,6 +52,7 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
       </button>`;
     })
     .join("");
+  const staffPitchGuide = renderStaffPitchGuide(exercise);
   const exerciseCatalog = renderExerciseCatalog(exercise, exerciseLibrary);
   const selectedIndex = exerciseLibrary.findIndex((candidate) => candidate.id === exercise.id);
   const nextExercise = exerciseLibrary[(selectedIndex + 1) % exerciseLibrary.length] ?? exercise;
@@ -116,7 +118,8 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
                   ? "Play each note once in order. The next expected key stays lit."
                   : "After the count-in, place one note on each beat. The next expected key stays lit."
               }</p>
-              <p class="practice-score-sequence" aria-label="Expected notes: ${escapeHtml(noteSequence)}">${escapeHtml(noteSequence)}</p>
+              ${staffPitchGuide}
+              <p class="practice-score-sequence" aria-label="Pitch order: ${escapeHtml(noteSequence)}">${escapeHtml(noteSequence)}</p>
             </div>
 
             <section

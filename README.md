@@ -1,6 +1,6 @@
 # Piano Practice
 
-Piano Practice is a personal, local-first browser application for focused piano exercises, with a thin native wrapper for dependable MIDI input on iPad. The current vertical slice offers eight original beginner studies: six untimed right- and left-hand C-position patterns plus one steady-quarter study for each hand. It gives immediate deterministic pitch, order, and bounded timing feedback and remembers completed attempts in the current browser or web view.
+Piano Practice is a personal, local-first browser application for focused piano exercises, with a thin native wrapper for dependable MIDI input on iPad. The current vertical slice offers eight original beginner studies: six untimed right- and left-hand C-position patterns plus one steady-quarter study for each hand. Each study includes a server-rendered treble or bass pitch guide, immediate deterministic pitch, order, and bounded timing feedback, and completed-attempt history in the current browser or web view.
 
 The application runs as a Cloudflare Worker through Wrangler. It renders useful HTML on the server, then progressively enhances the practice page with small typed browser modules. There is no client framework, account, cloud database, generative feedback loop, percentage grade, or streak mechanic.
 
@@ -10,6 +10,7 @@ The application runs as a Cloudflare Worker through Wrangler. It renders useful 
 
 - Choose from eight canonical exercises on the home or practice page, even when JavaScript or MIDI is unavailable.
 - Open `/practice` for the default right-hand ascent, or use `?exercise=<id>` to link directly to another exercise.
+- Read the current natural-note sequence on a pitch-only staff guide: treble for the right-hand C4-G4 studies and bass for the left-hand C3-G3 studies. Ordered note text remains alongside it as the accessible fallback.
 - Use the five on-screen practice keys for a deterministic hardware-free flow.
 - On a supported desktop browser, select and connect a Web MIDI input.
 - On iPadOS 17 or later, use the native wrapper to select one USB or paired Bluetooth CoreMIDI source.
@@ -18,7 +19,7 @@ The application runs as a Cloudflare Worker through Wrangler. It renders useful 
 - Restart cleanly after a disconnect or whenever you want to begin again.
 - Keep compact completed-attempt history scoped to each exercise ID and revision in a versioned `localStorage` record. Timed completions may include their tempo, interval classifications, and mean absolute error; incomplete and interrupted attempts are not saved.
 
-MIDI can confirm note pitch and order for every exercise and assess onset intervals for the steady-quarter studies. It cannot verify which hand played, assess posture, tension, fingering, note duration, velocity quality, or touch, or replace a qualified piano teacher.
+The staff guide supports gradual pitch-position reading, but its markers do not encode note duration or a complete score, and MIDI completion cannot establish that the learner read it. MIDI can confirm note pitch and order for every exercise and assess onset intervals for the steady-quarter studies. It cannot verify which hand played, assess posture, tension, fingering, note duration, velocity quality, or touch, or replace a qualified piano teacher.
 
 ## Run Locally
 
@@ -55,13 +56,14 @@ The wrapper restricts main-frame navigation and native bridge messages to the co
 - `src/views/` renders the home, practice, and fallback documents.
 - `src/client/` owns browser composition, session orchestration, DOM projection, and local persistence.
 - `src/audio/` owns the guidance-only Web Audio count-in and steady-pulse scheduler.
+- `src/notation/` owns the dependency-free pitch-to-staff projection for the current supported guide subset.
 - `src/midi/` defines the platform-neutral input contract plus Web MIDI and deterministic mock adapters.
 - `ios/` contains the iPadOS 17+ WKWebView shell, CoreMIDI service, CoreAudioKit pairing UI, and Swift tests.
 - `src/exercises/` contains the validated canonical exercise model and deterministic evaluator.
 - `src/api/` contains the JSON health endpoint used by tooling and smoke tests.
 - Colocated `*.test.ts` files cover domain and integration behavior; colocated `*.e2e.ts` files cover browser-visible flows.
 
-Each canonical exercise definition is the shared source for rendering, evaluation, fixtures, and persisted identity. Live evaluation is local and replayable: an identical exercise, selected tempo, and normalized MIDI sequence always yield the same result. Timed studies compare accepted-note MIDI timestamp deltas with canonical beat gaps; their Web Audio count-in and metronome guide the learner but are never used as evaluation timestamps.
+Each canonical exercise definition is the shared source for rendering, evaluation, fixtures, and persisted identity. The reversible inline-SVG pitch-guide adapter derives its supported treble and bass positions from the same expected events without adding notation fields, schema versions, or exercise revisions. Live evaluation is local and replayable: an identical exercise, selected tempo, and normalized MIDI sequence always yield the same result. Timed studies compare accepted-note MIDI timestamp deltas with canonical beat gaps; their Web Audio count-in and metronome guide the learner but are never used as evaluation timestamps.
 
 ## Routes
 
@@ -101,4 +103,4 @@ The application screenshot is committed at `docs/screenshots/home.png` and refre
 
 ## Next Slice
 
-Possible next slices include notation or another small original rhythm pattern. Note duration, velocity, rests, eighth notes, syncopation, chords, hands-together work, adaptive tempo, protected repertoire content, cloud sync, and iPad release distribution remain separate decisions.
+Possible next slices include a deterministic next-study recommendation or another small original rhythm pattern. Full score notation, note duration, velocity, rests, eighth notes, syncopation, chords, hands-together work, adaptive tempo, protected repertoire content, cloud sync, and iPad release distribution remain separate decisions.
