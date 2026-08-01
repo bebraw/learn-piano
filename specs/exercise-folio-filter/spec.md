@@ -4,7 +4,7 @@
 
 ### Context
 
-The home folio contains twenty-eight freely selectable studies. That breadth supports both hands, two keyboard positions, and several curriculum tracks, but scanning every card makes it harder to choose a relevant study. The learner needs a calm way to narrow the existing folio without turning parallel curriculum tags into exclusive categories, saved preferences, or progression gates.
+The home folio contains thirty freely selectable studies. That breadth supports both hands, two keyboard positions, and several curriculum tracks, but scanning every card makes it harder to choose a relevant study. The learner needs a calm way to narrow the existing folio without turning parallel curriculum tags into exclusive categories, saved preferences, or progression gates.
 
 ### Architecture
 
@@ -20,9 +20,9 @@ The home folio contains twenty-eight freely selectable studies. That breadth sup
 ### Accessibility and Progressive Enhancement
 
 - Focus and Hand are separate labelled radio groups with native keyboard behavior and visible focus treatment.
-- A polite status reports `Showing N of 28 studies`; Reset filters remains explicit and is disabled at All/All.
+- A polite status reports `Showing N of 30 studies`; Reset filters remains explicit and is disabled at All/All.
 - Hidden cards are removed from layout and interaction by the native `hidden` state. The canonical order of visible cards remains unchanged.
-- Without JavaScript, the controls stay hidden and all twenty-eight links, titles, instructions, and completion-independent content remain usable.
+- Without JavaScript, the controls stay hidden and all thirty links, titles, instructions, and completion-independent content remain usable.
 - Local-history loading or failure does not disable the filter. Filtering does not remove or recreate completion badges when cards are hidden and shown.
 
 ### Anti-Patterns
@@ -37,7 +37,7 @@ The home folio contains twenty-eight freely selectable studies. That breadth sup
 
 ### Definition of Done
 
-- [ ] `/` retains all twenty-eight canonical links in server HTML and renders hidden enhancement controls for three curriculum focuses plus right- and left-hand narrowing.
+- [ ] `/` retains all thirty canonical links in server HTML and renders hidden enhancement controls for three curriculum focuses plus right- and left-hand narrowing.
 - [ ] Enhancement opens at All/All, reports the complete count, and resets restored browser form state to that neutral default.
 - [ ] Every focus match considers all canonical curriculum-tag prefixes, allowing multi-track studies to appear under every relevant focus.
 - [ ] Right and Left include canonical studies assigned to that hand plus future both-hands studies in which that hand participates.
@@ -82,7 +82,7 @@ The home folio contains twenty-eight freely selectable studies. That breadth sup
 
 - Given: one or both filters are active
 - When: the learner selects Reset filters or reloads the page
-- Then: All/All is selected, all twenty-eight studies are visible, and no preference has been stored
+- Then: All/All is selected, all thirty studies are visible, and no preference has been stored
 
 **Scenario: Browse without enhancement**
 

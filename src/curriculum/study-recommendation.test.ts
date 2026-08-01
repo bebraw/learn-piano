@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { CompletedAttemptRecord } from "../client/persistence/attempt-repository.js";
 import { STEP_SKIP_LEFT_HAND_EXERCISE_ID, STEP_SKIP_RIGHT_HAND_EXERCISE_ID } from "../exercises/library/beginner-five-note-exercises.js";
+import {
+  D_MINOR_FIVE_NOTE_ASCENT_LEFT_HAND_EXERCISE_ID,
+  D_MINOR_FIVE_NOTE_ASCENT_RIGHT_HAND_EXERCISE_ID,
+} from "../exercises/library/d-minor-five-note-exercises.js";
 import { EVEN_EIGHTHS_LEFT_HAND_EXERCISE_ID, EVEN_EIGHTHS_RIGHT_HAND_EXERCISE_ID } from "../exercises/library/even-eighth-exercises.js";
 import {
   FIVE_FOUR_PULSE_LEFT_HAND_EXERCISE_ID,
@@ -333,6 +337,39 @@ describe("recommendNextStudy", () => {
       },
     });
   });
+
+  it.each([
+    {
+      dMinorChordTonesId: ORDERED_D_MINOR_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
+      oppositeDMinorChordTonesId: ORDERED_D_MINOR_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
+      ascentId: D_MINOR_FIVE_NOTE_ASCENT_RIGHT_HAND_EXERCISE_ID,
+    },
+    {
+      dMinorChordTonesId: ORDERED_D_MINOR_CHORD_TONES_LEFT_HAND_EXERCISE_ID,
+      oppositeDMinorChordTonesId: ORDERED_D_MINOR_CHORD_TONES_RIGHT_HAND_EXERCISE_ID,
+      ascentId: D_MINOR_FIVE_NOTE_ASCENT_LEFT_HAND_EXERCISE_ID,
+    },
+  ])(
+    "recommends $ascentId only after its matching D-minor chord-tone study",
+    ({ dMinorChordTonesId, oppositeDMinorChordTonesId, ascentId }) => {
+      const dMinorChordTones = requireLibraryExercise(dMinorChordTonesId);
+      const oppositeDMinorChordTones = requireLibraryExercise(oppositeDMinorChordTonesId);
+      const ascent = requireLibraryExercise(ascentId);
+
+      expect(
+        recommendNextStudy(exerciseLibrary, [attempt(oppositeDMinorChordTones, "2026-08-01T08:00:00.000Z")], oppositeDMinorChordTones.id)
+          ?.exercise,
+      ).not.toBe(ascent);
+      expect(recommendNextStudy(exerciseLibrary, [attempt(dMinorChordTones, "2026-08-01T08:05:00.000Z")], dMinorChordTones.id)).toEqual({
+        kind: "new-study",
+        exercise: ascent,
+        reason: {
+          kind: "direct-dependent",
+          prerequisiteExerciseIds: [dMinorChordTones.id],
+        },
+      });
+    },
+  );
 
   it.each([
     {

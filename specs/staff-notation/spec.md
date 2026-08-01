@@ -4,7 +4,7 @@
 
 ### Context
 
-The current practice stage names every expected pitch and shows its piano key, but the learner also wants gradual exposure to staff reading. All twenty-eight current exercises use a small, single-hand, natural-note range, so they can share a useful pitch-position guide without adopting a general score engine or pretending that the application can assess whether the learner actually read it.
+The current practice stage names every expected pitch and shows its piano key, but the learner also wants gradual exposure to staff reading. All thirty current exercises use a small, single-hand, natural-note range, so they can share a useful pitch-position guide without adopting a general score engine or pretending that the application can assess whether the learner actually read it.
 
 The first notation surface must preserve the server-rendered, progressively enhanced application model and the canonical exercise boundary. It must not invent note duration, rhythmic value, or a second exercise identity merely to draw the current pitches.
 
@@ -19,6 +19,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 - Progressive enhancement marks accepted, next, and remaining canonical events in the guide from the same evaluator progress that drives the textual next-note cue and keyboard.
 - The ordered C-major chord-tone pair renders five markers for C-E-G-E-C. Repeated C and E occurrences retain separate expected-event IDs and horizontal positions even though they share staff pitch positions and physical keyboard controls.
 - The ordered D-minor chord-tone pair renders five markers for D-F-A-F-D. Repeated D and F occurrences retain separate expected-event IDs and horizontal positions over D-E-F-G-A controls; A4 and A3 define the current upper range boundaries.
+- The D-minor five-note ascent pair renders five markers for D-E-F-G-A. Every marker has a distinct pitch and expected-event ID, and the A marker reuses the same bounded upper position without adding complete-scale or interval-recognition semantics.
 - The `steady-quarter-broken-chord-c-major-right-hand` and `steady-quarter-broken-chord-c-major-left-hand` studies each render eight markers for C-E-G-E-C-E-G-E over five C-G physical controls. Every repeated occurrence retains its own expected-event ID and horizontal position. The equal presentation spacing remains pitch order only and does not encode its canonical offsets `0` through `7` as written beats or two written measures.
 - The `three-four-broken-chord-c-major-right-hand` and `three-four-broken-chord-c-major-left-hand` studies each render seven markers for C-E-G-C-E-G-C over five C-G physical controls. Every repeated occurrence retains its own expected-event ID and horizontal position. The equal presentation spacing remains pitch order only and does not encode offsets `0` through `6`, 3/4 meter, written beats, barlines, or accents.
 - The `five-four-pulse-c-major-right-hand` and `five-four-pulse-c-major-left-hand` studies each render six markers for C-D-E-F-G-C over five C-G physical controls. Both C occurrences retain their own expected-event ID and horizontal position. The equal presentation spacing remains pitch order only and does not encode offsets `0` through `5`, 5/4 meter, the five-beat count-in, written beats, barlines, pulse, grouping, or accents. The exact pitch-free task `After the five-beat count-in, place one note on each beat. Count 1 2 3 4 5, 1.` remains separate from the guide.
@@ -61,6 +62,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 - A repeated pitch in the current ordered chord-tone, steady broken-chord, 3/4 broken-chord, 5/4 pulse, repeated-note, or mixed-pattern pair retains separate markers because canonical event IDs, not MIDI note number alone, identify positions in the sequence. Adjacent equal-pitch markers share a vertical position but remain independently accepted, expected, or remaining.
 - C-E-G-E-C remains five equally presentation-spaced, individual pitch markers. Shared pitch positions do not stack markers into chords or add simultaneity, duration, voicing, or harmony-assessment meaning.
 - D-F-A-F-D remains five equally presentation-spaced, individual pitch markers. Extending the guide through A does not add key-signature, accidental, scale, chord-quality-recognition, simultaneity, duration, voicing, or harmony-assessment meaning.
+- D-E-F-G-A remains five equally presentation-spaced pitch markers. Naming its close E-F half-step in instructions does not make the guide rhythmic notation, a complete D-minor scale, or evidence of scale construction, interval recognition, fingering, evenness, or technique.
 - C-E-G-E-C-E-G-E remains eight equally presentation-spaced, individual pitch markers over five physical controls. The guide does not show or prove audible phase, measure alignment, duration, release, legato, rests, articulation, dynamics, velocity, fingering, hand use, relaxation, harmony recognition, staff reading, consistency, or mastery.
 - C-E-G-C-E-G-C remains seven equally presentation-spaced, individual pitch markers over five physical controls. The guide does not draw or prove 3/4 meter, beat grouping, a beat-1 accent, audible phase, downbeat or measure alignment, duration, release, legato, rests, dynamics, fingering, hand use, harmony recognition, staff reading, consistency, or mastery.
 - C-D-E-F-G-C remains six equally presentation-spaced, individual pitch markers over five physical controls. The guide does not draw or prove 5/4 meter, the five-beat count-in, beat grouping, a beat-1 accent, audible phase, downbeat, click, pulse, or measure alignment, duration, release, legato, rests, dynamics, fingering, declared-hand use, keyboard geography, five-finger technique, staff reading, consistency, or mastery.
@@ -86,7 +88,7 @@ The first notation surface must preserve the server-rendered, progressively enha
 ### Definition of Done
 
 - [ ] Every current exercise renders the complete ordered pitch guide in the server response from its canonical expected events.
-- [ ] Each C-major ordered chord-tone study renders five occurrence-based markers for C-E-G-E-C while the keyboard reuses C and E; each D-minor study renders D-F-A-F-D while reusing D and F over the derived D-E-F-G-A range.
+- [ ] Each C-major ordered chord-tone study renders five occurrence-based markers for C-E-G-E-C while the keyboard reuses C and E; each D-minor chord-tone study renders D-F-A-F-D while reusing D and F over the derived D-E-F-G-A range; each D-minor five-note ascent renders distinct D-E-F-G-A markers over five expected controls.
 - [ ] Each steady broken-chord study renders eight occurrence-based markers for C-E-G-E-C-E-G-E while the keyboard separately reuses five C-G controls, and displays `Steady pulse` with `Pitch order · One note per beat` outside the pitch-only guide.
 - [ ] Each 3/4 broken-chord study renders seven occurrence-based markers for C-E-G-C-E-G-C while the keyboard separately reuses five C-G controls, and displays `Steady pulse`, `Pitch order · One note per beat`, and separate pitch-free three-beat count guidance outside the pitch-only guide.
 - [ ] Each 5/4 pulse study renders six occurrence-based markers for C-D-E-F-G-C while the keyboard separately reuses five C-G controls, and displays `Steady pulse`, `Pitch order · One note per beat`, and the exact pitch-free task `After the five-beat count-in, place one note on each beat. Count 1 2 3 4 5, 1.` outside the pitch-only guide.
@@ -159,6 +161,12 @@ The first notation surface must preserve the server-rendered, progressively enha
 - Given: `ordered-chord-tones-d-minor-right-hand` contains D4-F4-A4-F4-D4 as five expected-event IDs
 - When: its treble guide is rendered and progress advances
 - Then: A4 appears at the documented upper boundary, five occurrence-specific markers retain canonical state over D-E-F-G-A controls, and the guide adds no key signature, minor-quality, simultaneity, chord, duration, fingering, hand-use, reading, or mastery evidence
+
+**Scenario: Show every pitch in the D-minor five-note position**
+
+- Given: `five-note-ascent-d-minor-right-hand` contains D4-E4-F4-G4-A4 as five expected-event IDs
+- When: its treble guide is rendered and progress advances
+- Then: five distinct markers retain canonical state through the existing A4 boundary, and the guide adds no complete-scale, half-step-recognition, fingering, evenness, hand-use, reading, or technique evidence
 
 **Scenario: Preserve steady broken-chord occurrences without drawing measures**
 

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { defaultExercise, exerciseLibrary } from "./exercises/library/index.js";
 import { formatMidiNote } from "./exercises/evaluator.js";
+import { dMinorFiveNoteAscentRightHandExercise } from "./exercises/library/d-minor-five-note-exercises.js";
 import { evenEighthsRightHandExercise } from "./exercises/library/even-eighth-exercises.js";
 import { fiveFourPulseRightHandExercise } from "./exercises/library/five-four-pulse-exercises.js";
 import { mixedEighthPatternRightHandExercise } from "./exercises/library/mixed-eighth-pattern-exercises.js";
@@ -316,6 +317,64 @@ test("transfers ordered chord tones to D minor through the widened staff range",
   await playNote(page, 65);
   await expect(page.locator('[data-practice-key][data-note-number="62"]')).toHaveAttribute("data-note-state", "expected");
   await playNote(page, 62);
+
+  await expect(page.locator("#feedback-message")).toHaveText("The sequence was correct.");
+  await expect(page.getByText("1 of 1 completed without pitch or order corrections.", { exact: false })).toBeVisible();
+  const storedAttempt = await page.evaluate((storageKey) => {
+    const serialized = localStorage.getItem(storageKey);
+    if (serialized === null) {
+      return null;
+    }
+    const parsed = JSON.parse(serialized) as { attempts: Array<Record<string, unknown>> };
+    return parsed.attempts[0] ?? null;
+  }, ATTEMPT_STORAGE_KEY);
+  expect(storedAttempt).toMatchObject({
+    exerciseId: selectedExercise.id,
+    exerciseRevision: selectedExercise.revision,
+    status: "completed",
+    errorCounts: { outOfOrder: 0, repeated: 0, wrong: 0 },
+  });
+  expect(storedAttempt).not.toHaveProperty("timing");
+
+  await page.reload();
+  await expect(page.getByText("1 attempt completed today")).toBeVisible();
+  await expect(page.getByText("1 of 1 completed without pitch or order corrections.", { exact: false })).toBeVisible();
+});
+
+test("completes and persists the untimed D-minor five-note ascent", async ({ page }) => {
+  const selectedExercise = dMinorFiveNoteAscentRightHandExercise;
+  await page.goto(exercisePracticeHref(selectedExercise));
+
+  await expect(page.getByRole("heading", { level: 1, name: selectedExercise.title })).toBeVisible();
+  await expect(page.getByLabel("Pitch order: D4 · E4 · F4 · G4 · A4")).toBeVisible();
+  await expect(page.getByText("Right hand · D–A range")).toBeVisible();
+  await expect(page.locator("[data-practice-key]")).toHaveCount(5);
+  await expect(page.locator("[data-staff-note]")).toHaveCount(5);
+  await expect(page.locator('[data-practice-key][data-note-state="idle"]')).toHaveCount(0);
+  await expect(page.locator('[data-practice-key][data-note-number="62"]')).toHaveAttribute("data-note-state", "expected");
+  for (const noteNumber of [64, 65, 67, 69]) {
+    await expect(page.locator(`[data-practice-key][data-note-number="${noteNumber}"]`)).toHaveAttribute("data-note-state", "remaining");
+  }
+  const practiceRoot = page.locator("#practice-main");
+  const readingFocusToggle = page.getByRole("button", { name: "Reading focus" });
+  const exerciseInstructions = page.locator(".practice-heading-copy");
+  await expect(readingFocusToggle).toBeVisible();
+  await readingFocusToggle.click();
+  await expect(practiceRoot).toHaveAttribute("data-cue-mode", "reading-focus");
+  await expect(readingFocusToggle).toHaveAttribute("aria-pressed", "true");
+  await expect(exerciseInstructions).toHaveCSS("position", "absolute");
+  await expect(exerciseInstructions).toHaveCSS("width", "1px");
+  await expect(page.getByText("Right hand · D–A range")).toBeVisible();
+
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  const staffNotes = selectedExercise.expectedEvents.map((event) => page.locator(`#staff-note-${event.id}`));
+  await playNote(page, 62);
+  await expect(staffNotes[0]!).toHaveAttribute("data-note-state", "accepted");
+  await expect(staffNotes[1]!).toHaveAttribute("data-note-state", "expected");
+  await expect(page.locator('[data-practice-key][data-note-number="64"]')).toHaveAttribute("data-note-state", "expected");
+  for (const noteNumber of [64, 65, 67, 69]) {
+    await playNote(page, noteNumber);
+  }
 
   await expect(page.locator("#feedback-message")).toHaveText("The sequence was correct.");
   await expect(page.getByText("1 of 1 completed without pitch or order corrections.", { exact: false })).toBeVisible();

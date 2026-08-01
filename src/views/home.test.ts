@@ -29,10 +29,10 @@ describe("renderHomePage", () => {
   it("renders the piano practice entry point and stylesheet wiring", () => {
     const html = renderHomePage(exampleRoutes, exerciseLibrary, defaultExercise);
 
-    expect(exerciseLibrary).toHaveLength(28);
+    expect(exerciseLibrary).toHaveLength(30);
     expect(html).toContain("Personal practice studio");
     expect(html).toContain("Choose your next study");
-    expect(html).toContain("28 short patterns for both hands, including pulse and subdivision studies.");
+    expect(html).toContain("30 short patterns for both hands, including pulse and subdivision studies.");
     expect(html).toContain("Begin today’s study");
     expect(html).toContain("A calm, local-first practice companion");
     expect(html).toContain("Your local practice");

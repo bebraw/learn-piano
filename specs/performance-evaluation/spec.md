@@ -12,6 +12,7 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - It classifies each relevant note-on as correct, repeated, out of order, or wrong.
 - It advances only on the next expected pitch and completes after all canonical expected-event occurrences have been accepted.
 - The four untimed ordered chord-tone studies evaluate either C-E-G-E-C or D-F-A-F-D one individual note at a time. Returning pitches are correct when they become next despite sharing physical controls with earlier accepted events; this adds no simultaneous-chord or chord-quality evaluation.
+- The paired untimed D-minor five-note ascents evaluate D-E-F-G-A one individual note at a time. Accepting that order adds no timing, complete-scale, half-step-recognition, scale-construction, fingering, evenness, hand-use, or technique evaluation.
 - The paired repeated-note studies evaluate C-C-D-D-E as five individual occurrences. The second adjacent C or D is correct when it is next; an extra third same-pitch onset is `repeated` once the next canonical pitch differs.
 - The paired mixed-pattern studies evaluate C-E-D-D-F-G-E-C as eight individual occurrences. The adjacent D pair and later E and C returns remain distinct expected events, so all eight onsets advance independently when they become next.
 - The paired offbeat studies evaluate C-E-D-F-G as five individual occurrences at offsets 0, 0.5, 1.5, 2.5, and 3.5. The first C is the ungraded MIDI anchor and the four later accepted notes are classified only against their canonical gaps from it.
@@ -19,7 +20,7 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - The paired 3/4 broken-chord studies evaluate C-E-G-C-E-G-C as seven individual occurrences at offsets 0–6. Each returning C, E, and G advances only when its distinct expected event becomes next; the first C is the ungraded MIDI anchor and the six later accepted notes are classified only against their canonical whole-beat gaps from it.
 - The paired 5/4 pulse studies evaluate C-D-E-F-G-C as six individual occurrences at offsets 0–5. The returning C advances only when its distinct final expected event becomes next; the first C is the ungraded MIDI anchor and the five later accepted notes are classified only against their canonical whole-beat gaps from it.
 - For the ten steady-quarter studies—straight, step-and-skip, steady broken chord, 3/4 broken-chord loop, and 5/4 pulse for each hand—the first accepted correct note anchors timing and each later accepted correct note is additionally classified against its canonical beat gap with an inclusive ±0.2-beat tolerance. The ascending even-eighth, repeated-note, mixed-pattern, and offbeat pairs use fractional offsets and a proportional ±0.1-beat window. The domain classifications remain `on-pulse`, `early`, and `late`; learner-facing copy says “on time,” “early,” or “late.”
-- Pitch and order are evaluated for every exercise. Timing is evaluated only for `timed-ordered-notes`; audible phase, downbeat or measure alignment, rests, silence, duration, release, holding, legato, velocity quality, fingering, accents, articulation, dynamics, syncopation, declared-hand use, relaxation, physical technique, harmony recognition, reading, consistency, and mastery are not evaluated.
+- Pitch and order are evaluated for every exercise. Timing is evaluated only for `timed-ordered-notes`; audible phase, downbeat or measure alignment, rests, silence, duration, release, holding, legato, velocity quality, fingering, accents, articulation, dynamics, syncopation, declared-hand use, relaxation, physical technique, harmony or interval recognition, complete-scale knowledge, reading, consistency, and mastery are not evaluated.
 - Feedback is deterministic, brief, calm, specific about actual and expected notes, and limited to the next useful correction.
 
 ### Future Scope
@@ -182,6 +183,12 @@ The learner needs immediate, trustworthy feedback about what was played. Pitch o
 - Given: `ordered-chord-tones-d-minor-right-hand` expects D4-F4-A4-F4-D4 as five occurrence IDs
 - When: the learner plays those pitches in order
 - Then: both F4 events and both D4 events are accepted when next, progress advances five times, and completion reports only ordered pitch evidence rather than minor-quality recognition, harmonic understanding, simultaneous chord playing, fingering, hand use, reading, or mastery
+
+**Scenario: Accept the D-minor five-note fragment without overclaiming it**
+
+- Given: `five-note-ascent-d-minor-right-hand` expects D4-E4-F4-G4-A4 as five occurrence IDs
+- When: the learner plays those pitches in order
+- Then: progress advances five times and completion reports only ordered pitch evidence rather than a complete D-minor scale, half-step recognition, scale construction, fingering, evenness, hand use, reading, technique, or mastery
 
 **Scenario: Classify an extra repeat inside the chord-tone pattern**
 

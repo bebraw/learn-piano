@@ -7,6 +7,7 @@ import {
   stepSkipRightHandExercise,
 } from "./beginner-five-note-exercises.js";
 import { FIVE_NOTE_ASCENT_EXERCISE_ID, fiveNoteAscentExercise } from "./five-note-ascent.js";
+import { dMinorFiveNoteAscentLeftHandExercise, dMinorFiveNoteAscentRightHandExercise } from "./d-minor-five-note-exercises.js";
 import {
   steadyQuarterLeftHandExercise,
   steadyQuarterRightHandExercise,
@@ -47,6 +48,8 @@ export const exerciseLibrary: readonly Exercise[] = Object.freeze([
   orderedChordTonesLeftHandExercise,
   orderedDMinorChordTonesRightHandExercise,
   orderedDMinorChordTonesLeftHandExercise,
+  dMinorFiveNoteAscentRightHandExercise,
+  dMinorFiveNoteAscentLeftHandExercise,
   steadyBrokenChordRightHandExercise,
   steadyBrokenChordLeftHandExercise,
   threeFourBrokenChordRightHandExercise,

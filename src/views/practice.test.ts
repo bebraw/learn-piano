@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defaultExercise, exerciseLibrary } from "../exercises/library/index.js";
 import { stepSkipRightHandExercise } from "../exercises/library/beginner-five-note-exercises.js";
+import { dMinorFiveNoteAscentRightHandExercise } from "../exercises/library/d-minor-five-note-exercises.js";
 import { evenEighthsRightHandExercise } from "../exercises/library/even-eighth-exercises.js";
 import { fiveFourPulseRightHandExercise } from "../exercises/library/five-four-pulse-exercises.js";
 import { fiveNoteAscentExercise } from "../exercises/library/five-note-ascent.js";
@@ -79,7 +80,7 @@ describe("renderPracticePage", () => {
     expect(html.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).toContain("hidden");
     expect(html).not.toContain("The next expected key stays lit.");
     expect(html).toContain("Right hand · C–G range");
-    expect(exerciseLibrary).toHaveLength(28);
+    expect(exerciseLibrary).toHaveLength(30);
   });
 
   it("derives the rendered sequence and physical key order from the supplied exercise", () => {
@@ -161,6 +162,27 @@ describe("renderPracticePage", () => {
     expect(keyboardMarkup).toContain('data-note-number="67"\n        data-note-state="idle"');
     expect(html.match(/data-staff-note/g)).toHaveLength(5);
     expect(html).toContain('data-event-id="right-hand-chord-tone-d-minor-a4-apex"');
+  });
+
+  it("renders every expected key and staff marker in the D-minor five-note position", () => {
+    const html = renderPracticePage(dMinorFiveNoteAscentRightHandExercise, exerciseLibrary);
+    const keyboardStart = html.indexOf('class="practice-keyboard"');
+    const keyboardEnd = html.indexOf("</div>", keyboardStart);
+    const keyboardMarkup = html.slice(keyboardStart, keyboardEnd);
+
+    expect(html).toContain("D4 · E4 · F4 · G4 · A4");
+    expect(html).toContain("Right hand · D–A range");
+    expect(keyboardMarkup.match(/data-practice-key/g)).toHaveLength(5);
+    expect(keyboardMarkup).not.toContain('data-note-state="idle"');
+    expect(keyboardMarkup).toContain('data-note-number="62"\n        data-note-state="expected"');
+    for (const noteNumber of [64, 65, 67, 69]) {
+      expect(keyboardMarkup).toContain(`data-note-number="${noteNumber}"\n        data-note-state="remaining"`);
+    }
+    expect(html.match(/data-staff-note/g)).toHaveLength(5);
+    for (const event of dMinorFiveNoteAscentRightHandExercise.expectedEvents) {
+      expect(html).toContain(`data-event-id="${event.id}"`);
+    }
+    expect(html).toContain('aria-label="A4, later in phrase"');
   });
 
   it("renders repeated pairs as five staff events over one three-key span", () => {

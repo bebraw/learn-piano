@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { defaultExercise, exerciseLibrary } from "./exercises/library";
+import { dMinorFiveNoteAscentRightHandExercise } from "./exercises/library/d-minor-five-note-exercises.js";
 import { fiveFourPulseRightHandExercise } from "./exercises/library/five-four-pulse-exercises.js";
 import { mixedEighthPatternRightHandExercise } from "./exercises/library/mixed-eighth-pattern-exercises";
 import { offbeatStepSkipRightHandExercise } from "./exercises/library/offbeat-step-skip-exercises";
@@ -35,7 +36,7 @@ describe("worker", () => {
     expect(body).toContain("Enable JavaScript to read completions saved in this browser.");
     expect(body).toContain("data-home-root");
     expect(body).toContain('type="module" src="/client/main.js"');
-    expect(exerciseLibrary).toHaveLength(28);
+    expect(exerciseLibrary).toHaveLength(30);
     expect(body.match(/class="folio-card group"/g)).toHaveLength(exerciseLibrary.length);
     expect(body.match(/data-completion-badge hidden/g)).toHaveLength(exerciseLibrary.length);
     expect(body.match(/data-mode="timed"/g)).toHaveLength(18);
@@ -97,6 +98,19 @@ describe("worker", () => {
     expect(body.match(/data-note-number="69"/g)).toHaveLength(1);
     expect(body).toContain('data-note-number="64"\n        data-note-state="idle"');
     expect(body).toContain('data-note-number="67"\n        data-note-state="idle"');
+  });
+
+  it("server-renders the complete D-minor five-note position as expected pitches", async () => {
+    const response = await handleRequest(new Request(`http://example.com${exercisePracticeHref(dMinorFiveNoteAscentRightHandExercise)}`));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain('aria-label="Pitch order: D4 · E4 · F4 · G4 · A4"');
+    expect(body).toContain("Right hand · D–A range");
+    expect(body.match(/data-staff-note/g)).toHaveLength(5);
+    expect(body.match(/data-practice-key/g)).toHaveLength(5);
+    expect(body).not.toContain('data-note-state="idle"');
+    expect(body).toContain('data-note-number="69"\n        data-note-state="remaining"');
   });
 
   it("renders adjacent repeated notes as separate events over shared physical keys", async () => {

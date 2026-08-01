@@ -58,7 +58,7 @@ describe("projectStaffPitchGuide", () => {
     expect(guide?.notes.every(({ ledgerLines }) => ledgerLines.length === 0)).toBe(true);
   });
 
-  it("extends the bounded natural-note guide through A for both D-minor studies", () => {
+  it("extends the bounded natural-note guide through A for both D-minor chord-tone studies", () => {
     const trebleGuide = projectStaffPitchGuide(orderedDMinorChordTonesRightHandExercise.expectedEvents);
     const bassGuide = projectStaffPitchGuide(orderedDMinorChordTonesLeftHandExercise.expectedEvents);
 

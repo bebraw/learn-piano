@@ -47,7 +47,7 @@ The current library offers many rhythm variations but keeps every pitch pattern 
 ### Definition of Done
 
 - [ ] Both canonical exercises validate with exact IDs, titles, instructions, five events, hands, matching prerequisites, tags, source metadata, and fingerings.
-- [ ] The complete library exposes twenty-eight exercises, fourteen per hand, with ten untimed and eighteen timed studies.
+- [ ] The complete library exposes thirty exercises, fifteen per hand, with twelve untimed and eighteen timed studies.
 - [ ] Treble C4-A4 and bass C3-A3 natural pitches project through the existing staff adapter; pitches outside those bounded ranges still use the semantic fallback.
 - [ ] Practice HTML renders five D-through-A physical keys, five D-F-A-F-D staff occurrences, a derived `D–A range` label, and Reading Focus support before enhancement.
 - [ ] Completing either study uses the existing persistence, recent-evidence, and advisory recommendation paths without timing data.
@@ -66,7 +66,7 @@ The current library offers many rhythm variations but keeps every pitch pattern 
 ### Verification
 
 - **Exercise tests:** Assert exact canonical documents, instructions, sequences, event IDs, hands, matching C-major prerequisites, ordered tags, metadata, and fingerings.
-- **Library tests:** Assert twenty-eight unique stable IDs in canonical order, fourteen studies per hand, ten untimed studies, eighteen timed studies, and twenty five-event studies.
+- **Library tests:** Assert thirty unique stable IDs in canonical order, fifteen studies per hand, twelve untimed studies, eighteen timed studies, and twenty-two five-event studies.
 - **Notation tests:** Assert A4 and A3 coordinates, D-F-A-F-D occurrence order, expanded exact ranges, and fallback above A.
 - **Presentation tests:** Assert D-E-F-G-A keyboard projection, derived range copy, five staff occurrences, and unchanged C-position behavior.
 - **Recommendation tests:** Assert same-hand C-major completion selects D minor as a direct dependent before eligible timed C-major elaboration, while opposite-hand evidence does not.
