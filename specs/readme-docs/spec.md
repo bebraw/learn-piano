@@ -10,7 +10,7 @@ The README is the first surface for a learner or contributor. It must identify t
 
 - **Primary document:** `README.md`
 - **Committed screenshot:** `docs/screenshots/home.png`
-- **Product summary:** twenty-six-exercise selection with transient inclusive focus/hand filters, server-rendered treble and bass pitch guides, learner-controlled transient reading focus, ordered C-E-G-E-C chord-tone preparation, steady C-E-G-E-C-E-G-E broken-chord onsets, C-E-G-C-E-G-C broken-chord loops with 3/4 guidance, C-D-E-F-G-C pulse work with 5/4 guidance, C-C-D-D-E repeated-note onsets, C-E-D-D-F-G-E-C mixed-pattern onsets, C-E-D-F-G offbeat-onset preparation, local-first practice behavior, exact-current-revision home coverage, bounded quarter-note and fractional-position onset feedback, per-exercise persistence, input choices, and explicit limitations
+- **Product summary:** twenty-six-exercise selection with transient inclusive focus/hand filters, server-rendered treble and bass pitch guides, learner-controlled transient reading focus, ordered C-E-G-E-C chord-tone preparation, steady C-E-G-E-C-E-G-E broken-chord onsets, C-E-G-C-E-G-C broken-chord loops with 3/4 guidance, C-D-E-F-G-C pulse work with 5/4 guidance, C-C-D-D-E repeated-note onsets, C-E-D-D-F-G-E-C mixed-pattern onsets, C-E-D-F-G offbeat-onset preparation, local-first practice behavior, exact-current-revision home coverage, newest-five factual practice evidence, bounded quarter-note and fractional-position onset feedback, per-exercise persistence, input choices, and explicit limitations
 - **Developer summary:** runtime, default and query-selected practice routes, source layout, generated assets, verification, and authoritative documentation locations
 - **Screenshot refresh:** a manual developer action after material UI or catalog changes; screenshot capture remains outside the routine implementation and automated quality-gate loop
 - **Non-goal:** no local or remote screenshot workflow in the automated build, development loop, or CI
@@ -20,6 +20,7 @@ The README is the first surface for a learner or contributor. It must identify t
 - Do not describe the application as the old generic Worker stub or make readers infer the product from source files.
 - Do not claim Web MIDI or direct MIDI support on platforms where the runtime does not provide it reliably.
 - Do not imply that local browser history is cloud-synced, permanent, or an account-backed record.
+- Do not describe recent saved-attempt evidence as complete history, a score, trend, improvement claim, consistency claim, mastery claim, or recommendation input.
 - Do not claim the application can assess physical technique or replace a teacher.
 - Do not describe the pitch-only staff guide as full score notation, give its markers duration semantics, or claim completion proves staff reading.
 - Do not describe reading focus as a saved preference, separate exercise, assessment, recommendation input, or proof of staff-reading mastery.
@@ -39,6 +40,7 @@ The README is the first surface for a learner or contributor. It must identify t
 - [ ] The README identifies Piano Practice as a local-first Cloudflare Worker application near the top.
 - [ ] It describes all twenty-six right- and left-hand exercises, including the ordered chord-tone, steady broken-chord, 3/4 broken-chord, 5/4 pulse, repeated-note, mixed-pattern, and offbeat pairs, the two straight and two step-and-skip steady-quarter studies, and the ascending even-eighth pair, plus direct exercise selection, progressive enhancement, exact-current-revision home coverage, input options, per-exercise history, and feedback boundaries.
 - [ ] It explains that the home overview shows retained saved-study, hand, today, recent-study, and advisory recommendation facts without percentages, streaks, grades, locks, permanence, or mastery claims, and that storage failure leaves the complete library available.
+- [ ] It explains that each practice page summarizes no more than the five newest retained exact-revision attempts using pitch-or-order-correction facts plus categorical timing facts with their contributing-attempt count, without averaging tempo or timing error or changing recommendations.
 - [ ] It explains that enhanced home filters use every matching curriculum-track prefix plus hand, remain transient and inclusive, default to the complete folio on reload, and change no history or recommendation behavior.
 - [ ] It explains that C-E-G-E-C remains five ordered individual-note events, reuses C and E physical controls, and provides no simultaneous chord, voicing, or harmony-recognition evidence.
 - [ ] It states the exact catalog split: thirteen studies per hand, eight untimed and eighteen timed; the timed set contains ten steady-pulse, six regular eighth-grid, and two offbeat studies, while the latter eight retain fractional onset positions and a ±0.1-beat window. Fourteen timed studies use 4/4 with four count-in beats, the 3/4 pair uses three, and the 5/4 pair uses five.
@@ -80,7 +82,7 @@ The README is the first surface for a learner or contributor. It must identify t
 - **Manual check:** inspect the image and verify that it renders from the README path.
 - **Repository checks:** `git diff --check` and `npm run format:check`.
 - **Behavior check:** compare documented commands, routes, and file paths with `package.json`, `wrangler.jsonc`, and the source tree.
-- **Feature check:** compare exercise counts, 4/4, 3/4, and 5/4 meter guidance, steady-quarter, regular-eighth, and offbeat rhythm presentation, pitch-guide subset, reading-focus availability/lifetime/evidence boundary, timing-derived pulse behavior under ADR-060, MIDI/audio evaluator boundaries, and exclusions with the relevant living specs and implemented ADRs.
+- **Feature check:** compare exercise counts, 4/4, 3/4, and 5/4 meter guidance, steady-quarter, regular-eighth, and offbeat rhythm presentation, pitch-guide subset, reading-focus availability/lifetime/evidence boundary, recent-attempt evidence under ADR-062, timing-derived pulse behavior under ADR-060, MIDI/audio evaluator boundaries, and exclusions with the relevant living specs and implemented ADRs.
 
 ### Scenarios
 
@@ -88,7 +90,7 @@ The README is the first surface for a learner or contributor. It must identify t
 
 - Given: the repository is viewed locally or on Git hosting
 - When: the learner reads the opening sections
-- Then: they understand the twenty-six exercises available now, including the ordered but non-simultaneous chord-tone pair, eight-event steady broken-chord pair, seven-event 3/4 broken-chord pair, six-event 5/4 pulse pair, onset-only repeated-note pair, eight-event mixed-pattern pair, and MIDI-relative offbeat pair, how the staff pitch guide, transient reading focus, timing-derived meter guidance, quarter-pulse and fractional-position onset timing, selection, input, and per-exercise history work, and what the application cannot assess
+- Then: they understand the twenty-six exercises available now, including the ordered but non-simultaneous chord-tone pair, eight-event steady broken-chord pair, seven-event 3/4 broken-chord pair, six-event 5/4 pulse pair, onset-only repeated-note pair, eight-event mixed-pattern pair, and MIDI-relative offbeat pair, how the staff pitch guide, transient reading focus, timing-derived meter guidance, quarter-pulse and fractional-position onset timing, selection, input, and newest-five factual per-exercise history work, and what the application cannot assess
 
 **Scenario: Contributor runs the application**
 

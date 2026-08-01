@@ -34,6 +34,11 @@ describe("renderPracticePage", () => {
     expect(html).toContain("Live MIDI, note highlighting, and history need JavaScript");
     expect(html).toContain("History requires JavaScript");
     expect(html).toContain("Enable JavaScript to read completed attempts stored in this browser.");
+    expect(html).toContain('id="history-evidence"');
+    expect(html).toContain('id="history-evidence-window"');
+    expect(html).toContain('id="history-pitch-evidence"');
+    expect(html).toContain('id="history-timing-evidence"');
+    expect(html).toContain("Recent saved attempts");
     expect(html).not.toContain(">0 completed today<");
     expect(html).not.toContain("No completed attempts in this browser yet.");
     expect(html).toContain('type="module" src="/client/main.js"');

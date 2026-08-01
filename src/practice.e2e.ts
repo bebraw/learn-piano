@@ -269,11 +269,15 @@ test("reuses physical keys for returning chord tones and reloads persisted histo
   await expect(page.getByText("5 of 5 notes")).toBeVisible();
   await expect(cKey).toHaveAttribute("data-note-state", "accepted");
   await expect(page.getByText("1 attempt completed today")).toBeVisible();
+  await expect(page.getByText("The newest retained completion for this revision.")).toBeVisible();
+  await expect(page.getByText("0 of 1 completed without pitch or order corrections.", { exact: false })).toBeVisible();
+  await expect(page.getByText("Saved corrections: 1 wrong note.", { exact: false })).toBeVisible();
 
   await page.reload();
   await expect(page.getByRole("heading", { level: 1, name: selectedExercise.title })).toBeVisible();
   await expect(page.getByText("1 attempt completed today")).toBeVisible();
   await expect(page.getByText(/Most recent completion:/)).toBeVisible();
+  await expect(page.getByText("0 of 1 completed without pitch or order corrections.", { exact: false })).toBeVisible();
 });
 
 test("counts in an even-eighth study and persists its MIDI-relative timing summary", async ({ page }) => {
@@ -314,6 +318,7 @@ test("counts in an even-eighth study and persists its MIDI-relative timing summa
 
   await expect(page.locator("#feedback-message")).toContainText(/The sequence was correct\..*intervals were on time at 100 BPM/);
   await expect(page.getByText("1 attempt completed today")).toBeVisible();
+  await expect(page.getByText("1 of 1 completed without pitch or order corrections.", { exact: true })).toBeVisible();
 
   const attempt = await page.evaluate((storageKey) => {
     const value = localStorage.getItem(storageKey);
@@ -345,6 +350,16 @@ test("counts in an even-eighth study and persists its MIDI-relative timing summa
     ].sort(),
   );
   expect((attempt?.timing?.onPulse ?? 0) + (attempt?.timing?.early ?? 0) + (attempt?.timing?.late ?? 0)).toBe(4);
+  const timing = attempt?.timing;
+  if (timing === undefined) {
+    throw new Error("The timed completion requires saved timing evidence");
+  }
+  await expect(
+    page.getByText(
+      `Across 1 of 1 attempt with saved timing: ${timing.assessedIntervals} assessed intervals · ${timing.onPulse} on time · ${timing.early} early · ${timing.late} late.`,
+      { exact: true },
+    ),
+  ).toBeVisible();
 });
 
 test("advances adjacent repeated-note occurrences over shared physical keys", async ({ page }) => {

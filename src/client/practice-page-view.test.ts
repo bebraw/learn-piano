@@ -9,6 +9,7 @@ import { createEvaluationState, evaluateMidiEvent } from "../exercises/evaluator
 import type { Exercise } from "../exercises/types.js";
 import type { MidiConnectionState } from "../midi/types.js";
 import { projectPracticeKeyboardNotes } from "../views/exercise-presentation.js";
+import type { CompletedAttemptRecord } from "./persistence/attempt-repository.js";
 import { createPracticePageView, type PracticePageElements } from "./practice-page-view.js";
 import type { PracticeSnapshot } from "./practice-controller.js";
 
@@ -92,6 +93,7 @@ describe("createPracticePageView", () => {
     expect(elements.nextNote.textContent).toBe("C4");
     expect(elements.progressText.textContent).toBe("0 of 5 notes");
     expect(elements.historyCount.textContent).toBe("0 attempts completed today");
+    expect(elements.historyEvidence.hidden).toBe(true);
     expect(keys[0]?.dataset.noteState).toBe("expected");
     expect(keys[0]?.disabled).toBe(true);
     expect(staffNotes[0]?.getAttribute("data-note-state")).toBe("expected");
@@ -578,6 +580,12 @@ describe("createPracticePageView", () => {
               meanAbsoluteErrorMs: 0,
             },
           },
+          recentEvidence: {
+            attemptCount: 1,
+            correctionFreeAttempts: 1,
+            errorCounts: { outOfOrder: 0, repeated: 0, wrong: 0 },
+            timing: { contributingAttempts: 1, assessedIntervals: 4, onTime: 4, early: 0, late: 0 },
+          },
         },
       }),
     );
@@ -585,6 +593,10 @@ describe("createPracticePageView", () => {
     expect(elements.feedbackMessage.textContent).toBe("The sequence was correct. All 4 intervals were on time at 60 BPM.");
     expect(elements.pulseStatus.textContent).toBe("Pulse stopped. Study complete at 60 BPM.");
     expect(elements.historyDetail.textContent).toContain("At 60 BPM, 4 of 4 intervals were on time.");
+    expect(elements.historyEvidence.hidden).toBe(false);
+    expect(elements.historyTimingEvidence.textContent).toBe(
+      "Across 1 of 1 attempt with saved timing: 4 assessed intervals · 4 on time · 0 early · 0 late.",
+    );
     expect(elements.nextExerciseLink.hidden).toBe(false);
   });
 
@@ -796,6 +808,7 @@ describe("createPracticePageView", () => {
     expect(elements.feedbackMessage.getAttribute("data-session-status")).toBe("interrupted");
     expect(elements.nextExerciseLink.hidden).toBe(true);
     expect(elements.historyCount.textContent).toBe("History unavailable");
+    expect(elements.historyEvidence.hidden).toBe(true);
     expect(elements.persistenceMessage.hidden).toBe(false);
 
     view.render(snapshot({ inputKind: "native-midi", connection: connection("unsupported") }));
@@ -834,7 +847,7 @@ describe("createPracticePageView", () => {
             completedAt: "2026-08-01T08:01:00.000Z",
             inputKind: "mock",
             status: "completed",
-            errorCounts: { outOfOrder: 0, repeated: 0, wrong: 0 },
+            errorCounts: { outOfOrder: 1, repeated: 1, wrong: 1 },
             timing: {
               tempoBpm: 60,
               assessedIntervals: 1,
@@ -844,6 +857,12 @@ describe("createPracticePageView", () => {
               meanAbsoluteErrorMs: 250,
             },
           },
+          recentEvidence: {
+            attemptCount: 1,
+            correctionFreeAttempts: 0,
+            errorCounts: { outOfOrder: 1, repeated: 1, wrong: 1 },
+            timing: { contributingAttempts: 1, assessedIntervals: 1, onTime: 0, early: 0, late: 1 },
+          },
         },
       }),
     );
@@ -852,7 +871,86 @@ describe("createPracticePageView", () => {
     expect(elements.midiInput.innerHTML).toContain('value="unsafe&quot;"');
     expect(elements.historyCount.textContent).toBe("1 attempt completed today");
     expect(elements.historyDetail.textContent).toContain("At 60 BPM, 0 of 1 interval was on time.");
-    expect(elements.historyDetail.textContent).toContain("1 total for this exercise");
+    expect(elements.historyDetail.textContent).toContain("1 saved for this exercise revision");
+    expect(elements.historyEvidenceWindow.textContent).toBe("The newest retained completion for this revision.");
+    expect(elements.historyPitchEvidence.textContent).toBe(
+      "0 of 1 completed without pitch or order corrections. Saved corrections: 1 wrong note · 1 repeated note · 1 out-of-order note.",
+    );
+    expect(elements.historyTimingEvidenceRow.hidden).toBe(false);
+    expect(elements.historyTimingEvidence.textContent).toBe(
+      "Across 1 of 1 attempt with saved timing: 1 assessed interval · 0 on time · 0 early · 1 late.",
+    );
+    expect(elements.historyPitchEvidence.textContent).not.toMatch(/%|score|streak|master|improv/i);
+  });
+
+  it("keeps the recent window bounded and makes partial timing coverage explicit", () => {
+    const { elements } = createElements();
+    const view = createPracticePageView(elements);
+
+    view.render(
+      snapshot({
+        history: {
+          completedToday: 2,
+          totalCompleted: 8,
+          mostRecent: completedAttempt(),
+          recentEvidence: {
+            attemptCount: 5,
+            correctionFreeAttempts: 2,
+            errorCounts: { outOfOrder: 3, repeated: 0, wrong: 2 },
+            timing: { contributingAttempts: 2, assessedIntervals: 8, onTime: 6, early: 1, late: 1 },
+          },
+        },
+      }),
+    );
+
+    expect(elements.historyEvidenceWindow.textContent).toBe("The 5 newest retained completions for this revision.");
+    expect(elements.historyPitchEvidence.textContent).toBe(
+      "2 of 5 completed without pitch or order corrections. Saved corrections: 2 wrong notes · 3 out-of-order notes.",
+    );
+    expect(elements.historyTimingEvidenceRow.hidden).toBe(false);
+    expect(elements.historyTimingEvidence.textContent).toBe(
+      "Across 2 of 5 attempts with saved timing: 8 assessed intervals · 6 on time · 1 early · 1 late.",
+    );
+
+    view.render(
+      snapshot({
+        history: {
+          completedToday: 1,
+          totalCompleted: 1,
+          mostRecent: completedAttempt(),
+          recentEvidence: {
+            attemptCount: 1,
+            correctionFreeAttempts: 1,
+            errorCounts: { outOfOrder: 0, repeated: 0, wrong: 0 },
+            timing: null,
+          },
+        },
+      }),
+    );
+
+    expect(elements.historyTimingEvidenceRow.hidden).toBe(true);
+    expect(elements.historyTimingEvidence.textContent).toBe("");
+
+    view.render(
+      timedSnapshot({
+        history: {
+          completedToday: 1,
+          totalCompleted: 1,
+          mostRecent: completedAttempt({
+            timing: { tempoBpm: 60, assessedIntervals: 0, onPulse: 0, early: 0, late: 0, meanAbsoluteErrorMs: 0 },
+          }),
+          recentEvidence: {
+            attemptCount: 1,
+            correctionFreeAttempts: 1,
+            errorCounts: { outOfOrder: 0, repeated: 0, wrong: 0 },
+            timing: { contributingAttempts: 1, assessedIntervals: 0, onTime: 0, early: 0, late: 0 },
+          },
+        },
+      }),
+    );
+
+    expect(elements.historyTimingEvidenceRow.hidden).toBe(false);
+    expect(elements.historyTimingEvidence.textContent).toBe("Across 1 of 1 attempt with saved timing, no intervals were assessed.");
   });
 
   it("does not silently substitute another input when the selected device disappears", () => {
@@ -909,6 +1007,11 @@ function createElements(exercise: Exercise = fiveNoteAscentExercise): {
       persistenceMessage: new FakeElement(),
       historyCount: new FakeElement(),
       historyDetail: new FakeElement(),
+      historyEvidence: new FakeElement(),
+      historyEvidenceWindow: new FakeElement(),
+      historyPitchEvidence: new FakeElement(),
+      historyTimingEvidenceRow: new FakeElement(),
+      historyTimingEvidence: new FakeElement(),
       keyboardHelp: new FakeElement(),
       nextStudyRecommendation: new FakeElement(),
       nextStudyKicker: new FakeElement(),
@@ -962,7 +1065,17 @@ function snapshot(overrides: Partial<PracticeSnapshot> = {}): PracticeSnapshot {
     feedback: null,
     activeNoteNumbers: [],
     historyStatus: "ready",
-    history: { completedToday: 0, totalCompleted: 0, mostRecent: null },
+    history: {
+      completedToday: 0,
+      totalCompleted: 0,
+      mostRecent: null,
+      recentEvidence: {
+        attemptCount: 0,
+        correctionFreeAttempts: 0,
+        errorCounts: { outOfOrder: 0, repeated: 0, wrong: 0 },
+        timing: null,
+      },
+    },
     recommendationStatus: "ready",
     recommendation: null,
     persistenceMessage: null,
@@ -972,4 +1085,19 @@ function snapshot(overrides: Partial<PracticeSnapshot> = {}): PracticeSnapshot {
 
 function connection(status: MidiConnectionState["status"], selectedInputId: string | null = null): MidiConnectionState {
   return { status, selectedInputId, errorMessage: null };
+}
+
+function completedAttempt(overrides: Partial<CompletedAttemptRecord> = {}): CompletedAttemptRecord {
+  return {
+    schemaVersion: 1,
+    id: "completed-attempt",
+    exerciseId: fiveNoteAscentExercise.id,
+    exerciseRevision: fiveNoteAscentExercise.revision,
+    startedAt: "2026-08-01T08:00:00.000Z",
+    completedAt: "2026-08-01T08:01:00.000Z",
+    inputKind: "mock",
+    status: "completed",
+    errorCounts: { outOfOrder: 0, repeated: 0, wrong: 0 },
+    ...overrides,
+  };
 }

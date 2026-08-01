@@ -66,6 +66,11 @@ export interface PracticePageElements {
   readonly persistenceMessage: ElementLike;
   readonly historyCount: ElementLike;
   readonly historyDetail: ElementLike;
+  readonly historyEvidence: ElementLike;
+  readonly historyEvidenceWindow: ElementLike;
+  readonly historyPitchEvidence: ElementLike;
+  readonly historyTimingEvidenceRow: ElementLike;
+  readonly historyTimingEvidence: ElementLike;
   readonly keyboardHelp: ElementLike;
   readonly nextStudyRecommendation: ElementLike;
   readonly nextStudyKicker: ElementLike;
@@ -439,12 +444,14 @@ function keyboardHelpMessage(snapshot: PracticeSnapshot, mockKeysEnabled: boolea
 
 function renderHistory(elements: PracticePageElements, snapshot: PracticeSnapshot): void {
   if (snapshot.historyStatus === "loading") {
+    elements.historyEvidence.hidden = true;
     setTextContent(elements.historyCount, "Loading history…");
     setTextContent(elements.historyDetail, "Reading completed attempts from this browser.");
     return;
   }
 
   if (snapshot.historyStatus === "unavailable") {
+    elements.historyEvidence.hidden = true;
     setTextContent(elements.historyCount, "History unavailable");
     setTextContent(elements.historyDetail, "Practice still works; this browser could not read or save local history.");
     return;
@@ -456,11 +463,68 @@ function renderHistory(elements: PracticePageElements, snapshot: PracticeSnapsho
   setTextContent(
     elements.historyDetail,
     mostRecent === null
-      ? "No completed attempts in this browser yet."
+      ? "No completed attempts saved in this browser for this revision."
       : `Most recent completion: ${formatCompletionTime(mostRecent.completedAt)}.${formatHistoryTiming(
           mostRecent.timing,
-        )} ${snapshot.history.totalCompleted} total for this exercise.`,
+        )} ${snapshot.history.totalCompleted} saved for this exercise revision.`,
   );
+
+  renderRecentEvidence(elements, snapshot.history);
+}
+
+function renderRecentEvidence(elements: PracticePageElements, history: PracticeSnapshot["history"]): void {
+  const evidence = history.recentEvidence;
+  elements.historyEvidence.hidden = evidence.attemptCount === 0;
+  if (evidence.attemptCount === 0) {
+    return;
+  }
+
+  setTextContent(
+    elements.historyEvidenceWindow,
+    evidence.attemptCount === 1
+      ? "The newest retained completion for this revision."
+      : `The ${evidence.attemptCount} newest retained completions for this revision.`,
+  );
+  setTextContent(
+    elements.historyPitchEvidence,
+    `${evidence.correctionFreeAttempts} of ${evidence.attemptCount} completed without pitch or order corrections.${formatSavedCorrections(
+      evidence.errorCounts,
+    )}`,
+  );
+
+  const timing = evidence.timing;
+  elements.historyTimingEvidenceRow.hidden = timing === null;
+  if (timing === null) {
+    setTextContent(elements.historyTimingEvidence, null);
+    return;
+  }
+
+  setTextContent(
+    elements.historyTimingEvidence,
+    timing.assessedIntervals === 0
+      ? `Across ${formatTimingAttemptCoverage(timing.contributingAttempts, evidence.attemptCount)}, no intervals were assessed.`
+      : `Across ${formatTimingAttemptCoverage(timing.contributingAttempts, evidence.attemptCount)}: ${timing.assessedIntervals} assessed ${
+          timing.assessedIntervals === 1 ? "interval" : "intervals"
+        } · ${timing.onTime} on time · ${timing.early} early · ${timing.late} late.`,
+  );
+}
+
+function formatTimingAttemptCoverage(timingAttemptCount: number, recentAttemptCount: number): string {
+  return `${timingAttemptCount} of ${recentAttemptCount} ${recentAttemptCount === 1 ? "attempt" : "attempts"} with saved timing`;
+}
+
+function formatSavedCorrections(errorCounts: PracticeSnapshot["history"]["recentEvidence"]["errorCounts"]): string {
+  const labels = [
+    formatCountedLabel(errorCounts.wrong, "wrong note", "wrong notes"),
+    formatCountedLabel(errorCounts.repeated, "repeated note", "repeated notes"),
+    formatCountedLabel(errorCounts.outOfOrder, "out-of-order note", "out-of-order notes"),
+  ].filter((label): label is string => label !== null);
+
+  return labels.length === 0 ? "" : ` Saved corrections: ${labels.join(" · ")}.`;
+}
+
+function formatCountedLabel(count: number, singular: string, plural: string): string | null {
+  return count === 0 ? null : `${count} ${count === 1 ? singular : plural}`;
 }
 
 function formatHistoryTiming(timing: AttemptTimingSummary | undefined): string {

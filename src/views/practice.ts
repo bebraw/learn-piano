@@ -237,6 +237,20 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
             </div>
             <p id="history-count" class="history-count">History requires JavaScript</p>
             <p id="history-detail" class="history-detail" role="status" aria-live="polite">Enable JavaScript to read completed attempts stored in this browser.</p>
+            <div id="history-evidence" class="history-evidence" aria-live="polite" aria-atomic="true" hidden>
+              <p class="app-eyebrow">Recent saved attempts</p>
+              <p id="history-evidence-window" class="history-evidence-window"></p>
+              <dl class="history-evidence-list">
+                <div>
+                  <dt>Notes</dt>
+                  <dd id="history-pitch-evidence"></dd>
+                </div>
+                <div id="history-timing-evidence-row">
+                  <dt>Timing</dt>
+                  <dd id="history-timing-evidence"></dd>
+                </div>
+              </dl>
+            </div>
           </section>
 
           <p class="practice-boundary">MIDI can confirm pitch and order here. It cannot assess posture, tension, fingering, or replace a qualified teacher.</p>

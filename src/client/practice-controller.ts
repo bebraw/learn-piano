@@ -45,6 +45,12 @@ const EMPTY_HISTORY: PracticeHistorySummary = {
   completedToday: 0,
   totalCompleted: 0,
   mostRecent: null,
+  recentEvidence: {
+    attemptCount: 0,
+    correctionFreeAttempts: 0,
+    errorCounts: { outOfOrder: 0, repeated: 0, wrong: 0 },
+    timing: null,
+  },
 };
 
 export class PracticeController {

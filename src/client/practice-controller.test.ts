@@ -212,7 +212,17 @@ describe("PracticeController", () => {
       inputKind: "mock",
       sessionStatus: "ready",
       historyStatus: "ready",
-      history: { completedToday: 0, totalCompleted: 0, mostRecent: null },
+      history: {
+        completedToday: 0,
+        totalCompleted: 0,
+        mostRecent: null,
+        recentEvidence: {
+          attemptCount: 0,
+          correctionFreeAttempts: 0,
+          errorCounts: { outOfOrder: 0, repeated: 0, wrong: 0 },
+          timing: null,
+        },
+      },
       inputs: [{ id: MOCK_MIDI_INPUT_ID, label: "Deterministic mock keyboard" }],
     });
   });
@@ -231,6 +241,12 @@ describe("PracticeController", () => {
     expect(view.latest().sessionStatus).toBe("completed");
     expect(view.latest().evaluation.completionSummary?.message).toBe("The sequence was correct.");
     expect(view.latest().history.completedToday).toBe(1);
+    expect(view.latest().history.recentEvidence).toEqual({
+      attemptCount: 1,
+      correctionFreeAttempts: 1,
+      errorCounts: { outOfOrder: 0, repeated: 0, wrong: 0 },
+      timing: null,
+    });
     expect(repository.records).toEqual([
       expect.objectContaining({
         id: "attempt-fixed",
