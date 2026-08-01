@@ -10,7 +10,7 @@ import type {
   MidiUnsubscribe,
   NormalizedMidiEvent,
 } from "../midi/types.js";
-import type { AttemptRepository, CompletedAttemptRecord } from "./persistence/attempt-repository.js";
+import type { AttemptInputKind, AttemptRepository, CompletedAttemptRecord } from "./persistence/attempt-repository.js";
 import { PracticeController, type PracticeControllerOptions, type PracticeSnapshot, type PracticeView } from "./practice-controller.js";
 
 class MemoryAttemptRepository implements AttemptRepository {
@@ -249,16 +249,46 @@ describe("PracticeController", () => {
     expect(() => controller.restart()).toThrow("disposed");
   });
 
+  it("records native iPad input through the shared evaluation and persistence path", async () => {
+    const native = new ControllableMidiInputPort([{ id: "coremidi:61", label: "GO:PIANO 61" }]);
+    const repository = new MemoryAttemptRepository();
+    const view = new RecordingView();
+    const controller = new PracticeController(
+      fiveNoteAscentExercise,
+      { mock: new MockMidiInputPort(), "web-midi": new MockMidiInputPort(), "native-midi": native },
+      repository,
+      view,
+      { monotonicNow: () => 0, createAttemptId: () => "native-attempt" },
+    );
+    await controller.initialize();
+    await controller.selectInputKind("native-midi");
+    await controller.connect("coremidi:61");
+
+    for (const [index, event] of fiveNoteAscentExercise.expectedEvents.entries()) {
+      native.emitEvent({ type: "note-on", channel: 1, noteNumber: event.noteNumber, velocity: 72, timestamp: index + 1 });
+    }
+    await controller.waitForPersistence();
+
+    expect(view.latest().sessionStatus).toBe("completed");
+    expect(repository.records).toEqual([expect.objectContaining({ id: "native-attempt", inputKind: "native-midi" })]);
+  });
+
   it("discards a late refresh result after the learner switches input kinds", async () => {
     const mock = new MockMidiInputPort();
     const web = new ControllableMidiInputPort([{ id: "web-keyboard", label: "Web keyboard" }]);
     const pendingAccess = deferred<readonly MidiInputDevice[]>();
     web.accessResult = pendingAccess.promise;
     const view = new RecordingView();
-    const controller = new PracticeController(fiveNoteAscentExercise, { mock, "web-midi": web }, new MemoryAttemptRepository(), view, {
-      monotonicNow: () => 0,
-      createAttemptId: () => "attempt-fixed",
-    });
+    const controller = new PracticeController(
+      fiveNoteAscentExercise,
+      { mock, "web-midi": web, "native-midi": new MockMidiInputPort() },
+      new MemoryAttemptRepository(),
+      view,
+      {
+        monotonicNow: () => 0,
+        createAttemptId: () => "attempt-fixed",
+      },
+    );
     await controller.initialize();
 
     const selectWeb = controller.selectInputKind("web-midi");
@@ -278,7 +308,7 @@ describe("PracticeController", () => {
     const view = new RecordingView();
     const controller = new PracticeController(
       fiveNoteAscentExercise,
-      { mock: port, "web-midi": new MockMidiInputPort() },
+      { mock: port, "web-midi": new MockMidiInputPort(), "native-midi": new MockMidiInputPort() },
       new MemoryAttemptRepository(),
       view,
       { monotonicNow: () => 0, createAttemptId: () => "attempt-fixed" },
@@ -354,7 +384,7 @@ function createController(
   const mock = new MockMidiInputPort();
   const web = new MockMidiInputPort();
   const view = new RecordingView();
-  const ports: Record<"mock" | "web-midi", MidiInputPort> = { mock, "web-midi": web };
+  const ports: Record<AttemptInputKind, MidiInputPort> = { mock, "web-midi": web, "native-midi": new MockMidiInputPort() };
   const now = new Date(2026, 7, 1, 12, 0);
   const controller = new PracticeController(fiveNoteAscentExercise, ports, repository, view, {
     now: () => now,

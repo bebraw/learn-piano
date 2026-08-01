@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { defaultExercise, exerciseLibrary } from "./exercises/library/index.js";
 import { formatMidiNote } from "./exercises/evaluator.js";
+import { ATTEMPT_STORAGE_KEY } from "./client/persistence/attempt-repository.js";
 import { exercisePracticeHref } from "./views/exercise-presentation.js";
 
 test("keeps the exercise useful without JavaScript", async ({ baseURL, browser }) => {
@@ -65,6 +66,63 @@ test("completes a selected exercise and reloads its persisted history through mo
   await expect(page.getByRole("heading", { level: 1, name: selectedExercise.title })).toBeVisible();
   await expect(page.getByText("1 attempt completed today")).toBeVisible();
   await expect(page.getByText(/Most recent completion:/)).toBeVisible();
+});
+
+test("uses the injected iPad bridge through the shared practice flow", async ({ page }) => {
+  await page.addInitScript(() => {
+    const input = { id: "coremidi:61", label: "GO:PIANO 61" };
+    let state: { status: string; selectedInputId: string | null; errorMessage: string | null } = {
+      status: "idle",
+      selectedInputId: null,
+      errorMessage: null,
+    };
+
+    const handler = {
+      async postMessage(command: { type: string; inputId?: string }): Promise<unknown> {
+        if (command.type === "select-input" && command.inputId === input.id) {
+          state = { status: "connected", selectedInputId: input.id, errorMessage: null };
+        } else if (command.type === "disconnect") {
+          state = { status: "disconnected", selectedInputId: state.selectedInputId, errorMessage: null };
+        }
+        return { ok: true, inputs: [input], state };
+      },
+    };
+
+    Object.defineProperty(window, "webkit", {
+      configurable: true,
+      value: { messageHandlers: { learnPianoMidi: handler } },
+    });
+  });
+  await page.goto("/practice");
+
+  await expect(page.getByLabel("Input method")).toHaveValue("native-midi");
+  await expect(page.getByLabel("Device")).toHaveValue("coremidi:61");
+  await expect(page.getByRole("button", { name: "Pair Bluetooth MIDI" })).toBeVisible();
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await expect(page.getByText("Connected to GO:PIANO 61.")).toBeVisible();
+
+  await page.evaluate(
+    (events) => {
+      for (const event of events) {
+        window.dispatchEvent(new CustomEvent("learn-piano-native-midi", { detail: { type: "midi-event", event } }));
+      }
+    },
+    defaultExercise.expectedEvents.map((event, index) => ({
+      type: "note-on",
+      channel: 1,
+      noteNumber: event.noteNumber,
+      velocity: 72,
+      timestamp: index + 1,
+    })),
+  );
+
+  await expect(page.getByText("The sequence was correct.")).toBeVisible();
+  await expect(page.getByText("1 attempt completed today")).toBeVisible();
+  const storedInputKind = await page.evaluate((storageKey) => {
+    const value = localStorage.getItem(storageKey);
+    return value === null ? null : (JSON.parse(value) as { attempts?: Array<{ inputKind?: string }> }).attempts?.[0]?.inputKind;
+  }, ATTEMPT_STORAGE_KEY);
+  expect(storedInputKind).toBe("native-midi");
 });
 
 test("shows correction feedback and requires restart after an interruption", async ({ page }) => {

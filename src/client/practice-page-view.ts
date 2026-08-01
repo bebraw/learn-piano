@@ -94,7 +94,9 @@ function renderConnection(elements: PracticePageElements, snapshot: PracticeSnap
 function connectionMessage(snapshot: PracticeSnapshot, selectedLabel: string | undefined): string {
   switch (snapshot.connection.status) {
     case "unsupported":
-      return "Web MIDI is unavailable in this browser. The on-screen practice keys still work.";
+      return snapshot.inputKind === "native-midi"
+        ? "The iPad MIDI bridge is unavailable. The on-screen practice keys still work."
+        : "Web MIDI is unavailable in this browser. The on-screen practice keys still work.";
     case "idle":
       return snapshot.inputs.length > 0 ? "Choose an input and connect." : "No inputs are available yet.";
     case "requesting-permission":

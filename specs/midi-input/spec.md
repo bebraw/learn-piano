@@ -4,34 +4,39 @@
 
 ### Context
 
-The practice experience needs reliable note input from a Roland GO:PIANO 61 without coupling musical behavior to one browser API. Desktop browsers may provide Web MIDI, ordinary iPad Safari may not, and automated tests must work without physical hardware. A platform-neutral input boundary keeps practice and evaluation code independent of those platform differences.
+The practice experience needs reliable note input from a Roland GO:PIANO 61 without coupling musical behavior to one browser API. Desktop browsers may provide Web MIDI, ordinary iPad Safari may not, and automated tests must work without physical hardware. A platform-neutral input boundary keeps practice and evaluation code independent of those platform differences while a thin native shell supplies dependable iPad input.
 
 ### Current First-Slice Scope
 
 - A `MidiInputPort` boundary exposes input availability, device selection, connection state, normalized note events, and cleanup.
 - `WebMidiInputPort` adapts supported desktop Web MIDI implementations.
+- `NativeMidiInputPort` adapts the validated WKWebView bridge supplied by the iPadOS 17-or-later shell.
 - `MockMidiInputPort` replays deterministic fixtures and makes the whole practice flow usable without a keyboard.
+- The native shell discovers USB and Bluetooth sources through CoreMIDI, exposes exactly one selected source at a time, and opens Apple's CoreAudioKit Bluetooth MIDI pairing interface on request.
 - The selected device and its current state are visible to the learner.
 - Only channel note-on and note-off messages affect the exercise. Other MIDI messages are ignored safely.
 - System-exclusive access, output devices, pedals, aftertouch, pitch bend, timing evaluation, and multi-device aggregation are outside this slice.
 
 ### Future Scope
 
-- `NativeMidiInputPort` may adapt a thin iPad WKWebView or Capacitor wrapper backed by Swift and CoreMIDI.
 - Computer-keyboard or on-screen development input may implement the same boundary.
 - Pedal and other controller events may be added as new normalized event variants only when an exercise contract needs them.
-- Native-wrapper adoption requires its proposed architecture decision to be accepted and implemented; the browser application must remain independently usable.
+- Native packaging distribution, signing automation, and broader platform UI remain separate from the MIDI adapter boundary.
 
 ### Architecture
 
-- **Entry points:** The practice controller depends on `MidiInputPort`; platform bootstrap code chooses the Web MIDI or mock adapter. Domain evaluation never calls `navigator.requestMIDIAccess()` directly.
+- **Entry points:** The practice controller depends on `MidiInputPort`; platform bootstrap code chooses the native, Web MIDI, or mock adapter. Domain evaluation never calls `navigator.requestMIDIAccess()` or a WKWebView handler directly.
 - **Port lifecycle:** A port reports capability, enumerates inputs when authorized, explicitly opens one selected input before reporting it connected, emits connection changes and normalized events, and releases its platform listeners and best-effort closes owned inputs when switched, disconnected, or disposed. The latest selection or lifecycle action wins when asynchronous platform work settles out of order.
+- **Native bridge:** On the configured application origin, `NativeMidiInputPort` sends validated list, select, disconnect, and Bluetooth-pairing commands through the `learnPianoMidi` WKWebView reply handler. Native state and note updates return through the `learn-piano-native-midi` custom event. Both Swift and TypeScript reject unknown message kinds, invalid states, malformed device options, invalid identifiers, and out-of-range note data.
+- **Native source ownership:** CoreMIDI connects at most one selected source to the owned input port. Selecting another source first disconnects the old source; disconnect and disposal remove the active connection before publishing state. Late packets from a replaced source cannot reach the session.
+- **Native hosting boundary:** The iPad shell accepts an HTTPS application URL and restricts main-frame navigation and bridge handling to its configured origin. Plain HTTP is allowed only for validated local-development hosts. The bridge is not exposed to a redirected, embedded, or otherwise untrusted document.
+- **Bluetooth pairing:** Bluetooth discovery and pairing use the system CoreAudioKit interface. Pairing does not silently select a source; the learner still explicitly chooses one of the CoreMIDI sources returned after the system UI closes.
 - **Connection states:** The observable model distinguishes unsupported, idle, requesting permission, connected, disconnected, and error states. A permission denial or missing API is not presented as a device disconnection.
 - **Normalized note event:** Each event is a discriminated `note-on` or `note-off` value containing a one-based MIDI channel from 1 through 16, a MIDI note number from 0 through 127, a velocity from 0 through 127, and a finite monotonic timestamp in milliseconds.
 - **Timestamp contract:** Timestamps measure ordering and elapsed time within a runtime, not wall-clock time. Each adapter emits a non-decreasing event sequence from one monotonic clock domain. Mock taps without an explicit timestamp use an injectable runtime monotonic clock and advance strictly past the last emitted event; fixtures retain explicit deterministic timestamps.
 - **Raw-message normalization:** Status `0x9n` with non-zero velocity becomes note-on, status `0x8n` becomes note-off, and status `0x9n` with zero velocity becomes note-off with velocity zero. The wire channel nibble `0..15` is exposed as channel `1..16`.
 - **Device identity:** Device options expose a stable adapter-provided identifier and a human-readable label. Musical code treats the identifier as opaque.
-- **Dependencies:** The Web adapter alone depends on Web MIDI. The mock adapter depends only on replayable fixture data. Practice sessions and performance evaluation consume normalized events, never raw `MIDIMessageEvent` objects.
+- **Dependencies:** The Web adapter alone depends on Web MIDI. The native adapter alone depends on the validated WKWebView bridge, while the Swift shell owns WKWebView, CoreMIDI, and CoreAudioKit. The mock adapter depends only on replayable fixture data. Practice sessions and performance evaluation consume normalized events, never raw browser messages, bridge payloads, or CoreMIDI packets.
 
 ### Edge Cases
 
@@ -45,6 +50,11 @@ The practice experience needs reliable note input from a Roland GO:PIANO 61 with
 - Late events from an input that has been replaced, disconnected, or disposed are ignored.
 - An empty device list is a valid state. The mock adapter remains available for the first-slice browser flow.
 - A permission rejection is recoverable through another explicit connection attempt and must not cause an unhandled rejection.
+- An absent or malformed native reply is reported as a recoverable error and cannot fabricate a device, connection, or note event.
+- A bridge command from a document outside the configured application origin is rejected without calling CoreMIDI or opening native UI.
+- A main-frame navigation outside the configured origin is cancelled; redirects do not silently broaden the trusted origin.
+- Closing Bluetooth pairing with no connected device leaves the previous explicit selection state intact and permits another pairing attempt.
+- Native source add/remove notifications refresh availability without silently selecting a replacement for a disconnected source.
 
 ### Anti-Patterns
 
@@ -56,13 +66,18 @@ The practice experience needs reliable note input from a Roland GO:PIANO 61 with
 - Do not register anonymous listeners that cannot be removed, or reconnect by stacking another listener on the same device.
 - Do not silently choose a different hardware device after the selected device disconnects.
 - Do not treat Web MIDI availability as proof that the learner granted permission or that a device is connected.
+- Do not expose the native bridge to arbitrary web origins or allow unrestricted main-frame navigation.
+- Do not trust bridge data merely because it came from Swift or TypeScript; validate at both sides of the boundary.
+- Do not connect several CoreMIDI sources to one logical `MidiInputPort` or silently aggregate their events.
+- Do not reproduce evaluation, exercise, feedback, session, or persistence logic in Swift.
+- Do not require the native wrapper for the standalone browser application.
 
 ## Contract
 
 ### Definition of Done
 
 - [ ] The practice domain consumes input only through `MidiInputPort`.
-- [ ] Web MIDI and deterministic mock adapters satisfy the same observable lifecycle and event contract.
+- [ ] Web MIDI, native MIDI, and deterministic mock adapters satisfy the same observable lifecycle and event contract.
 - [ ] A learner can inspect available inputs, choose one, and distinguish connection, disconnection, unsupported, and error states.
 - [ ] Note-on, note-off, and note-on with velocity zero normalize according to this spec.
 - [ ] Unsupported and malformed messages are ignored without crashing the input stream.
@@ -70,6 +85,9 @@ The practice experience needs reliable note input from a Roland GO:PIANO 61 with
 - [ ] Replayable fixtures use deterministic monotonic timestamps.
 - [ ] The spec is updated in the same change set when the boundary or normalized event model changes.
 - [ ] Unit and browser tests cover the critical lifecycle and normalization behavior.
+- [ ] The native shell targets iPadOS 17 or later, loads only a configured HTTPS application origin, and restricts navigation and bridge handling to that origin.
+- [ ] CoreMIDI exposes USB and paired Bluetooth sources with one explicit active selection, while CoreAudioKit provides Bluetooth pairing UI.
+- [ ] Swift and TypeScript reject malformed bridge commands, replies, state, inputs, and note events.
 
 ### Regression Guardrails
 
@@ -82,12 +100,18 @@ The practice experience needs reliable note input from a Roland GO:PIANO 61 with
 - Reconnection must never multiply event delivery.
 - Mock fixtures must exercise the same normalized-event path used by hardware input.
 - Native iPad input must remain an adapter behind `MidiInputPort`, not a second practice or evaluation implementation.
+- The native bridge must remain unavailable to documents outside the configured application origin.
+- CoreMIDI must have at most one connected selected source for the logical port.
+- Native attempts must travel through the same controller and persistence path as Web MIDI and mock attempts.
+- The browser application must continue to start and practice without native globals.
 
 ### Verification
 
 - **Unit tests:** Table-driven raw-message normalization tests for note-on, note-off, velocity-zero note-off, all channel boundaries, malformed input, unknown statuses, and deterministic timestamps.
 - **Lifecycle tests:** Port contract tests for device selection, explicit opening and closing, out-of-order asynchronous completion, disconnect, reconnect, repeated connect, input replacement, nullable browser payloads, late events, and listener disposal.
+- **Bridge tests:** TypeScript tests cover valid replies and pushed events plus absent handlers, rejected commands, malformed payloads, invalid state transitions, stale operations, and disposal. Pure Swift tests cover command decoding, origin policy, raw-packet normalization, stale source-generation rejection, timestamp clamping, and invalid payload rejection; live CoreMIDI endpoint lifecycle remains part of physical-device verification.
 - **Browser tests:** Playwright drives the practice page through `MockMidiInputPort`; a physical keyboard is not required by CI.
+- **Operator verification:** Build with Xcode, sign for a physical iPadOS 17-or-later device, configure a deployed HTTPS application URL, and verify both USB and Bluetooth hardware. Simulator success is not evidence of CoreMIDI hardware behavior.
 - **Coverage target:** Every normalization branch and every listener-ownership transition remains exercised.
 
 ### Scenarios
@@ -133,3 +157,27 @@ The practice experience needs reliable note input from a Roland GO:PIANO 61 with
 - Given: a connected port has active platform listeners
 - When: the practice surface is torn down
 - Then: all owned listeners are removed and subsequent platform callbacks deliver no normalized events
+
+**Scenario: Select an iPad MIDI source**
+
+- Given: the trusted application is running in the native wrapper and CoreMIDI lists two sources
+- When: the learner selects the second source
+- Then: any previous source is disconnected, exactly that source becomes active, and its validated packets reach the existing session as normalized events
+
+**Scenario: Pair a Bluetooth keyboard**
+
+- Given: the native wrapper is running on an iPad and no Bluetooth source is yet paired
+- When: the learner opens Bluetooth MIDI pairing
+- Then: the system CoreAudioKit interface is presented, and any newly available source can be selected explicitly after pairing
+
+**Scenario: Reject an untrusted bridge caller**
+
+- Given: the web view is asked to navigate or send a bridge command from outside the configured application origin
+- When: the shell evaluates that request
+- Then: it cancels the navigation or rejects the command without changing CoreMIDI state
+
+**Scenario: Reject a malformed native event**
+
+- Given: a native custom event has an unknown kind or an out-of-range channel, note, velocity, or timestamp
+- When: `NativeMidiInputPort` validates it
+- Then: no normalized event is emitted, the adapter remains usable, and a later valid event is still deliverable

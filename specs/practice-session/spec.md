@@ -4,7 +4,7 @@
 
 ### Context
 
-The learner needs a short, calm practice flow that works with a physical keyboard or deterministic mock input, survives normal device failures, and leaves useful local evidence of progress. The server-rendered page must still explain the exercise when JavaScript or MIDI is unavailable.
+The learner needs a short, calm practice flow that works with a physical keyboard on desktop or iPad, or with deterministic mock input, survives normal device failures, and leaves useful local evidence of progress. The server-rendered page must still explain the exercise when JavaScript or MIDI is unavailable.
 
 ### Current First-Slice Scope
 
@@ -12,18 +12,20 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - `GET /practice` returns the default right-hand ascent. `GET /practice?exercise=<id>` returns the selected canonical exercise, while an unknown, empty, or duplicated exercise parameter returns `404` instead of silently changing the learner's task.
 - The home and practice pages render the complete exercise chooser on the server. The selected title, instructions, expected notes, chooser, and basic limitation text remain meaningful without JavaScript; connecting input, live highlighting, evaluation, completion, and local history are progressive enhancements.
 - Enhanced mode provides input selection and connection state, a clear five-key note display, the next expected note, brief event feedback, restart, completion feedback, and a local history summary.
-- The mock adapter supports the complete browser flow without physical hardware. Supported desktop browsers may use Web MIDI through the same session boundary.
+- The mock adapter supports the complete browser flow without physical hardware. Supported desktop browsers may use Web MIDI and the iPadOS 17-or-later wrapper may use CoreMIDI through `NativeMidiInputPort`, all through the same session boundary.
 - Only completed attempts are persisted in this slice. History is filtered by exercise ID and revision; an incomplete, restarted, disconnected, or abandoned attempt does not appear as a completed history item.
+- Native MIDI completions use the `native-midi` adapter kind; they do not have a separate evaluator, completion rule, or history model.
 
 ### Future Scope
 
 - Count-in, metronome, tempo controls, timing and duration evaluation, Web Audio clicks, pause/resume, richer history, recommendations, and original steady-pulse Rhythm and Coordination exercises belong to later slices.
 - Cloud synchronization, authentication, social comparison, streaks, and remote analytics are not implied by local history.
-- A native iPad MIDI wrapper may supply input later without changing session behavior.
+- Native release distribution, signing automation, device provisioning, and native-only practice features are not implied by the thin MIDI wrapper.
 
 ### Architecture
 
 - **Entry point:** The Worker resolves the optional `exercise` query parameter against the validated library and renders `/practice`; typed client modules enhance the returned HTML without inline executable code.
+- **Platform composition:** Browser composition remains standalone. When the trusted iPad shell exposes its validated bridge, bootstrap uses `NativeMidiInputPort`; otherwise the same page offers Web MIDI where supported and deterministic mock input everywhere.
 - **Selection rule:** An omitted exercise query selects the stable canonical default. A supplied ID must resolve exactly or return `404`; the client initializes from the server-selected exercise identity embedded in the document.
 - **Session states:** A session progresses through ready, in-progress, completed, or interrupted. Input capability and connection state are related context, not substitutes for session state.
 - **Start rule:** The first evaluable note-on starts an attempt. Note-off, unsupported MIDI, device enumeration, and connection changes do not start one.
@@ -34,6 +36,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - **Completion rule:** The attempt completes once the evaluator accepts every expected event in order. Additional input does not mutate the completed result.
 - **Persistence boundary:** A local attempt repository isolates browser storage from the session controller. A versioned `localStorage` envelope is the first-slice backing store for compact completed-attempt summaries; IndexedDB remains a migration option if the data model outgrows synchronous key-value storage.
 - **Completed-attempt record:** The stored record includes a unique attempt ID, exercise ID and revision, wall-clock start and completion times for history, input adapter kind, completion status, and deterministic feedback/error counts. Raw MIDI messages and platform device objects are not required.
+- **Native attempt identity:** A session driven through `NativeMidiInputPort` records `native-midi` as its adapter kind. It uses the same local attempt repository and exercise/revision scoping as every other completion.
 - **History summary:** At minimum, the page presents a meaningful empty state and the number of completed attempts today for the selected exercise ID and revision. It may also show the most recent matching completion. “Today” uses the learner's current local calendar day.
 - **Dependencies:** Sessions consume a validated canonical exercise, `MidiInputPort`, the deterministic evaluator, and the local attempt repository. None of those domains read rendered DOM as source data.
 
@@ -49,6 +52,8 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - If client JavaScript fails, the learner still sees what to play and is not shown a false connected, completed, or empty-history state. The server-rendered history shell states neutrally that JavaScript is required to read local attempts.
 - If an exercise query is missing, the canonical default is selected. If the parameter is present but empty, unknown, or repeated, the Worker returns a non-indexable `404`; client code never substitutes a different exercise.
 - If Web MIDI is unsupported or permission is denied, the page explains the state calmly and offers the mock path.
+- If the native bridge is absent, malformed, rejected, or not running at the configured trusted origin, native input is not offered and the standalone browser paths remain usable.
+- If the native source disconnects, is replaced, or the app leaves the foreground during an active attempt, the same disconnect rule interrupts the attempt; Swift does not synthesize completion or restore progress.
 - Note-off and unsupported events do not change expected-note highlighting or start an attempt.
 - Rapid restart invalidates callbacks from the old attempt so a late event cannot mutate the new one.
 - Storage unavailability, quota failure, or a corrupt stored record does not prevent practice or erase other valid records. Completion remains visible and the learner is told that history could not be saved.
@@ -68,6 +73,8 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - Do not block practice because local history storage failed.
 - Do not add cloud storage, identity, telemetry, streak pressure, punitive scoring, or celebratory game mechanics to this slice.
 - Do not imply that the app replaces a teacher or diagnoses posture, tension, fingering, or strength.
+- Do not branch practice-session or evaluator behavior on CoreMIDI packet details, native source identity, or WKWebView messages.
+- Do not store native attempts under a web or mock adapter kind.
 
 ## Contract
 
@@ -77,13 +84,15 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - [ ] Unknown, empty, and duplicated supplied exercise parameters return `404`.
 - [ ] The server-rendered chooser identifies the selected exercise and links to every library entry.
 - [ ] Enhancement exposes input choice and state, five-key guidance, next expected note, calm feedback, restart, and completion.
-- [ ] The complete session works through deterministic mock input and through Web MIDI on supported desktop browsers.
+- [ ] The complete session works through deterministic mock input, through Web MIDI on supported desktop browsers, and through `NativeMidiInputPort` in the trusted iPad wrapper.
 - [ ] Restart after an incomplete attempt produces clean progress without a false history record.
 - [ ] Disconnect during an attempt interrupts it and requires a clean restart.
 - [ ] One completed-attempt record is stored locally and appears in the history summary.
 - [ ] Empty and unavailable history states are handled explicitly.
 - [ ] The spec is updated in the same change set when session or persistence behavior changes.
 - [ ] Unit and Playwright tests cover critical lifecycle behavior.
+- [ ] Native completions are persisted with the `native-midi` adapter kind through the existing repository.
+- [ ] Closing, disconnecting, or replacing the selected native source interrupts an active attempt by the same rule as browser input loss.
 
 ### Regression Guardrails
 
@@ -98,12 +107,15 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - A completed attempt must be persisted at most once.
 - Storage failure must not convert a completed performance into a failed musical attempt.
 - History must remain local to the browser and scoped by exercise ID and revision unless a later accepted architecture decision changes that contract.
-- Mock and Web MIDI input must share the same session and evaluation path.
+- Mock, Web MIDI, and native MIDI input must share the same session and evaluation path.
+- The presence or absence of a WKWebView bridge must not change exercise identity, evaluator results, or browser-only availability.
+- Swift must never persist an attempt or claim practice completion directly.
 
 ### Verification
 
 - **Unit tests:** Session state transitions, note-off filtering, restart invalidation, disconnect interruption, completion idempotence, local-day summary, empty history, corrupt-record isolation, and persistence failure.
 - **Integration tests:** Exercise-library selection, canonical exercise, evaluator, mock port, and attempt repository cooperate without DOM-derived data; unknown IDs fail closed.
+- **Native adapter tests:** Validated native replies, state changes, and normalized events drive the same controller; malformed payloads, stale callbacks, disconnect, and disposal cannot advance or complete an attempt.
 - **Browser tests:** Playwright opens the default and at least one non-default exercise, verifies server-rendered instructions and chooser behavior, selects mock input, plays canonical fixtures, observes guidance and feedback, completes the exercise, reloads, and sees history only for the selected exercise revision.
 - **Coverage target:** Every session transition and persistence failure branch remains exercised; snapshots alone are insufficient evidence.
 
@@ -162,3 +174,21 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - Given: the sequence is complete but browser storage rejects the write
 - When: the session saves the attempt
 - Then: completion feedback remains visible and a separate message says that history was not saved
+
+**Scenario: Complete through native MIDI**
+
+- Given: the trusted iPad wrapper selected one CoreMIDI source and the ready session uses `NativeMidiInputPort`
+- When: the learner plays the canonical notes in order
+- Then: the shared evaluator completes the exercise and the existing repository stores one attempt with adapter kind `native-midi`
+
+**Scenario: Native source disconnects during practice**
+
+- Given: a native MIDI attempt is in progress
+- When: the selected CoreMIDI source disconnects
+- Then: the shared session becomes interrupted, late native packets cannot complete it, and the learner must restart
+
+**Scenario: Open the browser without the wrapper**
+
+- Given: the application runs in an ordinary browser with no native bridge
+- When: the learner opens a practice exercise
+- Then: server-rendered content, mock input, and supported Web MIDI behavior remain available without a native error

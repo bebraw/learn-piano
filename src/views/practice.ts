@@ -97,6 +97,7 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
               <select class="practice-control mt-2 w-full px-3" id="input-kind">
                 <option value="mock">On-screen practice keys</option>
                 <option value="web-midi">Web MIDI keyboard</option>
+                <option id="native-midi-input-kind" value="native-midi" hidden disabled>iPad MIDI keyboard</option>
               </select>
             </label>
             <label class="text-sm font-semibold" for="midi-input">Device
@@ -107,6 +108,7 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
             <div class="flex flex-wrap gap-2 sm:col-span-2">
               <button class="practice-button px-4 text-sm font-semibold" id="connect-input" type="button" disabled>Connect</button>
               <button class="practice-button practice-button-secondary px-4 text-sm font-semibold" id="refresh-inputs" type="button">Refresh inputs</button>
+              <button class="practice-button practice-button-secondary px-4 text-sm font-semibold" id="pair-bluetooth-midi" type="button" hidden>Pair Bluetooth MIDI</button>
               <button class="practice-button practice-button-secondary px-4 text-sm font-semibold" id="disconnect-input" type="button" disabled>Disconnect</button>
             </div>
           </div>

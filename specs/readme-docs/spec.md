@@ -32,7 +32,7 @@ The README is the first surface for a learner or contributor. It must identify t
 
 - [ ] The README identifies Piano Practice as a local-first Cloudflare Worker application near the top.
 - [ ] It describes the six untimed right- and left-hand exercises, direct exercise selection, progressive enhancement, input options, per-exercise history, and feedback boundaries.
-- [ ] It states the desktop Web MIDI dependency and the proposed—not implemented—native iPad path.
+- [ ] It states the desktop Web MIDI dependency and explains the implemented native iPad wrapper, including its operator-owned signing and physical-device verification steps.
 - [ ] Runtime, build, verification, route, and source-layout details match the repository.
 - [ ] It explains how vendored ASDLC guidance relates to repo-specific architecture, specs, and ADRs.
 - [ ] It references a committed screenshot that represents the current application.

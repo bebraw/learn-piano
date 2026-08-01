@@ -6,7 +6,7 @@ export interface AttemptErrorCounts {
   readonly wrong: number;
 }
 
-export type AttemptInputKind = "mock" | "web-midi";
+export type AttemptInputKind = "mock" | "web-midi" | "native-midi";
 
 export interface CompletedAttemptRecord {
   readonly schemaVersion: 1;

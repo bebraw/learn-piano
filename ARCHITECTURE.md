@@ -20,7 +20,7 @@ Use this file for global constraints. Use feature specs under `specs/` for domai
 ## Piano Practice Domain
 
 - Keep the Cloudflare Worker and server-rendered HTML as the document shell. Interactive practice behavior is progressive enhancement delivered through small, same-origin TypeScript modules compiled to browser ESM.
-- Keep musical behavior independent from platform APIs. Practice sessions consume the platform-neutral `MidiInputPort`; only adapters may depend on Web MIDI or a future native CoreMIDI bridge.
+- Keep musical behavior independent from platform APIs. Practice sessions consume the platform-neutral `MidiInputPort`; only adapters may depend on Web MIDI or the native CoreMIDI bridge. The iPad wrapper must host the same web domain rather than duplicate exercises, evaluation, sessions, or persistence in Swift.
 - Treat validated, versioned exercise definitions as the canonical source for rendering, evaluation, fixtures, persistence identity, and future curriculum or notation consumers.
 - Keep live performance evaluation deterministic and local. The same canonical exercise and normalized MIDI sequence must always produce the same progress and feedback.
 - Keep completed-attempt history local-first behind `AttemptRepository`. Storage failure must not block or redefine musical completion.
@@ -52,6 +52,7 @@ Use this file for global constraints. Use feature specs under `specs/` for domai
 - `npm run diagnostics:codebase` is useful during review and refactoring, but passing or failing it is not a readiness baseline by itself.
 - Documentation-only changes should use the smallest relevant checks unless they alter executable instructions or workflow contracts.
 - Browser ESM and the generated stylesheet are public build artifacts under ignored `.generated/browser/`. Source modules remain under `src/`; generated browser files are never edited by hand.
+- Native iPad build products and Xcode DerivedData stay under ignored `.generated/ios/`; the reviewed native project and Swift sources remain under `ios/`.
 
 ## Capability Kits
 

@@ -25,11 +25,12 @@ describe("LocalStorageAttemptRepository", () => {
 
   it("persists a completed attempt and returns it after a new repository is created", async () => {
     const storage = new MemoryStorage();
-    await new LocalStorageAttemptRepository(storage).save(firstAttempt);
+    const nativeAttempt = { ...firstAttempt, inputKind: "native-midi" as const };
+    await new LocalStorageAttemptRepository(storage).save(nativeAttempt);
 
     const attempts = await new LocalStorageAttemptRepository(storage).list(firstAttempt.exerciseId, firstAttempt.exerciseRevision);
 
-    expect(attempts).toEqual([firstAttempt]);
+    expect(attempts).toEqual([nativeAttempt]);
   });
 
   it("keeps one record when the same completion is saved more than once", async () => {

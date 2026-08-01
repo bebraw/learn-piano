@@ -106,6 +106,9 @@ describe("createPracticePageView", () => {
     expect(elements.historyCount.textContent).toBe("History unavailable");
     expect(elements.persistenceMessage.hidden).toBe(false);
 
+    view.render(snapshot({ inputKind: "native-midi", connection: connection("unsupported") }));
+    expect(elements.connectionStatus.textContent).toContain("iPad MIDI bridge is unavailable");
+
     view.render(
       snapshot({
         exercise: { ...fiveNoteAscentExercise, expectedEvents: [...fiveNoteAscentExercise.expectedEvents].reverse() },

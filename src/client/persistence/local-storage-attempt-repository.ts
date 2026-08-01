@@ -105,7 +105,7 @@ function isIsoDate(value: unknown): value is string {
 }
 
 function isAttemptInputKind(value: unknown): value is AttemptInputKind {
-  return value === "mock" || value === "web-midi";
+  return value === "mock" || value === "web-midi" || value === "native-midi";
 }
 
 function isErrorCounts(value: unknown): value is CompletedAttemptRecord["errorCounts"] {

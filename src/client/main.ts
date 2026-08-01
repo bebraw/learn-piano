@@ -1,5 +1,6 @@
 import type { Exercise } from "../exercises/types.js";
 import { MockMidiInputPort } from "../midi/mock-midi-input-port.js";
+import { createNativeMidiBridgeFromHost, NativeMidiInputPort } from "../midi/native-midi-input-port.js";
 import { WebMidiInputPort } from "../midi/web-midi-input-port.js";
 import type { AttemptInputKind, AttemptRepository } from "./persistence/attempt-repository.js";
 import { LocalStorageAttemptRepository } from "./persistence/local-storage-attempt-repository.js";
@@ -17,12 +18,19 @@ export async function bootstrapPracticePage(pageDocument: Document, browserWindo
 
   const elements = collectPageElements(pageDocument, exercise);
   const mockPort = new MockMidiInputPort();
+  const nativePort = new NativeMidiInputPort({ bridge: createNativeMidiBridgeFromHost(browserWindow) });
   const controller = new PracticeController(
     exercise,
-    { mock: mockPort, "web-midi": new WebMidiInputPort() },
+    { mock: mockPort, "web-midi": new WebMidiInputPort(), "native-midi": nativePort },
     createBrowserAttemptRepository(browserWindow),
     createPracticePageView(elements),
   );
+
+  if (nativePort.capability === "supported") {
+    elements.nativeInputOption.hidden = false;
+    elements.nativeInputOption.disabled = false;
+    elements.pairBluetoothButton.hidden = false;
+  }
 
   elements.inputKind.addEventListener("change", () => {
     const kind = parseInputKind(elements.inputKind.value);
@@ -45,6 +53,16 @@ export async function bootstrapPracticePage(pageDocument: Document, browserWindo
     }
   });
   elements.disconnectButton.addEventListener("click", () => controller.disconnect());
+  elements.pairBluetoothButton.addEventListener("click", () => {
+    runAction(
+      nativePort.openBluetoothSettings().then(async (opened) => {
+        if (opened) {
+          await controller.refreshInputs();
+        }
+      }),
+      elements.feedbackMessage,
+    );
+  });
   elements.restartButton.addEventListener("click", () => controller.restart());
 
   for (const key of elements.keys) {
@@ -58,6 +76,9 @@ export async function bootstrapPracticePage(pageDocument: Document, browserWindo
 
   browserWindow.addEventListener("pagehide", (event) => handlePracticePageHide(controller, event));
   await controller.initialize();
+  if (nativePort.capability === "supported") {
+    await controller.selectInputKind("native-midi");
+  }
   return controller;
 }
 
@@ -70,6 +91,8 @@ function collectPageElements(
   readonly connectButton: HTMLButtonElement;
   readonly refreshButton: HTMLButtonElement;
   readonly disconnectButton: HTMLButtonElement;
+  readonly nativeInputOption: HTMLOptionElement;
+  readonly pairBluetoothButton: HTMLButtonElement;
   readonly restartButton: HTMLButtonElement;
   readonly feedbackMessage: HTMLElement;
   readonly keys: readonly (PracticeKeyElement & { readonly element: HTMLButtonElement })[];
@@ -88,6 +111,8 @@ function collectPageElements(
     connectButton: requireElement(pageDocument, "connect-input", HTMLButtonElement),
     refreshButton: requireElement(pageDocument, "refresh-inputs", HTMLButtonElement),
     disconnectButton: requireElement(pageDocument, "disconnect-input", HTMLButtonElement),
+    nativeInputOption: requireElement(pageDocument, "native-midi-input-kind", HTMLOptionElement),
+    pairBluetoothButton: requireElement(pageDocument, "pair-bluetooth-midi", HTMLButtonElement),
     restartButton: requireElement(pageDocument, "restart-exercise", HTMLButtonElement),
     connectionStatus: requireElement(pageDocument, "connection-status", HTMLElement),
     nextNote: requireElement(pageDocument, "next-note", HTMLElement),
@@ -126,7 +151,7 @@ function createBrowserAttemptRepository(browserWindow: Window): AttemptRepositor
 }
 
 function parseInputKind(value: string): AttemptInputKind | null {
-  return value === "mock" || value === "web-midi" ? value : null;
+  return value === "mock" || value === "web-midi" || value === "native-midi" ? value : null;
 }
 
 function runAction(action: Promise<unknown>, feedbackElement: HTMLElement): void {

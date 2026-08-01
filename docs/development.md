@@ -46,6 +46,8 @@ If local CI warns with `No such remote 'origin'`, add `GITHUB_REPO=owner/repo` t
 - Start the local Worker with `npm run dev`.
 - Build the generated stylesheet and browser ESM with `npm run build`.
 - Build only the generated browser ESM with `npm run build:client`.
+- Build the native wrapper without signing for a generic iOS Simulator destination with `npm run ios:build`.
+- Build the native wrapper and Swift tests for a generic iOS Simulator destination with `npm run ios:build-for-testing`.
 - Install the Playwright browser with `npm run playwright:install`.
 - Run end-to-end tests with `npm run e2e`.
 - Run unit and integration tests with `npm test`.
@@ -79,9 +81,56 @@ Workflow-sensitive changes include GitHub Actions workflows, package metadata or
 
 The repository ships a server-rendered, progressively enhanced piano-practice application from `src/worker.ts`. `npm run dev` starts it on `http://127.0.0.1:8787`; open `/` to choose among the six beginner exercises, `/practice` for the default right-hand ascent, or `/practice?exercise=<id>` for a specific canonical exercise. Playwright uses `npm run e2e:server` on `http://127.0.0.1:8788` so browser tests run without extra setup. The e2e server forces Chokidar polling mode to avoid file-watcher exhaustion in macOS-hosted local runs while preserving the normal `npm run dev` loop. API modules live under `src/api/`, rendered views under `src/views/`, browser orchestration and per-exercise local persistence under `src/client/`, platform-neutral input adapters under `src/midi/`, and canonical exercise logic and the validated library under `src/exercises/`. Tests remain colocated under `src/`.
 
+## iPad Wrapper
+
+The native wrapper is a direct Swift/WKWebView target at `ios/LearnPiano.xcodeproj`, with application sources under `ios/LearnPiano/` and Swift tests under `ios/LearnPianoTests/`. It targets iPadOS 17 or later and uses WKWebView, CoreMIDI, and CoreAudioKit without Capacitor or a third-party native package.
+
+Use the package scripts for reproducible unsigned compile checks, or run their underlying commands directly:
+
+```bash
+npm run ios:build
+npm run ios:build-for-testing
+
+xcodebuild -project ios/LearnPiano.xcodeproj \
+  -scheme LearnPiano \
+  -destination 'generic/platform=iOS Simulator' \
+  CODE_SIGNING_ALLOWED=NO \
+  build
+
+xcodebuild -project ios/LearnPiano.xcodeproj \
+  -scheme LearnPiano \
+  -destination 'generic/platform=iOS Simulator' \
+  CODE_SIGNING_ALLOWED=NO \
+  build-for-testing
+```
+
+Run the Swift tests from Xcode with Product > Test, or choose an installed iPad simulator from `xcodebuild -showdestinations` and run:
+
+```bash
+xcodebuild -project ios/LearnPiano.xcodeproj \
+  -scheme LearnPiano \
+  -destination 'platform=iOS Simulator,name=<installed iPad simulator>' \
+  CODE_SIGNING_ALLOWED=NO \
+  test
+```
+
+These checks require Xcode with an iOS 17-or-later simulator runtime available. Replace the destination placeholder with an exact installed simulator name. A missing compatible local runtime is a workstation setup limitation, not a supported-product constraint; install the runtime through Xcode before rerunning the command. Simulator compilation and Swift unit tests do not establish that physical USB or Bluetooth MIDI works.
+
+To run on an iPad:
+
+1. Deploy the Worker to an HTTPS URL reachable from the device.
+2. Open `ios/LearnPiano.xcodeproj`, select the `LearnPiano` scheme, configure signing, and choose an iPadOS 17-or-later physical target.
+3. Optionally set the `LEARN_PIANO_APP_URL` build setting, which populates the Info.plist `LearnPianoAppURL` key, or enter and persist the URL in the app's first-launch/server prompt.
+4. Build and run from Xcode. Select a USB source directly, or open the system Bluetooth MIDI pairing interface and then select the paired source.
+5. Verify note-on, note-off, source switching, disconnect/reconnect, background/foreground behavior, and one-source-only delivery with the actual keyboard.
+
+Outside validated local-development hosts, the configured URL must use HTTPS. The shell pins main-frame navigation and its `learnPianoMidi` bridge to the exact configured origin, validates bridge payloads in Swift, and hosts the existing web domain rather than reimplementing exercises or evaluation. The TypeScript `NativeMidiInputPort` validates replies and pushed events again. The ordinary browser application remains independently runnable when no native bridge exists.
+
+Signing identities, provisioning, the deployed URL, physical installation, and real-device validation are operator-owned. They are intentionally not embedded in repository scripts or CI.
+
 The GitHub Actions CI workflow splits fast checks, browser checks, and mutation checks into separate jobs, reads the pinned Node version from `package.json`, relies on the npm release bundled with that Node setup as long as it satisfies the repo's npm 11 constraint, runs repository-shape validation as part of the fast job, runs the browser job in the version-pinned Playwright container image `mcr.microsoft.com/playwright:v1.61.1-noble`, pins every `uses:` action reference to a full commit SHA, and cancels superseded runs on the same ref. The browser and mutation jobs use `scripts/classify-expensive-ci.mjs` after checkout and skip cache restoration, Node setup, dependency installation, and gate execution when every changed file is in a known non-runtime area such as docs, specs, template update packs, or agent skill material. Unknown paths, missing commit ranges, and classifier failures take the safe path and run the expensive gates. The full `quality-mutation` workflow job is reserved for GitHub Actions with a `github.server_url` guard, so local Agent CI runs skip it; use `npm run quality:gate:deep` or `npm run mutation` when local mutation feedback is needed. Dependency installation uses plain `npm ci`; local Agent CI explicitly prewarms through the fast job's stable `install` step, then gives parallel jobs isolated writable `node_modules` views. This prevents cross-job cache races while avoiding duplicate cold installs, unnecessary npm self-upgrades in CI, and mutable action tags.
 
-The application keeps the Tailwind v4 baseline: Tailwind input lives in `src/tailwind-input.css`, generated CSS is written to `.generated/browser/styles.css`, and typed browser modules compile beside it under `.generated/browser/client/`. Wrangler runs `npm run build` automatically before local development. The Worker handles `/styles.css` first so the documented stylesheet headers stay intact, while Wrangler's static asset binding serves the generated browser modules directly.
+The application keeps the Tailwind v4 baseline: Tailwind input lives in `src/tailwind-input.css`, generated CSS is written to `.generated/browser/styles.css`, and typed browser modules compile beside it under `.generated/browser/client/`. Wrangler runs `npm run build` automatically before local development. The Worker handles `/styles.css` first so the documented stylesheet headers stay intact, while Wrangler's static asset binding serves the generated browser modules directly. Native wrapper scripts put Xcode DerivedData and build products under ignored `.generated/ios/`.
 
 The Lighthouse setup uses the Worker application as its concrete local target. Use `LIGHTHOUSE_URL=http://127.0.0.1:8787 LIGHTHOUSE_SERVER_COMMAND="npm run dev" npm run lighthouse`. Reports cover performance, accessibility, best practices, and SEO in mobile and desktop modes and are written to `reports/lighthouse/`. Configure the performance floor with `LIGHTHOUSE_MIN_PERFORMANCE_SCORE` and the other category floors with `LIGHTHOUSE_MIN_QUALITY_SCORE`.
 
@@ -111,7 +160,7 @@ Template update packs live under `.template/updates/`. Use them to port later te
 
 ## Write Boundaries
 
-Keep workflow write targets explicit and documented. Generated public CSS and browser ESM belong in `.generated/browser/`, Prettier's disposable content cache belongs in `.cache/prettier`, Lighthouse reports belong in `reports/lighthouse/`, coverage reports belong in `reports/coverage/`, mutation reports belong in `reports/mutation/`, Stryker temporary sandboxes belong in `.stryker-tmp/`, optional Fallow caches and the generated codebase map belong in ignored `.fallow/`, Agent CI local caches belong under Agent CI's managed cache directory, template update packs belong in `.template/updates/`, the committed README screenshot belongs in `docs/screenshots/`, and local secrets belong in untracked files such as `.dev.vars` or `.env.agent-ci`.
+Keep workflow write targets explicit and documented. Generated public CSS and browser ESM belong in `.generated/browser/`, native Xcode DerivedData and build products belong in `.generated/ios/`, Prettier's disposable content cache belongs in `.cache/prettier`, Lighthouse reports belong in `reports/lighthouse/`, coverage reports belong in `reports/coverage/`, mutation reports belong in `reports/mutation/`, Stryker temporary sandboxes belong in `.stryker-tmp/`, optional Fallow caches and the generated codebase map belong in ignored `.fallow/`, Agent CI local caches belong under Agent CI's managed cache directory, template update packs belong in `.template/updates/`, the committed README screenshot belongs in `docs/screenshots/`, and local secrets belong in untracked files such as `.dev.vars` or `.env.agent-ci`.
 
 When adding a new tool or workflow that writes files, document the target path in the same change and prefer ignored local output unless the artifact is intentionally reviewed.
 

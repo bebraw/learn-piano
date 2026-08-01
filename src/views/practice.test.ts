@@ -22,6 +22,8 @@ describe("renderPracticePage", () => {
     expect(html).not.toContain("No completed attempts in this browser yet.");
     expect(html).toContain('type="module" src="/client/main.js"');
     expect(html).toContain('rel="stylesheet" href="/styles.css"');
+    expect(html).toContain('id="native-midi-input-kind" value="native-midi" hidden disabled');
+    expect(html).toContain('id="pair-bluetooth-midi" type="button" hidden');
     expect(html).toContain("Choose an exercise");
     expect(html).toContain(`${exerciseLibrary.length} available`);
     expect(html).toContain('aria-current="page"');
