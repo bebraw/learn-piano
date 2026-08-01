@@ -10,6 +10,10 @@ class FakeElement {
   public textContent: string | null = "";
   public readonly attributes = new Map<string, string>();
 
+  public getAttribute(name: string): string | null {
+    return this.attributes.get(name) ?? null;
+  }
+
   public setAttribute(name: string, value: string): void {
     this.attributes.set(name, value);
   }
@@ -40,6 +44,10 @@ describe("createPracticePageView", () => {
     expect(elements.midiInput.value).toBe("mock-midi-input");
     expect(elements.connectButton.disabled).toBe(false);
     expect(elements.connectionStatus.textContent).toBe("Choose an input and connect.");
+    expect(elements.connectionStatus.getAttribute("data-status")).toBe("idle");
+    expect(elements.practiceStage.getAttribute("data-session-status")).toBe("ready");
+    expect(elements.feedbackMessage.getAttribute("data-session-status")).toBe("ready");
+    expect(elements.nextExerciseLink.hidden).toBe(true);
     expect(elements.nextNote.textContent).toBe("C4");
     expect(elements.progressText.textContent).toBe("0 of 5 notes");
     expect(elements.historyCount.textContent).toBe("0 attempts completed today");
@@ -70,6 +78,9 @@ describe("createPracticePageView", () => {
     );
 
     expect(elements.connectionStatus.textContent).toContain("Connected to Practice keys");
+    expect(elements.connectionStatus.getAttribute("data-status")).toBe("connected");
+    expect(elements.practiceStage.getAttribute("data-session-status")).toBe("in-progress");
+    expect(elements.feedbackMessage.getAttribute("data-session-status")).toBe("in-progress");
     expect(elements.nextNote.textContent).toBe("D4");
     expect(elements.feedbackMessage.textContent).toBe("Correct: C4. D4 is next.");
     expect(keys[0]?.dataset.noteState).toBe("accepted");
@@ -103,6 +114,9 @@ describe("createPracticePageView", () => {
     expect(elements.connectionStatus.textContent).toContain("Web MIDI is unavailable");
     expect(elements.nextNote.textContent).toBe("Restart required");
     expect(elements.feedbackMessage.textContent).toContain("interrupted");
+    expect(elements.practiceStage.getAttribute("data-session-status")).toBe("interrupted");
+    expect(elements.feedbackMessage.getAttribute("data-session-status")).toBe("interrupted");
+    expect(elements.nextExerciseLink.hidden).toBe(true);
     expect(elements.historyCount.textContent).toBe("History unavailable");
     expect(elements.persistenceMessage.hidden).toBe(false);
 
@@ -120,6 +134,9 @@ describe("createPracticePageView", () => {
     view.render(snapshot({ sessionStatus: "completed", evaluation }));
     expect(elements.nextNote.textContent).toBe("Complete");
     expect(elements.feedbackMessage.textContent).toBe("The sequence was correct.");
+    expect(elements.practiceStage.getAttribute("data-session-status")).toBe("completed");
+    expect(elements.feedbackMessage.getAttribute("data-session-status")).toBe("completed");
+    expect(elements.nextExerciseLink.hidden).toBe(false);
   });
 
   it("escapes input labels and reports recent history with singular grammar", () => {
@@ -183,6 +200,7 @@ function createElements(): { readonly elements: PracticePageElements; readonly k
       refreshButton: new FakeControl(),
       disconnectButton: new FakeControl(),
       restartButton: new FakeControl(),
+      practiceStage: new FakeElement(),
       connectionStatus: new FakeElement(),
       nextNote: new FakeElement(),
       progressText: new FakeElement(),
@@ -191,6 +209,7 @@ function createElements(): { readonly elements: PracticePageElements; readonly k
       historyCount: new FakeElement(),
       historyDetail: new FakeElement(),
       keyboardHelp: new FakeElement(),
+      nextExerciseLink: new FakeElement(),
       keys: fiveNoteAscentExercise.expectedEvents.map((event, index) => ({
         eventId: event.id,
         noteNumber: event.noteNumber,

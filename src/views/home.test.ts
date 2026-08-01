@@ -8,8 +8,9 @@ describe("renderHomePage", () => {
   it("renders the piano practice entry point and stylesheet wiring", () => {
     const html = renderHomePage(exampleRoutes, exerciseLibrary, defaultExercise);
 
-    expect(html).toContain("Choose an exercise");
-    expect(html).toContain(`${exerciseLibrary.length} untimed studies`);
+    expect(html).toContain("Personal practice studio");
+    expect(html).toContain("Choose your next study");
+    expect(html).toContain("Begin today’s study");
     expect(html).toContain("A calm, local-first practice companion");
     expect(html).not.toContain("Piano practice companion overview");
     expect(html).not.toContain("Untimed exercises for both hands and varied note order");
@@ -18,7 +19,9 @@ describe("renderHomePage", () => {
       expect(html).toContain(exercise.title);
       expect(html).toContain(`href="${exercisePracticeHref(exercise)}"`);
     }
-    expect(html).toContain("does not replace a qualified piano teacher");
+    expect(html).toContain("cannot assess posture, tension, fingering, or replace a qualified teacher");
+    expect(html).toContain('class="home-hero');
+    expect(html).toContain('class="folio-grid"');
     expect(html).toContain('rel="stylesheet" href="/styles.css"');
     expect(html).toContain(`<meta name="description" content="A calm, local-first practice companion`);
     expect(html).toContain('<meta name="color-scheme" content="light">');

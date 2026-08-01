@@ -27,3 +27,25 @@ export function cssResponse(body: string): Response {
 export function escapeHtml(value: string): string {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
 }
+
+interface AppHeaderOptions {
+  readonly actionHref: string;
+  readonly actionLabel: string;
+}
+
+export function renderAppHeader({ actionHref, actionLabel }: AppHeaderOptions): string {
+  return `<header class="app-topbar">
+    <div class="app-shell flex min-h-16 items-center justify-between gap-4 py-2">
+      <a class="app-brand" href="/" aria-label="Piano Practice home">
+        <span class="app-mark" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </span>
+        <span class="app-brand-name">Piano <strong>Practice</strong></span>
+      </a>
+      <div class="flex items-center gap-2 sm:gap-4">
+        <span class="app-local-status"><span aria-hidden="true"></span>Local practice</span>
+        <a class="app-header-action" href="${escapeHtml(actionHref)}">${escapeHtml(actionLabel)}</a>
+      </div>
+    </div>
+  </header>`;
+}

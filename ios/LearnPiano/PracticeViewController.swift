@@ -20,21 +20,23 @@ final class PracticeViewController: UIViewController, WKNavigationDelegate, WKUI
         nil
     }
 
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        .lightContent
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Piano Practice"
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = UIColor(
+            red: 235.0 / 255.0,
+            green: 233.0 / 255.0,
+            blue: 224.0 / 255.0,
+            alpha: 1
+        )
         navigationItem.leftBarButtonItem = UIBarButtonItem(
             title: "Server",
             style: .plain,
             target: self,
             action: #selector(showServerPrompt)
-        )
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
-            title: "Bluetooth MIDI",
-            style: .plain,
-            target: self,
-            action: #selector(showBluetoothSettings)
         )
         NotificationCenter.default.addObserver(
             self,
@@ -97,10 +99,6 @@ final class PracticeViewController: UIViewController, WKNavigationDelegate, WKUI
         present(alert, animated: true)
     }
 
-    @objc private func showBluetoothSettings() {
-        _ = presentBluetoothSettings()
-    }
-
     @objc private func applicationDidEnterBackground() {
         bridge?.disconnectForBackground()
     }
@@ -155,7 +153,7 @@ final class PracticeViewController: UIViewController, WKNavigationDelegate, WKUI
             webView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             webView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            webView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
         ])
 
         self.bridge = bridge

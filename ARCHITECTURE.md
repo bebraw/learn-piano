@@ -20,6 +20,7 @@ Use this file for global constraints. Use feature specs under `specs/` for domai
 ## Piano Practice Domain
 
 - Keep the Cloudflare Worker and server-rendered HTML as the document shell. Interactive practice behavior is progressive enhancement delivered through small, same-origin TypeScript modules compiled to browser ESM.
+- Keep the interface organized as a responsive practice desk: the active exercise, score, keyboard, next-note cue, and feedback form one primary stage, while input setup, exercise selection, and history remain secondary. Centralize the visual system in `src/tailwind-input.css` without weakening the server-rendered document order or no-JavaScript meaning.
 - Keep musical behavior independent from platform APIs. Practice sessions consume the platform-neutral `MidiInputPort`; only adapters may depend on Web MIDI or the native CoreMIDI bridge. The iPad wrapper must host the same web domain rather than duplicate exercises, evaluation, sessions, or persistence in Swift.
 - Treat validated, versioned exercise definitions as the canonical source for rendering, evaluation, fixtures, persistence identity, and future curriculum or notation consumers.
 - Keep live performance evaluation deterministic and local. The same canonical exercise and normalized MIDI sequence must always produce the same progress and feedback.

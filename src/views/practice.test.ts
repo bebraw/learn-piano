@@ -25,7 +25,9 @@ describe("renderPracticePage", () => {
     expect(html).toContain('id="native-midi-input-kind" value="native-midi" hidden disabled');
     expect(html).toContain('id="pair-bluetooth-midi" type="button" hidden');
     expect(html).toContain("Choose an exercise");
-    expect(html).toContain(`${exerciseLibrary.length} available`);
+    expect(html).toContain(`<span class="study-count">${exerciseLibrary.length}</span>`);
+    expect(html).toContain('id="practice-stage" class="practice-stage" data-session-status="ready"');
+    expect(html).toContain('id="next-exercise"');
     expect(html).toContain('aria-current="page"');
   });
 
@@ -45,8 +47,9 @@ describe("renderPracticePage", () => {
     const html = renderPracticePage(shortExercise, [shortExercise]);
 
     expect(html).toContain("G4 · E4 · C4");
-    expect(html).toContain("Left hand · Beginner");
-    expect(html).toContain("3-note guide");
+    expect(html).toContain("Left hand");
+    expect(html).toContain("Beginner");
+    expect(html).toContain("Descending test 3-note guide");
     expect(html.match(/data-practice-key/g)).toHaveLength(3);
     expect(html.indexOf('data-note-number="60"')).toBeLessThan(html.indexOf('data-note-number="64"'));
     expect(html.indexOf('data-note-number="64"')).toBeLessThan(html.indexOf('data-note-number="67"'));

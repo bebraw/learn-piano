@@ -114,6 +114,7 @@ function collectPageElements(
     nativeInputOption: requireElement(pageDocument, "native-midi-input-kind", HTMLOptionElement),
     pairBluetoothButton: requireElement(pageDocument, "pair-bluetooth-midi", HTMLButtonElement),
     restartButton: requireElement(pageDocument, "restart-exercise", HTMLButtonElement),
+    practiceStage: requireElement(pageDocument, "practice-stage", HTMLElement),
     connectionStatus: requireElement(pageDocument, "connection-status", HTMLElement),
     nextNote: requireElement(pageDocument, "next-note", HTMLElement),
     progressText: requireElement(pageDocument, "progress-text", HTMLElement),
@@ -122,6 +123,7 @@ function collectPageElements(
     historyCount: requireElement(pageDocument, "history-count", HTMLElement),
     historyDetail: requireElement(pageDocument, "history-detail", HTMLElement),
     keyboardHelp: requireElement(pageDocument, "keyboard-help", HTMLElement),
+    nextExerciseLink: requireElement(pageDocument, "next-exercise", HTMLAnchorElement),
     keys,
   };
 }

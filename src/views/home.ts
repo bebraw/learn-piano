@@ -1,6 +1,7 @@
+import { formatMidiNote } from "../exercises/evaluator";
 import type { Exercise } from "../exercises/types";
 import { exercisePracticeHref, formatExerciseCategory, formatExerciseHand, formatExerciseNoteOrder } from "./exercise-presentation";
-import { escapeHtml } from "./shared";
+import { escapeHtml, renderAppHeader } from "./shared";
 
 const appTitle = "Piano Practice";
 const appDescription = "A calm, local-first practice companion for focused exercises, useful feedback, and progress you can understand.";
@@ -13,34 +14,39 @@ export function renderHomePage(
   const routeList = routes
     .filter((route) => route.path !== "/" && route.path !== "/practice")
     .map(
-      (route) =>
-        `<li>
-          <a class="group flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0" href="${escapeHtml(route.path)}">
-            <div>
-              <span class="text-base font-semibold tracking-[-0.01em] text-app-accent-strong">${escapeHtml(route.path)}</span>
-              <p class="mt-2 max-w-2xl leading-7 text-app-text-soft">${escapeHtml(route.purpose)}</p>
-            </div>
-            <span class="pt-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-app-text-soft transition group-hover:text-app-accent">Open</span>
-          </a>
-        </li>`,
-    )
-    .join("");
-  const exerciseList = exercises
-    .map(
-      (exercise) => `<li>
-        <a class="group block py-5 first:pt-0 last:pb-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent/30" href="${escapeHtml(exercisePracticeHref(exercise))}">
-          <span class="flex items-start justify-between gap-4">
-            <span>
-              <span class="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-app-text-soft">${escapeHtml(formatExerciseCategory(exercise))} · ${escapeHtml(formatExerciseHand(exercise))}</span>
-              <span class="mt-1.5 block text-xl font-semibold tracking-[-0.025em] text-app-text">${escapeHtml(exercise.title)}</span>
-            </span>
-            <span class="shrink-0 pt-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-app-accent transition group-hover:text-app-accent-strong">${exercise.id === defaultExercise.id ? "Start here" : "Open"}</span>
-          </span>
-          <span class="mt-2 block text-sm leading-6 text-app-text-soft">${escapeHtml(exercise.instructions)}</span>
-          <span class="mt-2 block font-semibold tracking-[0.07em] text-app-accent-strong" aria-label="Note order: ${escapeHtml(formatExerciseNoteOrder(exercise))}">${escapeHtml(formatExerciseNoteOrder(exercise))}</span>
+      (route) => `<li>
+        <a class="footer-utility-link" href="${escapeHtml(route.path)}">
+          <span>${escapeHtml(route.path)}</span>
+          <span>${escapeHtml(route.purpose)}</span>
         </a>
       </li>`,
     )
+    .join("");
+  const exerciseList = exercises
+    .map((exercise, index) => {
+      const handLabel = formatExerciseHand(exercise);
+      const selected = exercise.id === defaultExercise.id;
+      return `<li>
+        <a
+          class="folio-card group"
+          data-hand="${handLabel === "Left hand" ? "left" : "right"}"
+          href="${escapeHtml(exercisePracticeHref(exercise))}"
+        >
+          <span class="folio-card-index">${String(index + 1).padStart(2, "0")}</span>
+          <span class="folio-card-body">
+            <span class="app-eyebrow">${escapeHtml(formatExerciseCategory(exercise))} · ${escapeHtml(handLabel)}</span>
+            <span class="folio-card-title">${escapeHtml(exercise.title)}</span>
+            <span class="folio-card-copy">${escapeHtml(exercise.instructions)}</span>
+            <span class="folio-card-sequence" aria-label="Note order: ${escapeHtml(formatExerciseNoteOrder(exercise))}">${escapeHtml(formatExerciseNoteOrder(exercise))}</span>
+          </span>
+          <span class="folio-card-action">${selected ? "Start here" : `${exercise.expectedEvents.length} notes`}<span aria-hidden="true">↗</span></span>
+        </a>
+      </li>`;
+    })
+    .join("");
+  const heroKeys = [...defaultExercise.expectedEvents]
+    .sort((left, right) => left.noteNumber - right.noteNumber)
+    .map((event) => `<span><strong>${escapeHtml(formatMidiNote(event.noteNumber))}</strong></span>`)
     .join("");
 
   return `<!doctype html>
@@ -53,39 +59,73 @@ export function renderHomePage(
     <title>${escapeHtml(appTitle)}</title>
     <link rel="stylesheet" href="/styles.css">
   </head>
-  <body class="min-h-screen bg-app-canvas text-app-text antialiased">
-    <a class="fixed left-4 top-4 z-10 -translate-y-24 rounded-lg bg-app-text px-4 py-3 font-semibold text-app-canvas transition focus:translate-y-0" href="#main">Skip to main content</a>
-    <main id="main" class="mx-auto w-[min(46rem,calc(100vw-2rem))] py-12 sm:py-16">
-      <article class="space-y-10">
-        <section>
-          <p class="mb-4 text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-app-accent">Today at the piano</p>
-          <h1 class="max-w-[9ch] text-5xl leading-[0.92] font-semibold tracking-[-0.055em] sm:text-7xl">${escapeHtml(appTitle)}</h1>
-          <p class="mt-5 max-w-2xl text-lg leading-8 text-app-text-soft">${escapeHtml(appDescription)}</p>
-        </section>
-        <section class="border-y border-app-line/90 py-4">
-          <div class="mb-4 flex items-end justify-between gap-4">
-            <h2 class="text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-app-text-soft">Choose an exercise</h2>
-            <p class="text-sm text-app-text-soft">${exercises.length} untimed studies</p>
+  <body class="app-body">
+    <a class="skip-link" href="#main">Skip to main content</a>
+    ${renderAppHeader({ actionHref: exercisePracticeHref(defaultExercise), actionLabel: "Begin practice" })}
+    <main id="main" class="app-shell pb-10 pt-5 sm:pb-14 sm:pt-8">
+      <section class="home-hero app-rise" aria-labelledby="home-heading">
+        <div class="home-hero-copy">
+          <p class="app-eyebrow app-eyebrow-inverse">Personal practice studio</p>
+          <h1 id="home-heading" class="home-title">Piano<br><em>Practice</em></h1>
+          <p class="home-intro">Small, focused studies for building calm and reliable movement at the keyboard.</p>
+          <div class="mt-7 flex flex-wrap items-center gap-4">
+            <a class="app-button app-button-cue" href="${escapeHtml(exercisePracticeHref(defaultExercise))}">Begin today’s study <span aria-hidden="true">→</span></a>
+            <span class="home-hero-note">No timer. No score. Just the next note.</span>
           </div>
-          <ul class="divide-y divide-app-line/90">${exerciseList}</ul>
-          <p class="border-t border-app-line/90 pt-4 text-sm leading-6 text-app-text-soft">Play on the built-in practice keys or connect a supported desktop MIDI keyboard. There is no timer and no score.</p>
-        </section>
-        <section class="space-y-4">
-          <div class="border-t border-app-line pt-4">
-            <p class="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-app-text-soft">Where this can lead</p>
-            <p class="mt-2 leading-7 text-app-text-soft">Notes and reading, rhythm and coordination, patterns and technique, and lawful repertoire pathways toward progressive music, Sibelius, and game music.</p>
+        </div>
+        <div class="hero-score" aria-label="Recommended first exercise">
+          <div class="flex items-start justify-between gap-5">
+            <div>
+              <p class="app-eyebrow">At the bench · Study 01</p>
+              <h2 class="hero-score-title">${escapeHtml(defaultExercise.title)}</h2>
+            </div>
+            <span class="hero-hand-badge">${escapeHtml(formatExerciseHand(defaultExercise))}</span>
           </div>
-          <div class="border-t border-app-line pt-4">
-            <p class="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-app-text-soft">A useful boundary</p>
-            <p class="mt-2 leading-7 text-app-text-soft">This companion can observe MIDI notes and help organize practice. It cannot see physical technique and does not replace a qualified piano teacher.</p>
+          <p class="hero-score-task">${escapeHtml(defaultExercise.instructions)}</p>
+          <p class="hero-score-sequence" aria-label="Expected notes: ${escapeHtml(formatExerciseNoteOrder(defaultExercise))}">${escapeHtml(formatExerciseNoteOrder(defaultExercise))}</p>
+          <div class="hero-keyboard" aria-hidden="true">${heroKeys}</div>
+          <div class="hero-score-footer">
+            <span>${defaultExercise.expectedEvents.length} notes</span>
+            <span>Beginner</span>
+            <span>Untimed</span>
           </div>
-          <div class="border-t border-app-line pt-4">
-            <p class="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-app-text-soft">For tooling</p>
-            <ul class="divide-y divide-app-line/90">${routeList}</ul>
+        </div>
+      </section>
+
+      <section class="home-library app-rise" aria-labelledby="library-heading">
+        <div class="section-heading-row">
+          <div>
+            <p class="app-eyebrow">Exercise folio</p>
+            <h2 id="library-heading" class="section-title">Choose your next study</h2>
           </div>
-        </section>
-      </article>
+          <p class="section-heading-copy">Six short patterns for both hands. Each one keeps its own local practice history.</p>
+        </div>
+        <ul class="folio-grid">${exerciseList}</ul>
+      </section>
+
+      <section class="practice-principles" aria-label="Practice approach">
+        <div class="principle-block">
+          <p class="app-eyebrow">Designed for focus</p>
+          <h2>Hear the instruction.<br>See the cue. Play.</h2>
+          <p>Use the built-in keys or connect a supported MIDI keyboard. Correct notes stay visible and the next step remains clear.</p>
+        </div>
+        <div class="principle-block principle-block-muted">
+          <p class="app-eyebrow">A useful boundary</p>
+          <h2>Pitch and order,<br>without false certainty.</h2>
+          <p>This companion can observe MIDI notes and organize practice. It cannot assess posture, tension, fingering, or replace a qualified teacher.</p>
+        </div>
+        <div class="principle-note">
+          <span>Where this can lead</span>
+          <p>Notes and reading, rhythm and coordination, patterns and technique, then lawful repertoire pathways toward progressive music, Sibelius, and game music.</p>
+        </div>
+      </section>
     </main>
+    <footer class="app-footer">
+      <div class="app-shell flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between">
+        <p><strong>Piano Practice</strong> · Private progress, kept on this device.</p>
+        <ul class="footer-utilities">${routeList}</ul>
+      </div>
+    </footer>
   </body>
 </html>`;
 }

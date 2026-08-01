@@ -13,6 +13,7 @@ The repository has evolved from a runnable template stub into a personal piano-p
 - **Routes:** `/` renders the application overview and six-exercise library, `/practice` renders the canonical default, `/practice?exercise=<id>` renders an exact library selection, `/api/health` returns stable JSON, and unknown paths or supplied exercise IDs return a non-indexable 404 document.
 - **Asset pipeline:** `src/tailwind-input.css` and the browser TypeScript graph compile into `.generated/browser/`. Selective Worker-first routing preserves the `/styles.css` response contract, while Wrangler's static asset binding serves `/client/*.js` directly.
 - **Rendering boundary:** The Worker provides the document shell and meaningful initial content. Small same-origin ESM modules progressively enhance interactive practice behavior.
+- **Visual-system boundary:** Server-rendered views share the responsive practice-desk shell and token-driven visual system from `src/tailwind-input.css`. The active practice surface leads the document hierarchy; setup, exercise selection, history, and utility routes remain supporting content without changing the semantic order when the layout stacks.
 - **Client code boundary:** Worker-rendered HTML may reference typed same-origin module files but must not embed executable browser code, event-handler attributes, JavaScript URLs, remote scripts, or classic scripts.
 - **Web response baseline:** HTML responses include a restrictive same-origin CSP, a narrow Permissions Policy that allows MIDI only for the same origin, a referrer policy, MIME-sniffing protection, and no-store caching. Rendered pages include baseline metadata and keyboard bypass navigation.
 - **Dependencies:** Wrangler provides the Worker runtime; Tailwind and TypeScript build public assets; Vitest and Playwright verify module and browser behavior.
@@ -34,6 +35,8 @@ The repository has evolved from a runnable template stub into a personal piano-p
 - [ ] Wrangler starts the application without additional scaffolding.
 - [ ] `/` returns the current Piano Practice overview and visible links to all six canonical exercises.
 - [ ] `/practice` returns useful canonical default-exercise content before client enhancement.
+- [ ] Home, practice, and not-found documents share the finished application identity, responsive layout rules, and accessible interaction sizing rather than presenting disconnected prototype screens.
+- [ ] The practice document keeps the active score, keyboard, cue, and feedback visually primary at desktop and iPad sizes, then stacks supporting setup, chooser, and history content after the stage on narrow screens.
 - [ ] `?exercise=<id>` selects each known exercise server-side, while unknown, empty, or duplicated supplied parameters return `404`.
 - [ ] `/api/health` returns stable JSON for smoke tests and tooling.
 - [ ] The build emits the stylesheet and typed browser ESM under `.generated/browser/`.
@@ -54,6 +57,7 @@ The repository has evolved from a runnable template stub into a personal piano-p
 - Unknown routes must return HTTP 404 and remain non-indexable.
 - HTML responses must retain `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and the documented Content Security Policy.
 - Home and practice pages must retain descriptions, colour-scheme declarations, and skip links.
+- Responsive presentation must preserve the server-rendered heading, landmark, and focus order; CSS must not make input setup, exercise selection, or history precede the active practice stage semantically.
 
 ### Verification
 

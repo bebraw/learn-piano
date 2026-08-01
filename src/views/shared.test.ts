@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cssResponse, escapeHtml, htmlResponse } from "./shared";
+import { cssResponse, escapeHtml, htmlResponse, renderAppHeader } from "./shared";
 
 describe("htmlResponse", () => {
   it("returns no-store HTML responses", () => {
@@ -31,5 +31,16 @@ describe("cssResponse", () => {
 describe("escapeHtml", () => {
   it("escapes characters that are significant in HTML", () => {
     expect(escapeHtml(`&<>"'`)).toBe("&amp;&lt;&gt;&quot;&#39;");
+  });
+});
+
+describe("renderAppHeader", () => {
+  it("renders shared navigation and escapes action content", () => {
+    const html = renderAppHeader({ actionHref: "/practice?exercise=a&b", actionLabel: "Begin <study>" });
+
+    expect(html).toContain('aria-label="Piano Practice home"');
+    expect(html).toContain("Local practice");
+    expect(html).toContain('href="/practice?exercise=a&amp;b"');
+    expect(html).toContain("Begin &lt;study&gt;");
   });
 });

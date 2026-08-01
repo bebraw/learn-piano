@@ -11,7 +11,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - The validated library contains six canonical, original beginner exercises: right-hand C4-G4 ascent and descent, left-hand C3-G3 ascent and descent, and a C-E-D-F-G step-and-skip pattern for each hand.
 - `GET /practice` returns the default right-hand ascent. `GET /practice?exercise=<id>` returns the selected canonical exercise, while an unknown, empty, or duplicated exercise parameter returns `404` instead of silently changing the learner's task.
 - The home and practice pages render the complete exercise chooser on the server. The selected title, instructions, expected notes, chooser, and basic limitation text remain meaningful without JavaScript; connecting input, live highlighting, evaluation, completion, and local history are progressive enhancements.
-- Enhanced mode provides input selection and connection state, a clear five-key note display, the next expected note, brief event feedback, restart, completion feedback, and a local history summary.
+- Enhanced mode provides input selection and connection state, a clear five-key note display, the next expected note, brief event feedback, restart, completion feedback, and a local history summary. The score, next-note cue, keyboard, and feedback read as one primary practice stage; input setup, exercise selection, history, and scope guidance sit in a secondary rail that follows the stage when the layout stacks.
 - The mock adapter supports the complete browser flow without physical hardware. Supported desktop browsers may use Web MIDI and the iPadOS 17-or-later wrapper may use CoreMIDI through `NativeMidiInputPort`, all through the same session boundary.
 - Only completed attempts are persisted in this slice. History is filtered by exercise ID and revision; an incomplete, restarted, disconnected, or abandoned attempt does not appear as a completed history item.
 - Native MIDI completions use the `native-midi` adapter kind; they do not have a separate evaluator, completion rule, or history model.
@@ -30,6 +30,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - **Session states:** A session progresses through ready, in-progress, completed, or interrupted. Input capability and connection state are related context, not substitutes for session state.
 - **Start rule:** The first evaluable note-on starts an attempt. Note-off, unsupported MIDI, device enumeration, and connection changes do not start one.
 - **Progress rule:** The performance evaluator owns note classification and expected-event advancement. The session projects evaluator state into the display and feedback region.
+- **Presentation hierarchy:** The canonical exercise and live session state are projected into a responsive practice-desk surface. Desktop and iPad layouts may place supporting panels beside the stage, but narrow layouts preserve the stage-first document and focus order instead of visually promoting configuration over playing.
 - **Evaluation boundary:** The evaluator observes normalized note pitch and order only. Hand labels are practice instructions; MIDI input cannot verify which hand, fingering, touch, movement, or posture produced a note.
 - **Restart rule:** Restart creates a clean evaluator state for the same exercise revision, clears transient feedback and progress, and keeps already completed history. Restarting an incomplete attempt does not persist it as completed.
 - **Disconnect rule:** Losing the active input during an in-progress attempt marks it interrupted. The learner is told to reconnect and restart; events after the disconnect cannot complete that attempt.
@@ -75,6 +76,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - Do not imply that the app replaces a teacher or diagnoses posture, tension, fingering, or strength.
 - Do not branch practice-session or evaluator behavior on CoreMIDI packet details, native source identity, or WKWebView messages.
 - Do not store native attempts under a web or mock adapter kind.
+- Do not let input configuration, exercise browsing, history, or decorative progress treatment compete with the current note and keyboard as the primary practice task.
 
 ## Contract
 
@@ -84,6 +86,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - [ ] Unknown, empty, and duplicated supplied exercise parameters return `404`.
 - [ ] The server-rendered chooser identifies the selected exercise and links to every library entry.
 - [ ] Enhancement exposes input choice and state, five-key guidance, next expected note, calm feedback, restart, and completion.
+- [ ] The active practice stage remains the dominant surface at desktop and iPad sizes, with secondary panels following it in semantic and narrow-screen order.
 - [ ] The complete session works through deterministic mock input, through Web MIDI on supported desktop browsers, and through `NativeMidiInputPort` in the trusted iPad wrapper.
 - [ ] Restart after an incomplete attempt produces clean progress without a false history record.
 - [ ] Disconnect during an attempt interrupts it and requires a clean restart.
@@ -110,6 +113,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 - Mock, Web MIDI, and native MIDI input must share the same session and evaluation path.
 - The presence or absence of a WKWebView bridge must not change exercise identity, evaluator results, or browser-only availability.
 - Swift must never persist an attempt or claim practice completion directly.
+- Responsive CSS must preserve the same canonical exercise, live-region meaning, control labels, and focus sequence at every supported viewport.
 
 ### Verification
 

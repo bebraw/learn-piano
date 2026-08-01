@@ -19,7 +19,8 @@ describe("worker", () => {
     const body = await response.text();
     expect(body).toContain("Piano Practice");
     expect(body).toContain(exercisePracticeHref(defaultExercise));
-    expect(body).toContain(`${exerciseLibrary.length} untimed studies`);
+    expect(body).toContain("Choose your next study");
+    expect(body.match(/class="folio-card group"/g)).toHaveLength(exerciseLibrary.length);
     expect(body).toContain("/api/health");
   });
 
@@ -95,6 +96,6 @@ describe("worker", () => {
     expect(response.headers.get("content-type")).toContain("text/css");
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
-    await expect(response.text()).resolves.toContain("--color-app-canvas:#f3eee6");
+    await expect(response.text()).resolves.toContain("--color-app-canvas:#ebe9e0");
   });
 });

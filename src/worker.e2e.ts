@@ -5,11 +5,10 @@ test("renders the piano practice home page", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { level: 1, name: "Piano Practice" })).toBeVisible();
-  await expect(
-    page.getByText("A calm, local-first practice companion for focused exercises, useful feedback, and progress you can understand."),
-  ).toBeVisible();
-  await expect(page.getByText("Choose an exercise")).toBeVisible();
-  await expect(page.locator('a[href^="/practice?exercise="]')).toHaveCount(exerciseLibrary.length);
+  await expect(page.getByText("Small, focused studies for building calm and reliable movement at the keyboard.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Choose your next study" })).toBeVisible();
+  const exerciseFolio = page.locator(".folio-grid");
+  await expect(exerciseFolio.locator('a[href^="/practice?exercise="]')).toHaveCount(exerciseLibrary.length);
   for (const exercise of exerciseLibrary) {
     await expect(page.getByRole("link", { name: new RegExp(exercise.title) })).toBeVisible();
   }
@@ -36,6 +35,6 @@ test("serves the generated stylesheet", async ({ request }) => {
   expect(response.headers()["x-content-type-options"]).toBe("nosniff");
 
   const stylesheet = await response.text();
-  expect(stylesheet).toContain("--color-app-canvas:#f3eee6");
+  expect(stylesheet).toContain("--color-app-canvas:#ebe9e0");
   expect(stylesheet).toContain(".piano-key");
 });

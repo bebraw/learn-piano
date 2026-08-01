@@ -5,6 +5,7 @@ import type { PracticeSnapshot, PracticeView } from "./practice-controller.js";
 interface ElementLike {
   hidden: boolean | string;
   textContent: string | null;
+  getAttribute(name: string): string | null;
   setAttribute(name: string, value: string): void;
 }
 
@@ -36,6 +37,7 @@ export interface PracticePageElements {
   readonly refreshButton: ControlLike;
   readonly disconnectButton: ControlLike;
   readonly restartButton: ControlLike;
+  readonly practiceStage: ElementLike;
   readonly connectionStatus: ElementLike;
   readonly nextNote: ElementLike;
   readonly progressText: ElementLike;
@@ -44,6 +46,7 @@ export interface PracticePageElements {
   readonly historyCount: ElementLike;
   readonly historyDetail: ElementLike;
   readonly keyboardHelp: ElementLike;
+  readonly nextExerciseLink: ElementLike;
   readonly keys: readonly PracticeKeyElement[];
 }
 
@@ -86,6 +89,7 @@ function renderConnection(elements: PracticePageElements, snapshot: PracticeSnap
   const connected = snapshot.connection.status === "connected";
   const selectedInput = snapshot.inputs.find((input) => input.id === snapshot.connection.selectedInputId);
   elements.connectionStatus.textContent = connectionMessage(snapshot, selectedInput?.label);
+  elements.connectionStatus.setAttribute("data-status", snapshot.connection.status);
   elements.connectButton.disabled = elements.midiInput.value === "" || connected || snapshot.connection.status === "requesting-permission";
   elements.refreshButton.disabled = snapshot.connection.status === "requesting-permission";
   elements.disconnectButton.disabled = !connected;
@@ -114,6 +118,10 @@ function renderSession(elements: PracticePageElements, snapshot: PracticeSnapsho
   const nextEvent = snapshot.exercise.expectedEvents[snapshot.evaluation.nextExpectedIndex];
   const mockKeysEnabled = snapshot.inputKind === "mock" && snapshot.connection.status === "connected";
   const activeNotes = new Set(snapshot.activeNoteNumbers);
+
+  elements.practiceStage.setAttribute("data-session-status", snapshot.sessionStatus);
+  elements.feedbackMessage.setAttribute("data-session-status", snapshot.sessionStatus);
+  elements.nextExerciseLink.hidden = snapshot.sessionStatus !== "completed";
 
   for (const [index, event] of snapshot.exercise.expectedEvents.entries()) {
     const key = elements.keys.find((candidate) => candidate.eventId === event.id);
