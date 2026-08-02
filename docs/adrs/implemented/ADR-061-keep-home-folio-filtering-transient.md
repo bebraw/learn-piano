@@ -6,7 +6,7 @@
 
 ## Context
 
-The canonical library now contains thirty studies across both hands, several parallel curriculum tracks, and both untimed and pulse-guided practice. The complete home folio remains freely selectable, but scanning every card makes it harder to choose a relevant study. Canonical exercises already carry hand, multi-track curriculum, and evaluation-mode metadata, so a discovery aid can reuse established facts without introducing learner-profile or progression data.
+The canonical library now contains thirty-three studies: thirty original foundations plus three sourced public-domain learning arrangements across both hands, several parallel curriculum tracks, and both untimed and pulse-guided practice. The complete home folio remains freely selectable, but scanning every card makes it harder to choose a relevant study. Canonical exercises already carry hand, multi-track curriculum, and evaluation-mode metadata, so a discovery aid can reuse established facts without introducing learner-profile or progression data.
 
 Filtering has architectural choices that affect later work. It could be server-driven through URLs, persisted as a browser preference, derived from one displayed category, or kept as page-local progressive enhancement. URL or storage state would make the filter a durable input with navigation and migration contracts. A single-category projection would contradict the curriculum rule that one study may belong to several parallel tracks. Server-only filtering would also weaken the complete no-JavaScript folio baseline established by ADR-052.
 
@@ -15,13 +15,13 @@ Filtering has architectural choices that affect later work. It could be server-d
 Keep home-folio filtering as transient typed client enhancement over canonical exercise metadata:
 
 - Server-render every canonical study link in canonical library order. Render the filter controls hidden until enhancement initializes, so the no-JavaScript document exposes the complete folio rather than non-functional controls.
-- Project focus membership from every canonical curriculum-tag prefix matching Notes & reading, Rhythm & coordination, or Patterns & technique. A multi-track study appears under every matching focus; focus is not an exclusive category.
+- Project focus membership from every canonical curriculum-tag prefix matching Notes & reading, Rhythm & coordination, Patterns & technique, or Repertoire. A multi-track study appears under every matching focus; focus is not an exclusive category.
 - Project hand membership from canonical event hands. Right- or left-hand studies match their declared hand, while a both-hands study matches both participating-hand filters, consistent with overview hand summaries.
 - Project timing membership from the canonical evaluation mode. `untimed-ordered-notes` appears as `Untimed`; `timed-ordered-notes` appears as the learner-facing `Pulse-guided` option because every current timed study includes count-in and pulse guidance.
 - Compose focus, hand, and timing as an intersection, hide only unmatched home list items, and preserve the relative order and DOM identity of visible cards.
 - Initialize All/All/All on every page load and provide an explicit reset. Do not store filter state, put it in the URL, or treat it as a learner goal.
 - Keep filtering independent from local-history reads, completion badges, overview totals, recommendation eligibility and order, practice-page selection, evaluation, and attempt persistence.
-- Omit Repertoire Pathways from the current control until lawful launchable exercises can match it. Unknown future tracks remain visible under All.
+- Expose Repertoire once ADR-064's lawful public-domain learning arrangements carry the `repertoire` prefix. Unknown future tracks remain visible under All.
 
 This decision extends ADR-052's lightweight progressive-enhancement boundary and leaves ADR-056's recommendation inputs unchanged.
 
@@ -36,6 +36,7 @@ The library has become broad enough that learner-controlled discovery needs more
 - Learners can narrow a large folio without losing the unrestricted starting view.
 - Multi-track curriculum meaning remains honest and inclusive.
 - Learners can separate pitch-order work from studies that add pulse guidance without changing exercise availability or evidence.
+- Learners can isolate sourced public-domain repertoire without turning it into a locked or exclusive pathway.
 - The full server document, practice URLs, recommendations, and local evidence stay stable.
 - No dependency, storage migration, exercise revision, or framework is required.
 
@@ -68,4 +69,4 @@ Query-driven server filtering could produce smaller responses, but the current l
 
 ### Keep The Unfiltered Grid Only
 
-This preserves the fewest concepts, but thirty similar cards already make deliberate browsing costly. The existing metadata provides a bounded improvement without introducing planning or progression behavior.
+This preserves the fewest concepts, but thirty-three similar cards already make deliberate browsing costly. The existing metadata provides a bounded improvement without introducing planning or progression behavior.

@@ -18,8 +18,9 @@ describe("projectFolioCurriculumFocuses", () => {
         "notes-and-reading.keyboard-geography",
         "patterns-and-technique.step-skip-coordination",
         "rhythm-and-coordination.hands-separately",
+        "repertoire.public-domain",
       ]),
-    ).toEqual(["notes-and-reading", "rhythm-and-coordination", "patterns-and-technique"]);
+    ).toEqual(["notes-and-reading", "rhythm-and-coordination", "patterns-and-technique", "repertoire"]);
   });
 
   it("ignores unrelated metadata while accepting a track-level tag", () => {
@@ -71,6 +72,7 @@ describe("folio filter value guards", () => {
   it("accepts only rendered focus, hand, timing, and curriculum-focus values", () => {
     expect(isFolioFocusFilter("all")).toBe(true);
     expect(isFolioFocusFilter("notes-and-reading")).toBe(true);
+    expect(isFolioFocusFilter("repertoire")).toBe(true);
     expect(isFolioFocusFilter("repertoire-pathways")).toBe(false);
     expect(isFolioHandFilter("left")).toBe(true);
     expect(isFolioHandFilter("both")).toBe(false);

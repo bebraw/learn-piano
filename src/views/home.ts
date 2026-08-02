@@ -10,6 +10,7 @@ import {
 import {
   exercisePracticeHref,
   formatExerciseCategory,
+  formatExerciseDifficulty,
   formatExerciseHand,
   formatExerciseNoteOrder,
   formatExerciseTimingLabel,
@@ -43,6 +44,7 @@ export function renderHomePage(
       const timing = projectFolioStudyTiming(exercise.evaluationMode);
       const selected = exercise.id === defaultExercise.id;
       const timingLabel = formatExerciseTimingLabel(exercise, true);
+      const sourceLine = renderFolioSource(exercise);
       return `<li data-folio-entry data-hand="${hand}" data-focuses="${focuses.join(" ")}" data-timing="${timing}">
         <a
           class="folio-card group"
@@ -50,12 +52,14 @@ export function renderHomePage(
           data-exercise-revision="${exercise.revision}"
           data-hand="${hand}"
           data-mode="${timing}"
+          data-source-kind="${exercise.source.kind}"
           href="${escapeHtml(exercisePracticeHref(exercise))}"
         >
           <span class="folio-card-index">${String(index + 1).padStart(2, "0")}</span>
           <span class="folio-card-body">
-            <span class="app-eyebrow">${escapeHtml(formatExerciseCategory(exercise))} · ${escapeHtml(handLabel)}</span>
+            <span class="app-eyebrow">${escapeHtml(formatExerciseCategory(exercise))} · ${escapeHtml(formatExerciseDifficulty(exercise))} · ${escapeHtml(handLabel)}</span>
             <span class="folio-card-title">${escapeHtml(exercise.title)}</span>
+            ${sourceLine}
             <span class="folio-card-copy">${escapeHtml(exercise.instructions)}</span>
             <span class="folio-card-sequence" aria-label="Note order: ${escapeHtml(formatExerciseNoteOrder(exercise))}">${escapeHtml(formatExerciseNoteOrder(exercise))}</span>
             <span class="folio-card-timing">${escapeHtml(timingLabel)}</span>
@@ -168,7 +172,7 @@ export function renderHomePage(
             <p class="app-eyebrow">Exercise folio</p>
             <h2 id="library-heading" class="section-title">Choose your next study</h2>
           </div>
-          <p class="section-heading-copy">${exercises.length} short patterns for both hands, including pulse and subdivision studies. Each one keeps its own local practice history.</p>
+          <p class="section-heading-copy">${exercises.length} focused studies and repertoire excerpts for both hands, including pulse and subdivision work. Each one keeps its own local practice history.</p>
         </div>
         ${renderFolioFilters(exercises.length)}
         <ul class="folio-grid" id="folio-grid">${exerciseList}</ul>
@@ -200,6 +204,14 @@ export function renderHomePage(
     <script type="module" src="/client/main.js"></script>
   </body>
 </html>`;
+}
+
+function renderFolioSource(exercise: Exercise): string {
+  if (exercise.source.kind !== "public-domain" || exercise.source.attribution === undefined) {
+    return "";
+  }
+
+  return `<span class="folio-card-source"><span>Public-domain learning arrangement</span> · ${escapeHtml(exercise.source.attribution)}</span>`;
 }
 
 function renderFolioFilters(studyCount: number): string {

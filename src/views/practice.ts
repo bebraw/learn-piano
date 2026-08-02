@@ -63,6 +63,7 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
     .join("");
   const staffPitchGuide = renderStaffPitchGuide(exercise);
   const exerciseCatalog = renderExerciseCatalog(exercise, exerciseLibrary);
+  const sourceNote = renderPracticeSource(exercise);
 
   return `<!doctype html>
 <html lang="en">
@@ -90,10 +91,12 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
           <p class="app-eyebrow"><a href="/">Exercise folio</a> <span aria-hidden="true">/</span> ${escapeHtml(categoryLabel)}</p>
           <h1>${escapeHtml(exercise.title)}</h1>
           <p class="practice-heading-copy">${escapeHtml(exercise.instructions)}</p>
+          ${sourceNote}
         </div>
         <div class="practice-meta" aria-label="Exercise details">
           <span>${escapeHtml(handLabel)}</span>
           <span>${escapeHtml(difficultyLabel)}</span>
+          ${exercise.source.kind === "public-domain" ? "<span>Public-domain excerpt</span>" : ""}
           ${
             timing === null
               ? "<span>Untimed</span>"
@@ -262,6 +265,27 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
     <script type="module" src="/client/main.js"></script>
   </body>
 </html>`;
+}
+
+function renderPracticeSource(exercise: Exercise): string {
+  const { source } = exercise;
+  if (
+    source.kind !== "public-domain" ||
+    source.attribution === undefined ||
+    source.workTitle === undefined ||
+    source.license === undefined ||
+    source.referenceUrl === undefined ||
+    source.adaptationNote === undefined
+  ) {
+    return "";
+  }
+
+  return `<aside class="practice-source-note" aria-label="Repertoire source and arrangement">
+    <p class="app-eyebrow">Public-domain learning arrangement</p>
+    <p class="practice-source-work"><strong>${escapeHtml(source.attribution)}</strong> · ${escapeHtml(source.workTitle)}</p>
+    <p class="practice-source-scope">${escapeHtml(source.adaptationNote)}</p>
+    <p class="practice-source-rights"><span>${escapeHtml(source.license)}</span><a href="${escapeHtml(source.referenceUrl)}" target="_blank" rel="noreferrer">Reference score <span aria-hidden="true">↗</span></a></p>
+  </aside>`;
 }
 
 function renderExerciseCatalog(selectedExercise: Exercise, exerciseLibrary: readonly Exercise[]): string {

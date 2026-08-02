@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { CompletedAttemptRecord } from "../client/persistence/attempt-repository.js";
-import { STEP_SKIP_LEFT_HAND_EXERCISE_ID, STEP_SKIP_RIGHT_HAND_EXERCISE_ID } from "../exercises/library/beginner-five-note-exercises.js";
+import {
+  FIVE_NOTE_DESCENT_RIGHT_HAND_EXERCISE_ID,
+  STEP_SKIP_LEFT_HAND_EXERCISE_ID,
+  STEP_SKIP_RIGHT_HAND_EXERCISE_ID,
+} from "../exercises/library/beginner-five-note-exercises.js";
 import {
   D_MINOR_FIVE_NOTE_ASCENT_LEFT_HAND_EXERCISE_ID,
   D_MINOR_FIVE_NOTE_ASCENT_RIGHT_HAND_EXERCISE_ID,
@@ -29,6 +33,11 @@ import {
   REPEATED_NOTES_LEFT_HAND_EXERCISE_ID,
   REPEATED_NOTES_RIGHT_HAND_EXERCISE_ID,
 } from "../exercises/library/repeated-note-exercises.js";
+import {
+  BACH_INVENTION_1_OPENING_MOTIF_RIGHT_HAND_EXERCISE_ID,
+  BEETHOVEN_ODE_TO_JOY_OPENING_RIGHT_HAND_EXERCISE_ID,
+  PACHELBEL_CANON_GROUND_BASS_LEFT_HAND_EXERCISE_ID,
+} from "../exercises/library/public-domain-repertoire-exercises.js";
 import {
   STEADY_QUARTER_LEFT_HAND_EXERCISE_ID,
   STEADY_QUARTER_RIGHT_HAND_EXERCISE_ID,
@@ -616,6 +625,52 @@ describe("recommendNextStudy", () => {
       });
     },
   );
+
+  it("recommends the Beethoven arrangement after its right-hand descent prerequisite", () => {
+    const beethoven = requireLibraryExercise(BEETHOVEN_ODE_TO_JOY_OPENING_RIGHT_HAND_EXERCISE_ID);
+    const library = prerequisiteClosure(beethoven);
+    const attempts = completedDependencies(beethoven);
+
+    expect(recommendNextStudy(library, attempts, FIVE_NOTE_DESCENT_RIGHT_HAND_EXERCISE_ID)).toEqual({
+      kind: "new-study",
+      exercise: beethoven,
+      reason: { kind: "direct-dependent", prerequisiteExerciseIds: [FIVE_NOTE_DESCENT_RIGHT_HAND_EXERCISE_ID] },
+    });
+  });
+
+  it("gates the Bach arrangement on both right-hand preparation studies", () => {
+    const bach = requireLibraryExercise(BACH_INVENTION_1_OPENING_MOTIF_RIGHT_HAND_EXERCISE_ID);
+    const library = prerequisiteClosure(bach);
+
+    expect(recommendNextStudy(library, completedDependencies(bach, [ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID]), null)?.exercise).not.toBe(
+      bach,
+    );
+    expect(recommendNextStudy(library, completedDependencies(bach), ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID)).toEqual({
+      kind: "new-study",
+      exercise: bach,
+      reason: {
+        kind: "direct-dependent",
+        prerequisiteExerciseIds: [STEP_SKIP_RIGHT_HAND_EXERCISE_ID, ORDERED_CHORD_TONES_RIGHT_HAND_EXERCISE_ID],
+      },
+    });
+  });
+
+  it("gates the Pachelbel arrangement on its complete left-hand preparation chain", () => {
+    const pachelbel = requireLibraryExercise(PACHELBEL_CANON_GROUND_BASS_LEFT_HAND_EXERCISE_ID);
+    const library = prerequisiteClosure(pachelbel);
+
+    expect(
+      recommendNextStudy(library, completedDependencies(pachelbel, [D_MINOR_FIVE_NOTE_ASCENT_LEFT_HAND_EXERCISE_ID]), null)?.exercise,
+    ).not.toBe(pachelbel);
+    expect(recommendNextStudy(library, completedDependencies(pachelbel), D_MINOR_FIVE_NOTE_ASCENT_LEFT_HAND_EXERCISE_ID)).toEqual({
+      kind: "new-study",
+      exercise: pachelbel,
+      reason: {
+        kind: "direct-dependent",
+        prerequisiteExerciseIds: [ORDERED_CHORD_TONES_LEFT_HAND_EXERCISE_ID, D_MINOR_FIVE_NOTE_ASCENT_LEFT_HAND_EXERCISE_ID],
+      },
+    });
+  });
 });
 
 function requireLibraryExercise(id: string): Exercise {
@@ -624,6 +679,29 @@ function requireLibraryExercise(id: string): Exercise {
     throw new Error(`Missing canonical exercise ${id}`);
   }
   return exercise;
+}
+
+function prerequisiteClosure(target: Exercise): readonly Exercise[] {
+  const includedIds = new Set<string>([target.id]);
+  const visit = (exercise: Exercise): void => {
+    for (const prerequisiteId of exercise.prerequisites) {
+      if (includedIds.has(prerequisiteId)) {
+        continue;
+      }
+      const prerequisite = requireLibraryExercise(prerequisiteId);
+      includedIds.add(prerequisite.id);
+      visit(prerequisite);
+    }
+  };
+  visit(target);
+  return exerciseLibrary.filter(({ id }) => includedIds.has(id));
+}
+
+function completedDependencies(target: Exercise, omittedIds: readonly string[] = []): readonly StudyAttemptEvidence[] {
+  const omitted = new Set(omittedIds);
+  return prerequisiteClosure(target)
+    .filter(({ id }) => id !== target.id && !omitted.has(id))
+    .map((exercise, index) => attempt(exercise, `2026-08-01T08:${String(index).padStart(2, "0")}:00.000Z`));
 }
 
 function exercise(id: string, prerequisites: readonly string[] = [], revision = 1): Exercise {

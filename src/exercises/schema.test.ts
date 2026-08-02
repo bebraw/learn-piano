@@ -31,7 +31,14 @@ interface MutableExerciseDocument {
   timing?: MutableExerciseTiming;
   difficulty: string;
   expectedEvents: MutableExpectedEvent[];
-  source: { kind: string; attribution?: string; license?: string };
+  source: {
+    kind: string;
+    attribution?: string;
+    workTitle?: string;
+    license?: string;
+    referenceUrl?: string;
+    adaptationNote?: string;
+  };
   prerequisites: unknown;
   curriculumTags: unknown;
   repertoireGoalTags: unknown;
@@ -314,6 +321,73 @@ describe("parseExercise", () => {
     expectInvalid(malformed, "exercise.source.attribution");
     expectInvalid(malformed, "exercise.source.license");
   });
+
+  it("preserves complete public-domain provenance", () => {
+    const document = createExerciseDocument();
+    document.source = {
+      kind: "public-domain",
+      attribution: "Example Composer",
+      workTitle: "Example Work, Op. 1",
+      license: "Public-domain composition and source score",
+      referenceUrl: "https://example.com/reference-score",
+      adaptationNote: "Independent eight-note learning arrangement.",
+    };
+
+    expect(parseExercise(document).source).toEqual(document.source);
+  });
+
+  it.each(["attribution", "workTitle", "license", "referenceUrl", "adaptationNote"] as const)(
+    "requires public-domain source field %s",
+    (field) => {
+      const document = createExerciseDocument();
+      document.source = {
+        kind: "public-domain",
+        attribution: "Example Composer",
+        workTitle: "Example Work, Op. 1",
+        license: "Public domain",
+        referenceUrl: "https://example.com/reference-score",
+        adaptationNote: "Independent learning arrangement.",
+      };
+      delete document.source[field];
+
+      expectInvalid(document, `exercise.source.${field}`);
+    },
+  );
+
+  it.each(["attribution", "workTitle", "license", "referenceUrl", "adaptationNote"] as const)(
+    "rejects blank public-domain source field %s",
+    (field) => {
+      const document = createExerciseDocument();
+      document.source = {
+        kind: "public-domain",
+        attribution: "Example Composer",
+        workTitle: "Example Work, Op. 1",
+        license: "Public domain",
+        referenceUrl: "https://example.com/reference-score",
+        adaptationNote: "Independent learning arrangement.",
+      };
+      document.source[field] = "";
+
+      expectInvalid(document, `exercise.source.${field}`);
+    },
+  );
+
+  it.each(["http://example.com/score", "https://user:secret@example.com/score", "not-a-url"])(
+    "rejects unsafe public-domain reference URL %s",
+    (referenceUrl) => {
+      const document = createExerciseDocument();
+      document.source = {
+        kind: "public-domain",
+        attribution: "Example Composer",
+        workTitle: "Example Work, Op. 1",
+        license: "Public domain",
+        referenceUrl,
+        adaptationNote: "Independent learning arrangement.",
+      };
+
+      expectInvalid(document, "exercise.source.referenceUrl");
+    },
+  );
 
   it("allows repeated pitches when event IDs stay distinct", () => {
     const document = createExerciseDocument();

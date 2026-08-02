@@ -11,6 +11,7 @@ import {
   orderedDMinorChordTonesRightHandExercise,
 } from "./exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "./exercises/library/repeated-note-exercises.js";
+import { bachInvention1OpeningMotifRightHandExercise } from "./exercises/library/public-domain-repertoire-exercises.js";
 import { steadyBrokenChordRightHandExercise } from "./exercises/library/steady-broken-chord-exercises.js";
 import { threeFourBrokenChordRightHandExercise } from "./exercises/library/three-four-broken-chord-exercises.js";
 import { ATTEMPT_STORAGE_KEY } from "./client/persistence/attempt-repository.js";
@@ -51,6 +52,32 @@ test("keeps the exercise useful without JavaScript", async ({ baseURL, browser }
   await expect(exerciseChooser.locator('a[aria-current="page"]')).toHaveCount(1);
   await expect(exerciseChooser.getByRole("link", { name: new RegExp(alternateExercise.title) })).toHaveAttribute("aria-current", "page");
   await expect(page.locator("[data-staff-pitch-guide]")).toHaveAttribute("data-staff-clef", "bass");
+
+  await context.close();
+});
+
+test("keeps sourced repertoire useful without JavaScript", async ({ baseURL, browser }) => {
+  if (baseURL === undefined) {
+    throw new Error("Playwright baseURL is required");
+  }
+
+  const exercise = bachInvention1OpeningMotifRightHandExercise;
+  const source = exercise.source;
+  if (source.workTitle === undefined || source.referenceUrl === undefined) {
+    throw new Error("The Bach repertoire fixture requires complete source metadata");
+  }
+
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.goto(`${baseURL}${exercisePracticeHref(exercise)}`);
+
+  await expect(page.getByRole("heading", { level: 1, name: exercise.title })).toBeVisible();
+  await expect(page.getByText(exercise.instructions)).toBeVisible();
+  await expect(page.getByLabel("Repertoire source and arrangement")).toContainText(source.workTitle);
+  await expect(page.getByRole("link", { name: /Reference score/ })).toHaveAttribute("href", source.referenceUrl);
+  await expect(page.locator("[data-staff-note]")).toHaveCount(8);
+  await expect(page.getByRole("navigation", { name: "Choose an exercise" }).getByRole("link")).toHaveCount(exerciseLibrary.length);
+  await expect(page.getByText("Live MIDI, note highlighting, and history need JavaScript.")).toBeVisible();
 
   await context.close();
 });

@@ -10,6 +10,7 @@ import {
   orderedDMinorChordTonesRightHandExercise,
 } from "./exercises/library/ordered-chord-tone-exercises";
 import { repeatedNotesRightHandExercise } from "./exercises/library/repeated-note-exercises";
+import { bachInvention1OpeningMotifRightHandExercise } from "./exercises/library/public-domain-repertoire-exercises.js";
 import { steadyBrokenChordRightHandExercise } from "./exercises/library/steady-broken-chord-exercises.js";
 import { threeFourBrokenChordRightHandExercise } from "./exercises/library/three-four-broken-chord-exercises.js";
 import { exercisePracticeHref } from "./views/exercise-presentation";
@@ -36,12 +37,25 @@ describe("worker", () => {
     expect(body).toContain("Enable JavaScript to read completions saved in this browser.");
     expect(body).toContain("data-home-root");
     expect(body).toContain('type="module" src="/client/main.js"');
-    expect(exerciseLibrary).toHaveLength(30);
+    expect(exerciseLibrary).toHaveLength(33);
     expect(body.match(/class="folio-card group"/g)).toHaveLength(exerciseLibrary.length);
     expect(body.match(/data-completion-badge hidden/g)).toHaveLength(exerciseLibrary.length);
     expect(body.match(/data-mode="timed"/g)).toHaveLength(18);
     expect(body.match(/Steady pulse · 60 BPM/g)).toHaveLength(10);
     expect(body).toContain("/api/health");
+  });
+
+  it("renders public-domain repertoire provenance from canonical metadata", async () => {
+    const response = await handleRequest(
+      new Request(`http://example.com${exercisePracticeHref(bachInvention1OpeningMotifRightHandExercise)}`),
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("Public-domain learning arrangement");
+    expect(body).toContain(bachInvention1OpeningMotifRightHandExercise.source.attribution);
+    expect(body).toContain(bachInvention1OpeningMotifRightHandExercise.source.workTitle);
+    expect(body).toContain(bachInvention1OpeningMotifRightHandExercise.source.referenceUrl);
   });
 
   it("renders canonical practice instructions before enhancement", async () => {

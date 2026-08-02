@@ -66,7 +66,7 @@ describe("initializeHomeFolioFilter", () => {
     initializeHomeFolioFilter(page.elements);
 
     expect(page.root.hidden).toBe(false);
-    expect(page.focusControls.map(({ checked }) => checked)).toEqual([true, false, false, false]);
+    expect(page.focusControls.map(({ checked }) => checked)).toEqual([true, false, false, false, false]);
     expect(page.handControls.map(({ checked }) => checked)).toEqual([true, false, false]);
     expect(page.timingControls.map(({ checked }) => checked)).toEqual([true, false, false]);
     expect(page.items[0]!.element.hidden).toBe(false);
@@ -139,6 +139,7 @@ function createElements(items: FakeStudy[]): {
     new FakeFilterControl("notes-and-reading"),
     new FakeFilterControl("rhythm-and-coordination"),
     new FakeFilterControl("patterns-and-technique"),
+    new FakeFilterControl("repertoire"),
   ];
   const handControls = [new FakeFilterControl("all"), new FakeFilterControl("right"), new FakeFilterControl("left")];
   const timingControls = [new FakeFilterControl("all"), new FakeFilterControl("untimed"), new FakeFilterControl("timed")];

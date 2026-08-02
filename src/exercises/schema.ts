@@ -51,6 +51,30 @@ function readOptionalNonEmptyString(value: unknown, path: string, issues: Exerci
   return readNonEmptyString(value, path, issues);
 }
 
+function readOptionalHttpsUrl(value: unknown, path: string, issues: ExerciseValidationIssue[]): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const url = readNonEmptyString(value, path, issues);
+  if (url.length === 0) {
+    return undefined;
+  }
+
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" || parsed.username.length > 0 || parsed.password.length > 0) {
+      issues.push({ path, message: "must be an HTTPS URL without credentials" });
+      return undefined;
+    }
+  } catch {
+    issues.push({ path, message: "must be a valid absolute URL" });
+    return undefined;
+  }
+
+  return url;
+}
+
 function readPositiveInteger(value: unknown, path: string, issues: ExerciseValidationIssue[], fallback = 1): number {
   if (typeof value === "number" && Number.isInteger(value) && value > 0) {
     return value;
@@ -132,12 +156,26 @@ function readSource(value: unknown, path: string, issues: ExerciseValidationIssu
 
   const kind = readLiteral<ExerciseSourceKind>(value.kind, EXERCISE_SOURCE_KINDS, "original", `${path}.kind`, issues);
   const attribution = readOptionalNonEmptyString(value.attribution, `${path}.attribution`, issues);
+  const workTitle = readOptionalNonEmptyString(value.workTitle, `${path}.workTitle`, issues);
   const license = readOptionalNonEmptyString(value.license, `${path}.license`, issues);
+  const referenceUrl = readOptionalHttpsUrl(value.referenceUrl, `${path}.referenceUrl`, issues);
+  const adaptationNote = readOptionalNonEmptyString(value.adaptationNote, `${path}.adaptationNote`, issues);
+
+  if (kind === "public-domain") {
+    for (const field of ["attribution", "workTitle", "license", "referenceUrl", "adaptationNote"] as const) {
+      if (value[field] === undefined) {
+        issues.push({ path: `${path}.${field}`, message: "is required for public-domain material" });
+      }
+    }
+  }
 
   return {
     kind,
     ...(attribution === undefined ? {} : { attribution }),
+    ...(workTitle === undefined ? {} : { workTitle }),
     ...(license === undefined ? {} : { license }),
+    ...(referenceUrl === undefined ? {} : { referenceUrl }),
+    ...(adaptationNote === undefined ? {} : { adaptationNote }),
   };
 }
 

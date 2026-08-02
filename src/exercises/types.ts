@@ -14,7 +14,10 @@ export type ExerciseSourceKind = (typeof EXERCISE_SOURCE_KINDS)[number];
 export interface ExerciseSourceMetadata {
   readonly kind: ExerciseSourceKind;
   readonly attribution?: string;
+  readonly workTitle?: string;
   readonly license?: string;
+  readonly referenceUrl?: string;
+  readonly adaptationNote?: string;
 }
 
 export interface NoteExerciseEvent {

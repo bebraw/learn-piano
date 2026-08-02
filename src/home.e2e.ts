@@ -18,13 +18,15 @@ function completedAttempt(overrides: Partial<CompletedAttemptRecord> = {}): Comp
 }
 
 test("enhances empty local history without restricting the library", async ({ page }) => {
+  const rightHandStudyCount = exerciseLibrary.filter((exercise) => exercise.expectedEvents.some(({ hand }) => hand !== "left")).length;
+  const leftHandStudyCount = exerciseLibrary.filter((exercise) => exercise.expectedEvents.some(({ hand }) => hand !== "right")).length;
   await page.goto("/");
 
   await expect(page.locator("#home-overview-status")).toHaveText(`Saved completion for 0 of ${exerciseLibrary.length} current studies.`);
   await expect(page.locator("#home-overview-details")).toBeVisible();
   await expect(page.locator("#home-overview-study-count")).toHaveText(`0 of ${exerciseLibrary.length}`);
-  await expect(page.locator("#home-overview-right-count")).toHaveText("0 of 15");
-  await expect(page.locator("#home-overview-left-count")).toHaveText("0 of 15");
+  await expect(page.locator("#home-overview-right-count")).toHaveText(`0 of ${rightHandStudyCount}`);
+  await expect(page.locator("#home-overview-left-count")).toHaveText(`0 of ${leftHandStudyCount}`);
   await expect(page.locator("#home-overview-recent")).toBeHidden();
   await expect(page.locator("#home-overview-recommendation-title")).toHaveText(defaultExercise.title);
   await expect(page.locator("#home-overview-recommendation-link")).toHaveAttribute("href", `/practice?exercise=${defaultExercise.id}`);
@@ -42,6 +44,7 @@ test("filters the complete folio by every matching focus, hand, and timing facet
   );
   const rightHandRhythmStudies = rhythmStudies.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "right"));
   const rightHandPulseGuidedRhythmStudies = rightHandRhythmStudies.filter((exercise) => exercise.evaluationMode === "timed-ordered-notes");
+  const repertoireStudies = exerciseLibrary.filter((exercise) => exercise.curriculumTags.some((tag) => tag.startsWith("repertoire.")));
   await page.goto("/");
 
   await page.getByRole("radio", { name: "Rhythm & coordination" }).check();
@@ -68,6 +71,12 @@ test("filters the complete folio by every matching focus, hand, and timing facet
   await expect(page.locator("#folio-filter-status")).toHaveText(`Showing ${exerciseLibrary.length} of ${exerciseLibrary.length} studies`);
   await expect(resetButton).toBeDisabled();
   expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
+
+  await page.getByRole("radio", { name: "Repertoire" }).check();
+  await expect(page.locator("[data-folio-entry]:visible")).toHaveCount(repertoireStudies.length);
+  await expect(page.locator(".folio-card-source:visible")).toHaveCount(repertoireStudies.length);
+  await expect(page.locator("#folio-filter-status")).toHaveText(`Showing ${repertoireStudies.length} of ${exerciseLibrary.length} studies`);
+  await resetButton.click();
 
   await page.getByRole("radio", { name: "Left" }).check();
   await page.getByRole("radio", { name: "Untimed" }).check();

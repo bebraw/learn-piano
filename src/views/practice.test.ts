@@ -12,10 +12,12 @@ import {
   orderedDMinorChordTonesRightHandExercise,
 } from "../exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises.js";
+import { bachInvention1OpeningMotifRightHandExercise } from "../exercises/library/public-domain-repertoire-exercises.js";
 import { steadyBrokenChordRightHandExercise } from "../exercises/library/steady-broken-chord-exercises.js";
 import { steadyQuarterStepSkipRightHandExercise } from "../exercises/library/steady-quarter-exercises.js";
 import type { Exercise } from "../exercises/types.js";
 import { renderPracticePage } from "./practice.js";
+import { escapeHtml } from "./shared.js";
 
 describe("renderPracticePage", () => {
   it("renders canonical instructions and a useful no-JavaScript document", () => {
@@ -80,7 +82,55 @@ describe("renderPracticePage", () => {
     expect(html.match(/<section\s+id="pulse-controls"[\s\S]*?>/)?.[0]).toContain("hidden");
     expect(html).not.toContain("The next expected key stays lit.");
     expect(html).toContain("Right hand · C–G range");
-    expect(exerciseLibrary).toHaveLength(30);
+    expect(exerciseLibrary).toHaveLength(33);
+    expect(html).not.toContain("Repertoire source and arrangement");
+  });
+
+  it("renders public-domain provenance and arrangement scope before enhancement", () => {
+    const exercise = bachInvention1OpeningMotifRightHandExercise;
+    const adaptationNote = exercise.source.adaptationNote;
+    if (adaptationNote === undefined) {
+      throw new Error("The Bach repertoire fixture requires an adaptation note");
+    }
+    const html = renderPracticePage(exercise, exerciseLibrary);
+
+    expect(html).toContain('aria-label="Repertoire source and arrangement"');
+    expect(html).toContain("Public-domain learning arrangement");
+    expect(html).toContain("Public-domain excerpt");
+    expect(html).toContain(exercise.source.attribution);
+    expect(html).toContain(exercise.source.workTitle);
+    expect(html).toContain(escapeHtml(adaptationNote));
+    expect(html).toContain(exercise.source.license);
+    expect(html).toContain(`href="${exercise.source.referenceUrl}" target="_blank" rel="noreferrer"`);
+    expect(html).toContain("Intermediate");
+    expect(html).toContain("C4 · D4 · E4 · F4 · D4 · E4 · C4 · G4");
+    expect(html.match(/data-staff-note/g)).toHaveLength(8);
+    expect(html.match(/data-practice-key/g)).toHaveLength(5);
+  });
+
+  it("escapes public-domain source metadata and reference URLs", () => {
+    const source = {
+      ...bachInvention1OpeningMotifRightHandExercise.source,
+      attribution: 'Composer <strong onclick="boom">',
+      workTitle: 'Work & "quoted" title',
+      license: "Rights <script>boom</script>",
+      referenceUrl: 'https://example.com/score?work="quoted"&next=<tag>',
+      adaptationNote: 'Scope <img src=x onerror="boom">',
+    };
+    const exercise: Exercise = {
+      ...bachInvention1OpeningMotifRightHandExercise,
+      id: "bach-hostile-source-test",
+      source,
+    };
+
+    const html = renderPracticePage(exercise, [exercise]);
+
+    for (const value of [source.attribution, source.workTitle, source.license, source.adaptationNote]) {
+      expect(html).toContain(escapeHtml(value));
+      expect(html).not.toContain(value);
+    }
+    expect(html).toContain(`href="${escapeHtml(source.referenceUrl)}"`);
+    expect(html).not.toContain(`href="${source.referenceUrl}"`);
   });
 
   it("derives the rendered sequence and physical key order from the supplied exercise", () => {

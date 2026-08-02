@@ -8,7 +8,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 
 ### Current Scope
 
-- The validated library contains thirty canonical, original beginner exercises, fifteen per hand: C-position ascents and descents, untimed C-E-D-F-G step-and-skip patterns, untimed C-E-G-E-C C-major and D-F-A-F-D D-minor ordered chord-tone patterns, untimed D-E-F-G-A D-minor five-note ascents, straight C-D-E-F-G steady-quarter studies, timed C-E-D-F-G step-and-skip studies, C-D-E-F-G even-eighth studies, C-C-D-D-E repeated-note studies, C-E-D-D-F-G-E-C mixed-pattern studies, C-E-D-F-G offbeat-onset studies, C-E-G-E-C-E-G-E steady broken-chord studies, C-E-G-C-E-G-C broken-chord loops in 3/4, and C-D-E-F-G-C pulse patterns in 5/4. Twelve are untimed and eighteen are timed.
+- The validated library contains thirty-three canonical exercises. The first thirty remain original beginner foundations, fifteen per hand: C-position ascents and descents, untimed C-E-D-F-G step-and-skip patterns, untimed C-E-G-E-C C-major and D-F-A-F-D D-minor ordered chord-tone patterns, untimed D-E-F-G-A D-minor five-note ascents, straight C-D-E-F-G steady-quarter studies, timed C-E-D-F-G step-and-skip studies, C-D-E-F-G even-eighth studies, C-C-D-D-E repeated-note studies, C-E-D-D-F-G-E-C mixed-pattern studies, C-E-D-F-G offbeat-onset studies, C-E-G-E-C-E-G-E steady broken-chord studies, C-E-G-C-E-G-C broken-chord loops in 3/4, and C-D-E-F-G-C pulse patterns in 5/4. Three sourced public-domain learning arrangements add Beethoven, Bach, and Pachelbel excerpts at task-relative beginner, intermediate, and advanced levels. Fifteen are untimed and eighteen are timed.
 - `GET /practice` returns the default right-hand ascent. `GET /practice?exercise=<id>` returns the selected canonical exercise, while an unknown, empty, or duplicated exercise parameter returns `404` instead of silently changing the learner's task.
 - The home and practice pages render the complete exercise chooser on the server. The selected title, instructions, expected notes, pitch-only staff guide, chooser, and basic limitation text remain meaningful without JavaScript; connecting input, live highlighting, evaluation, completion, and local history are progressive enhancements.
 - Every current exercise receives a supported inline-SVG pitch guide derived from its canonical expected events: treble for the single-hand right-hand C4-A4 natural-note range and bass for the single-hand left-hand C3-A3 natural-note range. Adjacent ordered note text remains the semantic fallback, and the guide adds no duration, rhythm, chord-quality, or staff-reading evidence.
@@ -147,7 +147,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 
 ### Definition of Done
 
-- [ ] `/practice` returns the canonical default, and `?exercise=<id>` selects each of the thirty validated exercises without requiring client JavaScript.
+- [ ] `/practice` returns the canonical default, and `?exercise=<id>` selects each of the thirty-three validated exercises without requiring client JavaScript.
 - [ ] Unknown, empty, and duplicated supplied exercise parameters return `404`.
 - [ ] The server-rendered chooser identifies the selected exercise and links to every library entry.
 - [ ] Every current exercise server-renders the supported treble or bass pitch guide and adjacent semantic note text from its canonical expected events.
@@ -225,7 +225,7 @@ The learner needs a short, calm practice flow that works with a physical keyboar
 
 - Given: client scripting is disabled or fails to load
 - When: the learner opens `/practice`
-- Then: the default C-D-E-F-G right-hand instructions, expected notes, and thirty-exercise chooser remain visible, and history says JavaScript is required instead of claiming the history is empty
+- Then: the default C-D-E-F-G right-hand instructions, expected notes, and thirty-three-exercise chooser remain visible, and history says JavaScript is required instead of claiming the history is empty
 
 **Scenario: Select another exercise without JavaScript**
 

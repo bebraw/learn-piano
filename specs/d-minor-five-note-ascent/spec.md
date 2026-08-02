@@ -45,7 +45,7 @@ The D-minor chord-tone studies move the learner into D position but use only D, 
 ### Definition of Done
 
 - [ ] Both canonical exercises validate with exact IDs, titles, instructions, five events, hands, matching prerequisites, ordered tags, source metadata, and fingerings.
-- [ ] The complete library exposes thirty exercises, fifteen per hand, with twelve untimed and eighteen timed studies.
+- [ ] The complete library exposes thirty-three exercises, seventeen right-hand and sixteen left-hand, with fifteen untimed and eighteen timed studies; the original thirty foundations remain fifteen per hand.
 - [ ] The canonical D-minor ascent pair follows the D-minor chord-tone pair and preserves every earlier identity, revision, and relative order.
 - [ ] Practice HTML renders five D-through-A physical keys, five D-E-F-G-A staff occurrences, a derived `D–A range` label, and Reading Focus support before enhancement.
 - [ ] Completing either study uses the existing persistence, recent-evidence, and advisory recommendation paths without timing data.
@@ -63,7 +63,7 @@ The D-minor chord-tone studies move the learner into D position but use only D, 
 ### Verification
 
 - **Exercise tests:** Assert exact canonical documents, instructions, sequences, event IDs, hands, matching D-minor chord-tone prerequisites, ordered tags, metadata, and fingerings.
-- **Library tests:** Assert thirty unique stable IDs in canonical order, fifteen studies per hand, twelve untimed studies, eighteen timed studies, and twenty-two five-event studies.
+- **Library tests:** Assert thirty-three unique stable IDs in canonical order, seventeen right-hand studies, sixteen left-hand studies, fifteen untimed studies, eighteen timed studies, twenty-two five-event studies, and the unchanged thirty-study foundation cohort.
 - **Presentation tests:** Assert five D-E-F-G-A staff markers, five expected keyboard controls, the derived range copy, and unchanged C-position behavior.
 - **Recommendation tests:** Assert same-hand D-minor chord-tone completion selects the ascent as its direct dependent while opposite-hand evidence does not.
 - **Browser tests:** Open and complete the right-hand ascent through on-screen input, verify Reading Focus and the D-A position, and reload its persisted exact-revision history.

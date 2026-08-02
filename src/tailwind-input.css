@@ -903,6 +903,21 @@
     line-height: 1.55;
   }
 
+  .folio-card-source {
+    display: block;
+    margin-top: 0.55rem;
+    color: var(--color-app-text-soft);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.035em;
+    line-height: 1.45;
+  }
+
+  .folio-card-source span {
+    color: var(--color-app-accent-strong);
+    text-transform: uppercase;
+  }
+
   .folio-card-sequence {
     display: block;
     margin-top: 0.9rem;
@@ -1105,6 +1120,52 @@
     color: var(--color-app-text-soft);
     font-size: 0.88rem;
     line-height: 1.6;
+  }
+
+  .practice-source-note {
+    max-width: 50rem;
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgb(57 117 95 / 0.2);
+    border-radius: 0.9rem;
+    background: rgb(247 248 236 / 0.72);
+  }
+
+  .practice-source-work {
+    margin-top: 0.3rem;
+    color: var(--color-app-text);
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .practice-source-scope {
+    margin-top: 0.35rem;
+    color: var(--color-app-text-soft);
+    font-size: 0.72rem;
+    line-height: 1.55;
+  }
+
+  .practice-source-rights {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-top: 0.55rem;
+    color: var(--color-app-text-soft);
+    font-size: 0.64rem;
+    font-weight: 750;
+  }
+
+  .practice-source-rights a {
+    color: var(--color-app-accent-strong);
+    text-decoration: underline;
+    text-decoration-color: rgb(29 77 60 / 0.25);
+    text-underline-offset: 0.18rem;
+  }
+
+  .practice-source-rights a:hover {
+    text-decoration-color: currentcolor;
   }
 
   .practice-meta {

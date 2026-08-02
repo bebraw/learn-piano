@@ -11,6 +11,11 @@ import {
 import { offbeatStepSkipLeftHandExercise, offbeatStepSkipRightHandExercise } from "../exercises/library/offbeat-step-skip-exercises";
 import { repeatedNotesLeftHandExercise, repeatedNotesRightHandExercise } from "../exercises/library/repeated-note-exercises";
 import {
+  bachInvention1OpeningMotifRightHandExercise,
+  beethovenOdeToJoyOpeningRightHandExercise,
+  pachelbelCanonGroundBassLeftHandExercise,
+} from "../exercises/library/public-domain-repertoire-exercises.js";
+import {
   steadyBrokenChordLeftHandExercise,
   steadyBrokenChordRightHandExercise,
 } from "../exercises/library/steady-broken-chord-exercises.js";
@@ -24,15 +29,16 @@ import {
 } from "../exercises/library/three-four-broken-chord-exercises.js";
 import { exercisePracticeHref } from "./exercise-presentation";
 import { renderHomePage } from "./home";
+import { escapeHtml } from "./shared.js";
 
 describe("renderHomePage", () => {
   it("renders the piano practice entry point and stylesheet wiring", () => {
     const html = renderHomePage(exampleRoutes, exerciseLibrary, defaultExercise);
 
-    expect(exerciseLibrary).toHaveLength(30);
+    expect(exerciseLibrary).toHaveLength(33);
     expect(html).toContain("Personal practice studio");
     expect(html).toContain("Choose your next study");
-    expect(html).toContain("30 short patterns for both hands, including pulse and subdivision studies.");
+    expect(html).toContain("33 focused studies and repertoire excerpts for both hands, including pulse and subdivision work.");
     expect(html).toContain("Begin today’s study");
     expect(html).toContain("A calm, local-first practice companion");
     expect(html).toContain("Your local practice");
@@ -46,9 +52,10 @@ describe("renderHomePage", () => {
     expect(html).toContain("<legend>Hand</legend>");
     expect(html).toContain("<legend>Timing</legend>");
     expect(html).toContain("Pulse-guided");
+    expect(html).toContain(">Repertoire</span>");
     expect(html).toContain('id="folio-filter-status" role="status" aria-live="polite"');
     expect(html).toContain(`Showing ${exerciseLibrary.length} of ${exerciseLibrary.length} studies`);
-    expect(html.match(/data-folio-focus-filter/g)).toHaveLength(4);
+    expect(html.match(/data-folio-focus-filter/g)).toHaveLength(5);
     expect(html.match(/data-folio-hand-filter/g)).toHaveLength(3);
     expect(html.match(/data-folio-timing-filter/g)).toHaveLength(3);
     expect(html.match(/aria-controls="folio-grid" checked/g)).toHaveLength(3);
@@ -69,6 +76,21 @@ describe("renderHomePage", () => {
       expect(entry).toContain(`data-exercise-revision="${exercise.revision}"`);
       expect(entry).toContain(`data-focuses="${projectFolioCurriculumFocuses(exercise.curriculumTags).join(" ")}"`);
       expect(entry).toContain(`data-timing="${projectFolioStudyTiming(exercise.evaluationMode)}"`);
+      expect(entry).toContain(`data-source-kind="${exercise.source.kind}"`);
+    }
+    for (const exercise of [
+      beethovenOdeToJoyOpeningRightHandExercise,
+      pachelbelCanonGroundBassLeftHandExercise,
+      bachInvention1OpeningMotifRightHandExercise,
+    ]) {
+      const cardStart = html.indexOf(`data-exercise-id="${exercise.id}"`);
+      const cardEnd = html.indexOf("</a>", cardStart);
+      const card = html.slice(cardStart, cardEnd);
+
+      expect(card).toContain("Repertoire");
+      expect(card).toContain(exercise.source.attribution);
+      expect(card).toContain("Public-domain learning arrangement");
+      expect(card).toContain(exercise.difficulty.charAt(0).toUpperCase() + exercise.difficulty.slice(1));
     }
     expect(html).toContain("cannot assess posture, tension, fingering, or replace a qualified teacher");
     expect(html).toContain('class="home-hero');
@@ -145,5 +167,22 @@ describe("renderHomePage", () => {
     expect(html).toContain('<script type="module" src="/client/main.js"></script>');
     expect(html).not.toContain("Stryker was here!");
     expect(html.match(/<li\b/g)).toHaveLength(exerciseLibrary.length + 1);
+  });
+
+  it("escapes public-domain attribution in folio cards", () => {
+    const attribution = 'J. S. <img src=x onerror="boom">';
+    const exercise = {
+      ...bachInvention1OpeningMotifRightHandExercise,
+      id: "bach-hostile-attribution-test",
+      source: {
+        ...bachInvention1OpeningMotifRightHandExercise.source,
+        attribution,
+      },
+    };
+
+    const html = renderHomePage(exampleRoutes, [exercise], exercise);
+
+    expect(html).toContain(escapeHtml(attribution));
+    expect(html).not.toContain(attribution);
   });
 });

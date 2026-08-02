@@ -4,26 +4,26 @@
 
 ### Context
 
-The home folio contains thirty freely selectable studies. That breadth supports both hands, two keyboard positions, several curriculum tracks, and untimed or pulse-guided practice, but scanning every card makes it harder to choose a relevant study. The learner needs a calm way to narrow the existing folio without turning parallel curriculum tags into exclusive categories or any filter choice into a saved preference or progression gate.
+The home folio contains thirty-three freely selectable studies: thirty original foundations plus three public-domain learning arrangements. That breadth supports both hands, two keyboard positions, several curriculum tracks, and untimed or pulse-guided practice, but scanning every card makes it harder to choose a relevant study. The learner needs a calm way to narrow the existing folio without turning parallel curriculum tags into exclusive categories or any filter choice into a saved preference or progression gate.
 
 ### Architecture
 
 - **Server-first library:** `/` server-renders every canonical exercise link in canonical order. The filter controls are enhancement-only and hidden until the typed browser module initializes.
-- **Focus projection:** A study matches Notes & reading, Rhythm & coordination, or Patterns & technique when any canonical `curriculumTags` entry uses that track prefix. All matching prefixes are retained, so one study may appear under several focuses.
+- **Focus projection:** A study matches Notes & reading, Rhythm & coordination, Patterns & technique, or Repertoire when any canonical `curriculumTags` entry uses that track prefix. All matching prefixes are retained, so one study may appear under several focuses.
 - **Hand projection:** Right and Left match the canonical event-hand projection already shown on each card. A future both-hands study matches both participating-hand filters, consistent with the local overview's hand summaries.
 - **Timing projection:** `untimed-ordered-notes` maps to `Untimed`; `timed-ordered-notes` maps to the learner-facing `Pulse-guided` option because every current timed study offers count-in and pulse guidance. This projection reads canonical evaluation mode rather than card copy.
 - **Filter state:** Focus, hand, and timing compose as an intersection. All/All/All is the default on every page load, and Reset filters restores that state.
 - **Presentation boundary:** Filtering hides unmatched home-folio list items only. It does not reorder cards, edit canonical metadata, change practice URLs, affect the practice-page chooser, or alter completion badges.
-- **Curriculum boundary:** Focus is a browsing aid over the current three launchable track prefixes. It does not expose Repertoire Pathways before lawful launchable exercises carry that metadata, and it does not make tracks mutually exclusive.
+- **Curriculum boundary:** Focus is a browsing aid over the four current launchable track prefixes. Repertoire is available because ADR-064's lawful public-domain arrangements carry that prefix; focus never treats tracks as mutually exclusive or grants rights to unrelated material.
 - **Evidence boundary:** Filter state is not persisted and never enters attempts, local history, the practice overview, recommendation eligibility, review selection, evaluation, or mastery claims.
 - **Dependencies:** ADR-061 records this transient, inclusive projection and extends the progressive-rendering boundary of ADR-052 without changing ADR-056 recommendation policy. The slice introduces no dependency, storage key, schema revision, or exercise revision.
 
 ### Accessibility and Progressive Enhancement
 
 - Focus, Hand, and Timing are separate labelled radio groups with native keyboard behavior and visible focus treatment.
-- A polite status reports `Showing N of 30 studies`; Reset filters remains explicit and is disabled at All/All/All.
+- A polite status reports `Showing N of 33 studies`; Reset filters remains explicit and is disabled at All/All/All.
 - Hidden cards are removed from layout and interaction by the native `hidden` state. The canonical order of visible cards remains unchanged.
-- Without JavaScript, the controls stay hidden and all thirty links, titles, instructions, and completion-independent content remain usable.
+- Without JavaScript, the controls stay hidden and all thirty-three links, titles, instructions, source labels, and completion-independent content remain usable.
 - Local-history loading or failure does not disable the filter. Filtering does not remove or recreate completion badges when cards are hidden and shown.
 
 ### Anti-Patterns
@@ -34,13 +34,13 @@ The home folio contains thirty freely selectable studies. That breadth supports 
 - Do not persist filter choices, add them to URLs, or use them as implicit learner goals.
 - Do not hide studies by default, lock unmatched studies, penalize resets, or change recommendation order.
 - Do not make the complete server-rendered library depend on JavaScript, local storage, or overview success.
-- Do not add a Repertoire filter until lawful current exercises can actually match it.
+- Do not expose a curriculum focus unless at least one lawful current exercise can actually match it.
 
 ## Contract
 
 ### Definition of Done
 
-- [ ] `/` retains all thirty canonical links in server HTML and renders hidden enhancement controls for three curriculum focuses, right- and left-hand narrowing, and untimed or pulse-guided timing.
+- [ ] `/` retains all thirty-three canonical links in server HTML and renders hidden enhancement controls for four curriculum focuses, right- and left-hand narrowing, and untimed or pulse-guided timing.
 - [ ] Enhancement opens at All/All/All, reports the complete count, and resets restored browser form state to that neutral default.
 - [ ] Every focus match considers all canonical curriculum-tag prefixes, allowing multi-track studies to appear under every relevant focus.
 - [ ] Right and Left include canonical studies assigned to that hand plus future both-hands studies in which that hand participates.
@@ -53,7 +53,7 @@ The home folio contains thirty freely selectable studies. That breadth supports 
 ### Regression Guardrails
 
 - All/All/All must remain the initial state after navigation or reload, regardless of browser-restored radio values.
-- Multi-track membership must be inclusive and deterministic in the display order Notes & reading, Rhythm & coordination, Patterns & technique.
+- Multi-track membership must be inclusive and deterministic in the display order Notes & reading, Rhythm & coordination, Patterns & technique, Repertoire.
 - A selected focus plus hand plus timing means every active condition, not any one condition.
 - A both-hands study must match both participating-hand filters so folio discovery and overview hand summaries share one membership meaning.
 - Filtering must not mutate the DOM identity used by local completion badges or recommendation links.
@@ -92,7 +92,7 @@ The home folio contains thirty freely selectable studies. That breadth supports 
 
 - Given: one or more filters are active
 - When: the learner selects Reset filters or reloads the page
-- Then: All/All/All is selected, all thirty studies are visible, and no preference has been stored
+- Then: All/All/All is selected, all thirty-three studies are visible, and no preference has been stored
 
 **Scenario: Browse without enhancement**
 

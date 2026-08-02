@@ -37,6 +37,11 @@ import {
   THREE_FOUR_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID,
   THREE_FOUR_BROKEN_CHORD_RIGHT_HAND_EXERCISE_ID,
 } from "./three-four-broken-chord-exercises.js";
+import {
+  BACH_INVENTION_1_OPENING_MOTIF_RIGHT_HAND_EXERCISE_ID,
+  BEETHOVEN_ODE_TO_JOY_OPENING_RIGHT_HAND_EXERCISE_ID,
+  PACHELBEL_CANON_GROUND_BASS_LEFT_HAND_EXERCISE_ID,
+} from "./public-domain-repertoire-exercises.js";
 
 const EXPECTED_SEQUENCES = new Map<string, readonly number[]>([
   ["five-note-ascent-c-major-right-hand", [60, 62, 64, 65, 67]],
@@ -69,6 +74,9 @@ const EXPECTED_SEQUENCES = new Map<string, readonly number[]>([
   [MIXED_EIGHTH_PATTERN_LEFT_HAND_EXERCISE_ID, [48, 52, 50, 50, 53, 55, 52, 48]],
   [OFFBEAT_STEP_SKIP_RIGHT_HAND_EXERCISE_ID, [60, 64, 62, 65, 67]],
   [OFFBEAT_STEP_SKIP_LEFT_HAND_EXERCISE_ID, [48, 52, 50, 53, 55]],
+  [BEETHOVEN_ODE_TO_JOY_OPENING_RIGHT_HAND_EXERCISE_ID, [64, 64, 65, 67, 67, 65, 64, 62]],
+  [BACH_INVENTION_1_OPENING_MOTIF_RIGHT_HAND_EXERCISE_ID, [60, 62, 64, 65, 62, 64, 60, 67]],
+  [PACHELBEL_CANON_GROUND_BASS_LEFT_HAND_EXERCISE_ID, [48, 55, 57, 52, 53, 48, 53, 55]],
 ]);
 
 const EXPECTED_FINGERINGS = new Map<string, string>([
@@ -102,12 +110,15 @@ const EXPECTED_FINGERINGS = new Map<string, string>([
   [THREE_FOUR_BROKEN_CHORD_LEFT_HAND_EXERCISE_ID, "5-3-1-5-3-1-5"],
   [FIVE_FOUR_PULSE_RIGHT_HAND_EXERCISE_ID, "1-2-3-4-5-1"],
   [FIVE_FOUR_PULSE_LEFT_HAND_EXERCISE_ID, "5-4-3-2-1-5"],
+  [BEETHOVEN_ODE_TO_JOY_OPENING_RIGHT_HAND_EXERCISE_ID, "3-3-4-5-5-4-3-2"],
+  [BACH_INVENTION_1_OPENING_MOTIF_RIGHT_HAND_EXERCISE_ID, "1-2-3-4-2-3-1-5"],
+  [PACHELBEL_CANON_GROUND_BASS_LEFT_HAND_EXERCISE_ID, "5-2-1-3-2-5-2-1"],
 ]);
 
-describe("beginner exercise library", () => {
-  it("exposes thirty stable identities with the original ascent as default", () => {
+describe("exercise library", () => {
+  it("exposes thirty foundations plus three repertoire arrangements with the original ascent as default", () => {
     expect(exerciseLibrary.map(({ id, revision }) => [id, revision])).toEqual([...EXPECTED_SEQUENCES.keys()].map((id) => [id, 1]));
-    expect(new Set(exerciseLibrary.map(({ id }) => id))).toHaveLength(30);
+    expect(new Set(exerciseLibrary.map(({ id }) => id))).toHaveLength(33);
     expect(DEFAULT_EXERCISE_ID).toBe("five-note-ascent-c-major-right-hand");
     expect(defaultExercise.id).toBe(DEFAULT_EXERCISE_ID);
     expect(findExerciseById(DEFAULT_EXERCISE_ID)).toBe(defaultExercise);
@@ -121,10 +132,12 @@ describe("beginner exercise library", () => {
     expect(findExerciseById("missing-exercise")).toBeNull();
   });
 
-  it("keeps every document valid, original, beginner-level, and explicitly evaluated", () => {
+  it("keeps the original foundation documents valid, beginner-level, and explicitly evaluated", () => {
     expect(() => parseExerciseLibrary(exerciseLibrary)).not.toThrow();
 
-    for (const exercise of exerciseLibrary) {
+    const foundationExercises = exerciseLibrary.filter(({ source }) => source.kind === "original");
+    expect(foundationExercises).toHaveLength(30);
+    for (const exercise of foundationExercises) {
       expect(exercise).toMatchObject({
         schemaVersion: 1,
         revision: 1,
@@ -137,6 +150,16 @@ describe("beginner exercise library", () => {
       });
       expect(["untimed-ordered-notes", "timed-ordered-notes"]).toContain(exercise.evaluationMode);
     }
+
+    expect(exerciseLibrary.filter(({ source }) => source.kind === "public-domain").map(({ difficulty }) => difficulty)).toEqual([
+      "beginner",
+      "intermediate",
+      "advanced",
+    ]);
+    expect(exerciseLibrary.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "right"))).toHaveLength(17);
+    expect(exerciseLibrary.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "left"))).toHaveLength(16);
+    expect(exerciseLibrary.filter(({ evaluationMode }) => evaluationMode === "untimed-ordered-notes")).toHaveLength(15);
+    expect(exerciseLibrary.filter(({ evaluationMode }) => evaluationMode === "timed-ordered-notes")).toHaveLength(18);
   });
 
   it("uses unique event occurrences and each exercise's declared pitch sequence", () => {
@@ -161,8 +184,9 @@ describe("beginner exercise library", () => {
   });
 
   it("covers both hands, two positions, two chord qualities, motion, subdivision, repeated pairs, mixed patterns, offbeats, broken chords, 3/4, and 5/4", () => {
-    const rightHandExercises = exerciseLibrary.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "right"));
-    const leftHandExercises = exerciseLibrary.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "left"));
+    const foundationExercises = exerciseLibrary.filter(({ source }) => source.kind === "original");
+    const rightHandExercises = foundationExercises.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "right"));
+    const leftHandExercises = foundationExercises.filter((exercise) => exercise.expectedEvents.every(({ hand }) => hand === "left"));
     expect(rightHandExercises).toHaveLength(15);
     expect(leftHandExercises).toHaveLength(15);
 
@@ -196,14 +220,15 @@ describe("beginner exercise library", () => {
       expect(intervals.some((interval) => interval >= 3)).toBe(true);
     }
 
-    expect(exerciseLibrary.filter(({ evaluationMode }) => evaluationMode === "timed-ordered-notes")).toHaveLength(18);
-    expect(exerciseLibrary.filter(({ evaluationMode }) => evaluationMode === "untimed-ordered-notes")).toHaveLength(12);
-    expect(exerciseLibrary.filter(({ expectedEvents }) => expectedEvents.length === 5)).toHaveLength(22);
-    expect(exerciseLibrary.filter(({ expectedEvents }) => expectedEvents.length === 6)).toHaveLength(2);
-    expect(exerciseLibrary.filter(({ expectedEvents }) => expectedEvents.length === 7)).toHaveLength(2);
-    expect(exerciseLibrary.filter(({ expectedEvents }) => expectedEvents.length === 8)).toHaveLength(4);
+    expect(foundationExercises.filter(({ evaluationMode }) => evaluationMode === "timed-ordered-notes")).toHaveLength(18);
+    expect(foundationExercises.filter(({ evaluationMode }) => evaluationMode === "untimed-ordered-notes")).toHaveLength(12);
+    expect(foundationExercises.filter(({ expectedEvents }) => expectedEvents.length === 5)).toHaveLength(22);
+    expect(foundationExercises.filter(({ expectedEvents }) => expectedEvents.length === 6)).toHaveLength(2);
+    expect(foundationExercises.filter(({ expectedEvents }) => expectedEvents.length === 7)).toHaveLength(2);
+    expect(foundationExercises.filter(({ expectedEvents }) => expectedEvents.length === 8)).toHaveLength(4);
+    expect(exerciseLibrary.filter(({ expectedEvents }) => expectedEvents.length === 8)).toHaveLength(7);
 
-    const timedExercises = exerciseLibrary.filter(({ evaluationMode }) => evaluationMode === "timed-ordered-notes");
+    const timedExercises = foundationExercises.filter(({ evaluationMode }) => evaluationMode === "timed-ordered-notes");
     expect(timedExercises.filter(({ timing }) => timing?.beatsPerMeasure === 4)).toHaveLength(14);
     expect(timedExercises.filter(({ timing }) => timing?.beatsPerMeasure === 3)).toHaveLength(2);
     expect(timedExercises.filter(({ timing }) => timing?.beatsPerMeasure === 5)).toHaveLength(2);

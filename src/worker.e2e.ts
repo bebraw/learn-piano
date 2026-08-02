@@ -10,6 +10,11 @@ import {
   orderedDMinorChordTonesRightHandExercise,
 } from "./exercises/library/ordered-chord-tone-exercises.js";
 import { repeatedNotesRightHandExercise } from "./exercises/library/repeated-note-exercises.js";
+import {
+  bachInvention1OpeningMotifRightHandExercise,
+  beethovenOdeToJoyOpeningRightHandExercise,
+  pachelbelCanonGroundBassLeftHandExercise,
+} from "./exercises/library/public-domain-repertoire-exercises.js";
 import { steadyBrokenChordRightHandExercise } from "./exercises/library/steady-broken-chord-exercises.js";
 import { steadyQuarterStepSkipRightHandExercise } from "./exercises/library/steady-quarter-exercises.js";
 import { threeFourBrokenChordRightHandExercise } from "./exercises/library/three-four-broken-chord-exercises.js";
@@ -22,10 +27,12 @@ test("renders the piano practice home page", async ({ page }) => {
   await expect(page.getByText("Small, focused studies for building calm and reliable movement at the keyboard.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Choose your next study" })).toBeVisible();
   const exerciseFolio = page.locator(".folio-grid");
-  expect(exerciseLibrary).toHaveLength(30);
+  expect(exerciseLibrary).toHaveLength(33);
   await expect(exerciseFolio.locator('a[href^="/practice?exercise="]')).toHaveCount(exerciseLibrary.length);
   await expect(exerciseFolio.locator('[data-mode="timed"]')).toHaveCount(18);
-  await expect(page.getByText("30 short patterns for both hands, including pulse and subdivision studies.")).toBeVisible();
+  await expect(
+    page.getByText("33 focused studies and repertoire excerpts for both hands, including pulse and subdivision work."),
+  ).toBeVisible();
   await expect(page.getByRole("link", { name: new RegExp(evenEighthsRightHandExercise.title) })).toContainText("Eighth-note grid · 60 BPM");
   await expect(page.getByRole("link", { name: new RegExp(orderedChordTonesRightHandExercise.title) })).toContainText("Untimed");
   await expect(page.getByRole("link", { name: new RegExp(orderedDMinorChordTonesRightHandExercise.title) })).toContainText("Untimed");
@@ -49,7 +56,28 @@ test("renders the piano practice home page", async ({ page }) => {
   for (const exercise of exerciseLibrary) {
     await expect(page.getByRole("link", { name: new RegExp(exercise.title) })).toBeVisible();
   }
+  for (const exercise of [
+    beethovenOdeToJoyOpeningRightHandExercise,
+    pachelbelCanonGroundBassLeftHandExercise,
+    bachInvention1OpeningMotifRightHandExercise,
+  ]) {
+    await expect(page.getByRole("link", { name: new RegExp(exercise.title) })).toContainText(exercise.source.attribution!);
+  }
   await expect(page.locator('a[href="/api/health"]').first()).toBeVisible();
+});
+
+test("renders a sourced Bach learning arrangement", async ({ page }) => {
+  const exercise = bachInvention1OpeningMotifRightHandExercise;
+  await page.goto(exercisePracticeHref(exercise));
+
+  await expect(page.getByRole("heading", { level: 1, name: exercise.title })).toBeVisible();
+  const source = page.getByLabel("Repertoire source and arrangement");
+  await expect(source).toContainText("Public-domain learning arrangement");
+  await expect(source).toContainText(exercise.source.attribution!);
+  await expect(source).toContainText(exercise.source.workTitle!);
+  await expect(source).toContainText(exercise.source.adaptationNote!);
+  await expect(source.getByRole("link", { name: "Reference score" })).toHaveAttribute("href", exercise.source.referenceUrl!);
+  await expect(page.locator("[data-staff-note]")).toHaveCount(8);
 });
 
 test("shows steady-pulse facts and controls only for timed studies", async ({ page }) => {

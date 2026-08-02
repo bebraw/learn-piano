@@ -27,6 +27,11 @@ import {
 import { repeatedNotesLeftHandExercise, repeatedNotesRightHandExercise } from "./repeated-note-exercises.js";
 import { steadyBrokenChordLeftHandExercise, steadyBrokenChordRightHandExercise } from "./steady-broken-chord-exercises.js";
 import { threeFourBrokenChordLeftHandExercise, threeFourBrokenChordRightHandExercise } from "./three-four-broken-chord-exercises.js";
+import {
+  bachInvention1OpeningMotifRightHandExercise,
+  beethovenOdeToJoyOpeningRightHandExercise,
+  pachelbelCanonGroundBassLeftHandExercise,
+} from "./public-domain-repertoire-exercises.js";
 import { parseExerciseLibrary } from "../schema.js";
 
 export const DEFAULT_EXERCISE_ID = FIVE_NOTE_ASCENT_EXERCISE_ID;
@@ -62,6 +67,9 @@ export const exerciseLibrary: readonly Exercise[] = Object.freeze([
   mixedEighthPatternLeftHandExercise,
   offbeatStepSkipRightHandExercise,
   offbeatStepSkipLeftHandExercise,
+  beethovenOdeToJoyOpeningRightHandExercise,
+  bachInvention1OpeningMotifRightHandExercise,
+  pachelbelCanonGroundBassLeftHandExercise,
 ]);
 
 parseExerciseLibrary(exerciseLibrary);

@@ -4,6 +4,7 @@ export const FOLIO_CURRICULUM_FOCUSES = [
   { id: "notes-and-reading", label: "Notes & reading" },
   { id: "rhythm-and-coordination", label: "Rhythm & coordination" },
   { id: "patterns-and-technique", label: "Patterns & technique" },
+  { id: "repertoire", label: "Repertoire" },
 ] as const;
 
 export const FOLIO_FOCUS_FILTERS = [{ id: "all", label: "All" }, ...FOLIO_CURRICULUM_FOCUSES] as const;
