@@ -1832,6 +1832,14 @@
     line-height: 1.45;
   }
 
+  .repeat-guidance {
+    max-width: 44rem;
+    margin-top: 0.55rem;
+    color: rgb(255 253 247 / 0.72);
+    font-size: 0.72rem;
+    line-height: 1.5;
+  }
+
   .next-study-recommendation {
     max-width: 44rem;
     margin-top: 0.65rem;

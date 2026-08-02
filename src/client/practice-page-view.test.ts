@@ -90,6 +90,9 @@ describe("createPracticePageView", () => {
     expect(elements.stopPulseButton.disabled).toBe(true);
     expect(elements.pulseBeats.every((beat) => beat.getAttribute("data-beat-state") === "idle")).toBe(true);
     expect(elements.nextExerciseLink.hidden).toBe(true);
+    expect(elements.repeatGuidance.hidden).toBe(true);
+    expect(elements.repeatGuidance.textContent).toBe("");
+    expect(elements.restartButton.textContent).toBe("Restart");
     expect(elements.nextNote.textContent).toBe("C4");
     expect(elements.progressText.textContent).toBe("0 of 5 notes");
     expect(elements.historyCount.textContent).toBe("0 attempts completed today");
@@ -660,6 +663,55 @@ describe("createPracticePageView", () => {
     expect(staffNotes.every((note) => note.getAttribute("data-note-active") === "false")).toBe(true);
   });
 
+  it("offers an immediate repeat after corrections without replacing the next-study recommendation", () => {
+    const { elements } = createElements();
+    const view = createPracticePageView(elements);
+    let evaluation = createEvaluationState(fiveNoteAscentExercise);
+
+    evaluation = evaluateMidiEvent(fiveNoteAscentExercise, evaluation, {
+      type: "note-on",
+      channel: 1,
+      noteNumber: 61,
+      velocity: 72,
+      timestamp: 0,
+    }).state;
+    for (const [index, event] of fiveNoteAscentExercise.expectedEvents.entries()) {
+      evaluation = evaluateMidiEvent(fiveNoteAscentExercise, evaluation, {
+        type: "note-on",
+        channel: 1,
+        noteNumber: event.noteNumber,
+        velocity: 72,
+        timestamp: index + 1,
+      }).state;
+    }
+
+    view.render(
+      snapshot({
+        sessionStatus: "completed",
+        evaluation,
+        recommendation: {
+          kind: "new-study",
+          exercise: fiveNoteDescentRightHandExercise,
+          reason: { kind: "direct-dependent", prerequisiteExerciseIds: [fiveNoteAscentExercise.id] },
+        },
+      }),
+    );
+
+    expect(elements.repeatGuidance.hidden).toBe(false);
+    expect(elements.repeatGuidance.textContent).toBe(
+      "Pitch or order corrections occurred in this attempt. Repeat once while the phrase is familiar.",
+    );
+    expect(elements.restartButton.textContent).toBe("Repeat study");
+    expect(elements.nextStudyRecommendation.hidden).toBe(false);
+    expect(elements.nextStudyTitle.textContent).toBe(fiveNoteDescentRightHandExercise.title);
+
+    view.render(snapshot());
+
+    expect(elements.repeatGuidance.hidden).toBe(true);
+    expect(elements.repeatGuidance.textContent).toBe("");
+    expect(elements.restartButton.textContent).toBe("Restart");
+  });
+
   it.each([
     {
       name: "a direct next study",
@@ -1005,6 +1057,7 @@ function createElements(exercise: Exercise = fiveNoteAscentExercise): {
       progressText: new FakeElement(),
       feedbackMessage: new FakeElement(),
       persistenceMessage: new FakeElement(),
+      repeatGuidance: new FakeElement(),
       historyCount: new FakeElement(),
       historyDetail: new FakeElement(),
       historyEvidence: new FakeElement(),

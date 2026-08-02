@@ -185,6 +185,7 @@ export function renderPracticePage(exercise: Exercise, exerciseLibrary: readonly
                 <p class="app-eyebrow app-eyebrow-inverse">Live coaching</p>
                 <p id="feedback-message" class="feedback-message" data-session-status="ready" role="status" aria-live="polite">Begin when your input is connected. ${escapeHtml(formatMidiNote(firstEvent.noteNumber))} is first.</p>
                 <p id="persistence-message" class="persistence-message" role="status" aria-live="polite" hidden></p>
+                <p id="repeat-guidance" class="repeat-guidance" role="status" aria-live="polite" hidden></p>
                 <div class="next-study-recommendation" id="next-study-recommendation" hidden>
                   <p class="next-study-kicker" id="next-study-kicker">Suggested next</p>
                   <p class="next-study-copy"><strong id="next-study-title"></strong> <span id="next-study-reason"></span></p>

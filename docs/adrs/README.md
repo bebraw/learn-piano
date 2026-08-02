@@ -97,6 +97,7 @@ No accepted-only ADRs are currently pending implementation.
 | [ADR-062](./implemented/ADR-062-keep-recent-attempt-evidence-factual.md)                             | Implemented | Summarize the newest five retained exact-revision attempts as factual categories without grading.    |
 | [ADR-063](./implemented/ADR-063-extend-pitch-guide-through-a.md)                                     | Implemented | Extend the bounded natural-note pitch guide through A4 on treble and A3 on bass.                     |
 | [ADR-064](./implemented/ADR-064-curate-public-domain-repertoire-as-bounded-learning-arrangements.md) | Implemented | Add sourced public-domain repertoire as independently encoded, bounded learning arrangements.        |
+| [ADR-065](./implemented/ADR-065-separate-immediate-repeat-guidance-from-study-recommendation.md)     | Implemented | Derive a page-local repeat cue from only the just-completed attempt while preserving recommendation. |
 
 ## Creating A New ADR
 

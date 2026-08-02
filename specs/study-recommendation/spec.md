@@ -6,7 +6,7 @@
 
 The learner has thirty-three short exercises—thirty original foundations plus three public-domain learning arrangements, seventeen right-hand, sixteen left-hand, fifteen untimed, and eighteen timed—across pitch, pattern, ordered chord-tone, minor chord vocabulary, D-minor five-note preparation, steady broken-chord, 3/4 broken-chord loop, 5/4 pulse, repeated-note, mixed-pattern, offbeat-onset, hand, steady-pulse, onset-subdivision, and bounded repertoire work. The timed set remains fourteen 4/4 studies, two 3/4 studies, and two 5/4 studies; ten use the integer steady-pulse grid. The exercise library already declares prerequisites, and completed attempts already carry stable exercise IDs and revisions in local history. The practice completion flow and home overview should use that evidence to suggest one understandable next study instead of advancing by a circular UI position, while preserving the learner's freedom to choose any exercise.
 
-A recommendation is practice guidance, not an evaluator result, unlock, grade, or mastery claim. The first implementation therefore uses only completion identity and recency. Pitch-error counts, timing classifications, tempo, velocity, and inferred physical technique do not affect this version.
+A recommendation is practice guidance, not an evaluator result, unlock, grade, or mastery claim. The first implementation therefore uses only completion identity and recency. Pitch-error counts, timing classifications, tempo, velocity, and inferred physical technique do not affect this version. Under ADR-065, a separate page-local repeat cue may reflect corrections or early/late intervals from the just-completed evaluator summary without becoming a recommendation input.
 
 ### Current Scope
 
@@ -32,12 +32,13 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - When every current exercise has exact-revision completion evidence, the service recommends the least recently practiced exercise. Equal recency is resolved by canonical library order.
 - When readable history contains no current-revision completions, the service recommends the first prerequisite-free exercise in canonical library order.
 - The practice completion view and enhanced home overview explain why the study was suggested and always keep the complete exercise library available as the fallback and override.
+- The practice completion view may also show an immediate repeat cue after a corrected or off-time current attempt. That cue leaves the canonical suggestion and explanation visible and unchanged.
 - The service uses no network, remote model, account, cloud state, randomness, percentage score, streak, or hidden learner profile.
 
 ### Future Scope
 
 - Later recommendation versions may consider learner-selected goals, recent difficulty, tempo progression, repeated attempts, track balance, or richer curriculum nodes only after their evidence and explanation contracts are explicit.
-- Error-sensitive or timing-sensitive suggestions require a separate decision; this version treats every completed attempt equally regardless of corrections, early/late intervals, or mean timing error.
+- Error-sensitive or timing-sensitive study recommendations require a separate decision; this version treats every completed attempt equally regardless of corrections, early/late intervals, or mean timing error. The bounded immediate repeat cue in ADR-065 is not a study recommendation and does not broaden this policy.
 - Cloud synchronization, cross-device history, teacher-authored plans, AI coaching, and mandatory course progression are not implied.
 
 ### Architecture
@@ -53,7 +54,7 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - **Optimistic completion rule:** Immediately after musical completion, the controller may calculate from the just-completed in-memory record before persistence finishes. After a successful save, it refreshes retained history and recalculates. If saving fails, the in-session suggestion may still reflect that transient completion, but it must not be described as durable and a later reload falls back to whatever history can actually be read.
 - **Failure rule:** An initial history read failure, malformed recommendation graph, or inability to produce a canonical candidate yields an unavailable recommendation. Completion remains complete, history reports its own failure, and the exercise library remains usable.
 - **Explanation rule:** Every available recommendation exposes a short deterministic reason matching the branch that selected it: direct next step, eligible next step, beginner starting point, or least-recently-practiced review. Copy must not use “mastered,” “unlocked,” “passed,” or equivalent claims.
-- **Evaluation separation:** Recommendation never mutates evaluator state, pulse behavior, attempt facts, exercise prerequisites, or persisted records. Error counts and optional timing summaries remain visible evidence but are deliberately ignored by this first recommender.
+- **Evaluation separation:** Recommendation never mutates evaluator state, pulse behavior, attempt facts, exercise prerequisites, or persisted records. Error counts and optional timing summaries remain visible evidence but are deliberately ignored by this first recommender. A separate immediate-repeat projection may read only the current completion summary; its presence, copy, and restart action never enter the recommendation service.
 
 ### Accessibility and Progressive Enhancement
 
@@ -105,6 +106,7 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - [ ] Initial history-read or graph failure preserves musical completion and exposes the unrestricted exercise library as a neutral fallback; save failure may preserve only the current page's transient suggestion.
 - [ ] Each available result includes an accurate deterministic explanation without mastery or unlock language.
 - [ ] Error counts, timing summaries, tempo, and velocity have no effect on the first recommendation version.
+- [ ] A current-attempt immediate repeat cue can coexist with the canonical suggestion without changing its exercise, explanation, availability, or retained evidence.
 - [ ] Unit, controller, view, and browser tests cover rule precedence, failure, explanation, persistence timing, and learner override.
 
 ### Regression Guardrails
@@ -123,6 +125,7 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - Missing or evicted history must not generate a mastery loss, penalty, or false assertion that an exercise was never practiced.
 - The exercise chooser must remain complete and usable in loading, ready, unavailable, completed, and storage-failure states.
 - Explanation copy must identify only facts the algorithm used.
+- Showing, clearing, or acting on immediate repeat guidance must not recalculate or hide the recommendation except through the recommender's already-documented persistence refresh.
 
 ### Verification
 
@@ -133,7 +136,7 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - **Exclusion tests:** Changing error counts, timing classifications, tempo, and input kind on otherwise equivalent completed records does not change the recommendation; steady, 3/4, or 5/4 pitch and timing evidence does not create phase, downbeat, click, meter understanding or counting, grouping, accent, measure, note-length, release, articulation, dynamics, physical-technique, harmony, reading, consistency, or mastery signals.
 - **Controller tests:** Recommendation loads independently of practice, recalculates optimistically on completion, refreshes after save, and preserves the in-session suggestion while surfacing save failure honestly.
 - **View tests:** Loading, available reasons, current-study review, unavailable fallback, and unrestricted chooser states render with calm accessible text.
-- **Browser tests:** Completing the default with empty retained history suggests its first eligible direct dependent from the new in-memory completion; manual selection remains available; reload reflects only successfully retained evidence.
+- **Browser tests:** Completing the default with empty retained history suggests its first eligible direct dependent from the new in-memory completion; a corrected or off-time attempt may simultaneously offer a repeat while preserving that suggestion; manual selection remains available; reload reflects only successfully retained evidence.
 
 ### Scenarios
 
@@ -238,6 +241,12 @@ A recommendation is practice guidance, not an evaluator result, unlock, grade, o
 - Given: two histories differ only in pitch-error counts, timing classifications, tempo, or input kind
 - When: recommendation runs with otherwise identical completion identities and timestamps
 - Then: both histories produce the same exercise and explanation
+
+**Scenario: Keep an immediate repeat separate from the suggestion**
+
+- Given: the just-completed attempt contains a pitch or order correction or an early or late timing interval
+- When: the completion UI shows its page-local repeat cue
+- Then: the recommendation still uses only completion identity, revision, prerequisites, and recency, and its suggested exercise and explanation remain visible and unchanged
 
 **Scenario: Use completion before persistence settles**
 

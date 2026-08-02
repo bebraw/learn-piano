@@ -66,6 +66,7 @@ describe("renderPracticePage", () => {
     expect(html).toContain('id="practice-stage" class="practice-stage" data-session-status="ready"');
     expect(html).toContain('data-pulse-status="idle"');
     expect(html).toContain('id="next-study-recommendation" hidden');
+    expect(html).toContain('id="repeat-guidance" class="repeat-guidance" role="status" aria-live="polite" hidden');
     expect(html).toContain('id="next-study-title"');
     expect(html).toContain('id="next-study-reason"');
     expect(html).toContain('id="next-exercise" href="/" hidden');

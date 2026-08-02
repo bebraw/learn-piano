@@ -304,6 +304,20 @@ test("reuses physical keys for returning chord tones and reloads persisted histo
   await expect(page.getByText("0 of 1 completed without pitch or order corrections.", { exact: false })).toBeVisible();
   await expect(page.getByText("Saved corrections: 1 wrong note.", { exact: false })).toBeVisible();
 
+  const repeatGuidance = page.locator("#repeat-guidance");
+  const nextStudyRecommendation = page.locator("#next-study-recommendation");
+  const nextStudyTitle = page.locator("#next-study-title");
+  await expect(repeatGuidance).toBeVisible();
+  await expect(repeatGuidance).toHaveText("Pitch or order corrections occurred in this attempt. Repeat once while the phrase is familiar.");
+  await expect(nextStudyRecommendation).toBeVisible();
+  await expect(nextStudyTitle).not.toHaveText("");
+
+  await page.getByRole("button", { name: "Repeat study" }).click();
+  await expect(page.getByText("0 of 5 notes")).toBeVisible();
+  await expect(repeatGuidance).toBeHidden();
+  await expect(page.getByRole("button", { name: "Restart" })).toBeVisible();
+  await expect(nextStudyRecommendation).toBeHidden();
+
   await page.reload();
   await expect(page.getByRole("heading", { level: 1, name: selectedExercise.title })).toBeVisible();
   await expect(page.getByText("1 attempt completed today")).toBeVisible();
@@ -506,6 +520,22 @@ test("counts in an even-eighth study and persists its MIDI-relative timing summa
       { exact: true },
     ),
   ).toBeVisible();
+
+  const repeatGuidance = page.locator("#repeat-guidance");
+  const nextStudyRecommendation = page.locator("#next-study-recommendation");
+  const nextStudyTitle = page.locator("#next-study-title");
+  await expect(repeatGuidance).toBeVisible();
+  await expect(repeatGuidance).toContainText("Repeat once at the same tempo.");
+  await expect(nextStudyRecommendation).toBeVisible();
+  await expect(nextStudyTitle).not.toHaveText("");
+
+  await page.getByRole("button", { name: "Repeat at 100 BPM" }).click();
+  await expect(page.getByText(`0 of ${evenEighthsRightHandExercise.expectedEvents.length} notes`)).toBeVisible();
+  await expect(repeatGuidance).toBeHidden();
+  await expect(page.getByRole("button", { name: "Restart" })).toBeVisible();
+  await expect(page.locator("#pulse-tempo")).toHaveValue("100");
+  await expect(page.locator("#pulse-status")).toContainText("Ready at 100 BPM");
+  await expect(nextStudyRecommendation).toBeHidden();
 });
 
 test("advances adjacent repeated-note occurrences over shared physical keys", async ({ page }) => {

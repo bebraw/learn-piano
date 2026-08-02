@@ -14,7 +14,7 @@ The learner needs factual context when repeating a study. A latest-completion ti
 - **Note-sequence projection:** An attempt is correction-free only when all persisted `wrong`, `repeated`, and `outOfOrder` counts are zero. The window also sums each correction category.
 - **Timing projection:** Records with timing contribute a timing-bearing-attempt count plus assessed-interval, `onPulse`, early, and late counts. Learner copy calls `onPulse` “on time” and states how many recent attempts supplied timing. Records without timing still contribute note-sequence evidence and do not create timing facts.
 - **Presentation:** The panel identifies the retained exact-revision window, separates pitch and timing facts, and hides the recent-evidence block for empty or unavailable history.
-- **Dependencies:** ADR-049 owns local persistence, ADR-054 owns MIDI-relative timing evidence, ADR-056 owns recommendation inputs, and ADR-062 owns this factual recent-window projection.
+- **Dependencies:** ADR-049 owns local persistence, ADR-054 owns MIDI-relative timing evidence, ADR-056 owns recommendation inputs, ADR-062 owns this factual recent-window projection, and ADR-065 keeps the current-attempt repeat cue outside retained aggregates.
 
 ### Anti-Patterns
 
@@ -23,6 +23,7 @@ The learner needs factual context when repeating a study. A latest-completion ti
 - Do not average `meanAbsoluteErrorMs` or tempo across attempts.
 - Do not infer fingering, hand use, articulation, dynamics, touch, posture, tension, staff reading, or the cause of an error from these aggregates.
 - Do not feed recent pitch or timing quality into recommendation, curriculum completion, unlocking, or exercise availability without a later decision.
+- Do not derive the page-local immediate repeat cue from this newest-five aggregate; it uses only the just-completed evaluator summary while that page remains open.
 - Do not discard compatible records from the note-sequence summary merely because they have no timing field.
 
 ## Contract
@@ -36,6 +37,7 @@ The learner needs factual context when repeating a study. A latest-completion ti
 - [ ] Untimed or older compatible records without timing remain valid and do not create fabricated timing values.
 - [ ] Empty, loading, and unavailable history states do not expose stale recent evidence.
 - [ ] The attempt schema, local-storage envelope, evaluator, completion behavior, and recommendation policy remain unchanged.
+- [ ] Immediate repeat guidance remains a separate current-attempt projection and does not consult or alter the retained recent-evidence window.
 - [ ] The spec is updated with behavior changes, and unit, view, controller, and browser tests cover the critical path.
 
 ### Regression Guardrails
@@ -47,6 +49,7 @@ The learner needs factual context when repeating a study. A latest-completion ti
 - Mixed tempos and `meanAbsoluteErrorMs` values must not be averaged or displayed as a multi-attempt metric.
 - Storage failure must keep practice and musical completion usable while hiding unavailable history evidence.
 - Recent evidence must remain a read-only presentation and must not alter recommendation or curriculum results.
+- Retained corrections or early/late totals must not create, preserve, or suppress the current page's immediate repeat cue.
 
 ### Verification
 
@@ -54,6 +57,7 @@ The learner needs factual context when repeating a study. A latest-completion ti
 - **View tests:** Empty and unavailable hiding, exact-revision window copy, singular grammar, pitch-or-order correction details, partial timing coverage, timing classification details, and absence of score or mastery language.
 - **Controller tests:** Initial empty evidence and refreshed evidence after a successfully persisted completion.
 - **Browser tests:** An untimed attempt with a wrong-note correction survives reload with factual pitch evidence; a timed attempt shows its saved interval distribution.
+- **Separation tests:** Restart clears immediate repeat guidance while retained recent evidence and the independent next-study recommendation remain available.
 - **Coverage target:** Every aggregation branch and presentation state remains exercised without snapshot-only evidence.
 
 ### Scenarios
@@ -93,3 +97,9 @@ The learner needs factual context when repeating a study. A latest-completion ti
 - Given: recent attempts contain pitch or order corrections or early and late intervals
 - When: the application recommends a next study
 - Then: the recommendation uses its existing exact-revision completion and prerequisite policy without consulting recent evidence
+
+**Scenario: Immediate repeat remains current-attempt evidence**
+
+- Given: retained recent attempts contain corrections but the current attempt completes without pitch, order, early, or late corrections
+- When: the current completion UI renders
+- Then: no immediate repeat cue appears because the newest-five aggregate is not an input to that page-local projection

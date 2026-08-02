@@ -13,7 +13,7 @@ The repository has evolved from a runnable template stub into a personal piano-p
 - **Routes:** `/` renders the application overview, local-practice enhancement shell, and thirty-three-exercise library; `/practice` renders the canonical default; `/practice?exercise=<id>` renders an exact library selection; `/api/health` returns stable JSON; and unknown paths or supplied exercise IDs return a non-indexable 404 document.
 - **Asset pipeline:** `src/tailwind-input.css` and the browser TypeScript graph compile into `.generated/browser/`. Selective Worker-first routing preserves the `/styles.css` response contract, while Wrangler's static asset binding serves `/client/*.js` directly.
 - **Rendering boundary:** The Worker provides the document shell and meaningful initial content. Small same-origin ESM modules progressively enhance interactive practice behavior, browser-local practice summaries, and transient home-folio filtering. Without JavaScript, `/` explains that saved completions cannot be read, hides non-functional filter controls, and preserves every exercise link.
-- **Guidance boundary:** Every practice response is fully guided and meaningful before enhancement. Reading focus is an optional client-only presentation after supported staff validation; it never changes routing, response identity, canonical exercise content, or the no-JavaScript contract.
+- **Guidance boundary:** Every practice response is fully guided and meaningful before enhancement. Reading focus is an optional client-only presentation after supported staff validation; immediate repeat guidance is an optional client-only projection after completion. Neither changes routing, response identity, canonical exercise content, or the no-JavaScript contract.
 - **Visual-system boundary:** Server-rendered views share the responsive practice-desk shell and token-driven visual system from `src/tailwind-input.css`. The active practice surface leads the document hierarchy; setup, exercise selection, history, and utility routes remain supporting content without changing the semantic order when the layout stacks.
 - **Client code boundary:** Worker-rendered HTML may reference typed same-origin module files but must not embed executable browser code, event-handler attributes, JavaScript URLs, remote scripts, or classic scripts.
 - **Web response baseline:** HTML responses include a restrictive same-origin CSP, a narrow Permissions Policy that allows MIDI only for the same origin, a referrer policy, MIME-sniffing protection, and no-store caching. Rendered pages include baseline metadata and keyboard bypass navigation.
@@ -40,6 +40,7 @@ The repository has evolved from a runnable template stub into a personal piano-p
 - [ ] The home response keeps all canonical cards in server HTML and exposes focus/hand/timing filters only after enhancement; filter state never changes URLs, storage, canonical order, or recommendation behavior.
 - [ ] `/practice` returns useful canonical default-exercise content before client enhancement.
 - [ ] The practice response remains fully guided, while supported client enhancement may expose a transient reading-focus toggle without adding a route, query parameter, or alternate document identity.
+- [ ] The enhanced practice response may reveal a server-rendered hidden repeat-status region after a corrected or off-time completion, relabel the existing restart action, and clear both on restart without replacing the next-study suggestion.
 - [ ] Home, practice, and not-found documents share the finished application identity, responsive layout rules, and accessible interaction sizing rather than presenting disconnected prototype screens.
 - [ ] The practice document keeps the active score, keyboard, cue, and feedback visually primary at desktop and iPad sizes, then stacks supporting setup, chooser, and history content after the stage on narrow screens.
 - [ ] `?exercise=<id>` selects each known exercise server-side, while unknown, empty, or duplicated supplied parameters return `404`.
@@ -57,6 +58,7 @@ The repository has evolved from a runnable template stub into a personal piano-p
 - Enhanced home filtering must begin at All/All/All on every load, while the no-JavaScript response keeps controls hidden and all links visible.
 - `GET /practice` must include the default exercise title, instructions, expected note sequence, limitation text, server-rendered chooser, and same-origin module entry point.
 - Reading-focus enhancement must leave that guided response content and canonical identity intact; navigation or reload creates a new guided document and no Worker state persists the choice.
+- Immediate repeat enhancement must remain absent before completion and on clean completion, must never create a new route or server state, and must leave the no-JavaScript restart and completion meaning intact.
 - `GET /practice?exercise=<id>` must keep the URL selection, rendered content, and embedded canonical identity aligned without client JavaScript.
 - A 5/4 practice response must retain all six event occurrences and five timing-derived beat indicators while making no server-side claim about audible phase, downbeat, click, measure or final-C alignment, 5/4 grouping, accent, dynamics, duration, release, articulation, fingering, hand use, reading, technique, consistency, or mastery.
 - A present but empty or unknown exercise ID, or a duplicated exercise parameter, must return `404` rather than fall back to the default.
@@ -73,7 +75,7 @@ The repository has evolved from a runnable template stub into a personal piano-p
 
 - **Unit and integration tests:** colocated Vitest files under `src/**/*.test.ts` cover routing, response headers, rendered content, and domain-to-view composition.
 - **Tooling tests:** `scripts/assert-no-worker-client-scripts.test.mjs` exercises accepted and rejected browser-code shapes.
-- **Browser tests:** colocated Playwright files under `src/**/*.e2e.ts` cover the home library and its transient filters, generated assets, health route, default and selected no-JavaScript guided practice documents, transient reading-focus enhancement, and other enhanced practice flows.
+- **Browser tests:** colocated Playwright files under `src/**/*.e2e.ts` cover the home library and its transient filters, generated assets, health route, default and selected no-JavaScript guided practice documents, transient reading-focus enhancement, immediate repeat presentation and reset, and other enhanced practice flows.
 - **Coverage target:** Worker, API, view, and non-DOM browser modules remain above repository coverage thresholds.
 
 ### Scenarios
@@ -95,6 +97,12 @@ The repository has evolved from a runnable template stub into a personal piano-p
 - Given: the guided practice document contains a validated supported staff guide and client scripting runs
 - When: enhancement initializes and the learner selects reading focus
 - Then: the URL and canonical server content remain unchanged while only the documented visual cues are reduced for that page instance
+
+**Scenario: Client offers an immediate repeat without changing the document**
+
+- Given: the enhanced practice page completes with a pitch or order correction or an early or late timed interval
+- When: the client projects the evaluator completion summary
+- Then: it reveals the existing repeat-status region and relabels restart for one repeat while the route, canonical content, retained history shape, and next-study suggestion remain unchanged
 
 **Scenario: Learner follows a direct exercise link**
 

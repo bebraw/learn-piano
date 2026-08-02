@@ -176,6 +176,7 @@ function collectPageElements(
     feedbackMessage: requireElement(pageDocument, "feedback-message", HTMLElement),
     readingFocusToggle: requireElement(pageDocument, "reading-focus-toggle", HTMLButtonElement),
     persistenceMessage: requireElement(pageDocument, "persistence-message", HTMLElement),
+    repeatGuidance: requireElement(pageDocument, "repeat-guidance", HTMLElement),
     historyCount: requireElement(pageDocument, "history-count", HTMLElement),
     historyDetail: requireElement(pageDocument, "history-detail", HTMLElement),
     historyEvidence: requireElement(pageDocument, "history-evidence", HTMLElement),

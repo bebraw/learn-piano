@@ -4,6 +4,7 @@ import type { AttemptTimingSummary } from "./persistence/attempt-repository.js";
 import { exercisePracticeHref, formatPracticeKeyboardNoteLabel, type PracticeKeyboardNoteState } from "../views/exercise-presentation.js";
 import type { PracticeSnapshot, PracticeView } from "./practice-controller.js";
 import type { PracticeCueMode } from "./practice-cue-mode.js";
+import { projectPracticeRepeatGuidance } from "./practice-repeat-guidance.js";
 import { studyRecommendationCopy } from "./study-recommendation-copy.js";
 
 interface AttributeElementLike {
@@ -64,6 +65,7 @@ export interface PracticePageElements {
   readonly progressText: ElementLike;
   readonly feedbackMessage: ElementLike;
   readonly persistenceMessage: ElementLike;
+  readonly repeatGuidance: ElementLike;
   readonly historyCount: ElementLike;
   readonly historyDetail: ElementLike;
   readonly historyEvidence: ElementLike;
@@ -220,6 +222,7 @@ function renderSession(elements: PracticePageElements, snapshot: PracticeSnapsho
   elements.practiceStage.setAttribute("data-session-status", snapshot.sessionStatus);
   elements.feedbackMessage.setAttribute("data-session-status", snapshot.sessionStatus);
   elements.nextExerciseLink.hidden = snapshot.sessionStatus !== "completed";
+  renderRepeatGuidance(elements, snapshot);
   renderRecommendation(elements, snapshot);
 
   for (const [index, event] of snapshot.exercise.expectedEvents.entries()) {
@@ -260,6 +263,14 @@ function renderSession(elements: PracticePageElements, snapshot: PracticeSnapsho
 
   elements.persistenceMessage.hidden = snapshot.persistenceMessage === null;
   setTextContent(elements.persistenceMessage, snapshot.persistenceMessage);
+}
+
+function renderRepeatGuidance(elements: PracticePageElements, snapshot: PracticeSnapshot): void {
+  const guidance = snapshot.sessionStatus === "completed" ? projectPracticeRepeatGuidance(snapshot.evaluation.completionSummary) : null;
+
+  elements.repeatGuidance.hidden = guidance === null;
+  setTextContent(elements.repeatGuidance, guidance?.message ?? null);
+  setTextContent(elements.restartButton, guidance?.actionLabel ?? "Restart");
 }
 
 function readingFocusFeedbackMessage(snapshot: PracticeSnapshot): string {
