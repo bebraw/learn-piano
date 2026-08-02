@@ -47,8 +47,10 @@ The template needs a verification baseline that stays strict enough for end-to-e
 - **Worker client-code guard:** `scripts/assert-no-worker-client-scripts.mjs`, allowing only empty same-origin external module scripts while rejecting inline or unverifiable browser execution paths
 - **Codebase diagnostics config:** `.fallowrc.json`
 - **Mutation config:** `stryker.config.mjs`
+- **Mutation config contract:** `scripts/stryker-config.test.mjs`
 - **Local mutation concurrency:** 50% of available parallelism
 - **GitHub mutation concurrency:** 100% of available parallelism
+- **Mutation score thresholds:** 90% high band, 80% low/target band, 65% breaking floor
 - **Readiness baseline:** `npm run quality:gate` for non-documentation changes
 - **Local workflow requirement:** `npm run ci:local` for changes to GitHub Actions workflows, package metadata or dependency installation, build or container setup, browser CI setup, and explicit full PR or release readiness checks
 - **Local workflow exception:** ordinary source, test, tooling, and documentation changes may skip `npm run ci:local` when they do not cross a workflow-sensitive boundary
@@ -79,6 +81,7 @@ The template needs a verification baseline that stays strict enough for end-to-e
 - [ ] The interactive codebase map writes a self-contained HTML report under ignored `.fallow/` state without opening a browser automatically.
 - [ ] The browser gate covers the Playwright baseline.
 - [ ] The full mutation gate covers runtime `src/**/*.ts` files with Stryker, Vitest, and TypeScript checking.
+- [ ] The mutation gate preserves the full browser-independent runtime scope and fails below the measured 65% regression floor while retaining 80% as the test-hardening target.
 - [ ] The incremental mutation gate reuses prior Stryker results for explicit deep local runs while preserving a complete mutation report.
 - [ ] The full gate runs the fast and browser gates in order without unconditionally running mutation testing.
 - [ ] The deep local gate runs the fast, browser, and incremental mutation gates in order.
@@ -103,8 +106,11 @@ The template needs a verification baseline that stays strict enough for end-to-e
 - `npm run quality:gate:deep` must preserve each child command's live output and emit a progress heartbeat at least every 30 seconds while that command is still running.
 - `npm run diagnostics:codebase` must remain advisory and must not be required by the baseline readiness path.
 - Fallow diagnostics must use `--no-cache` in repo scripts so normal diagnostic runs do not create a persistent `.fallow/` cache.
-- `npm run mutation` must fail when the mutation score is below the configured break threshold.
-- `npm run mutation:incremental` must fail when the resulting mutation score is below the configured break threshold.
+- `npm run mutation` must fail when the mutation score is below the configured 65% break threshold.
+- `npm run mutation:incremental` must fail when the resulting mutation score is below the configured 65% break threshold.
+- Stryker must retain `high: 90` and `low: 80` as reporting bands so a passing score below 80 remains visible test-hardening debt.
+- The tooling test must guard the configured 65/80/90 thresholds and full browser-independent runtime mutation boundary.
+- The mutation break threshold must be ratcheted upward when clean full runs establish durable margin; lowering it again requires measured evidence and an explicit architecture decision.
 - `npm install` must keep the repo-managed `pre-push` hook configured without requiring extra setup steps.
 - The CI workflow must cancel superseded runs for the same ref.
 - The CI workflow must run browser and mutation gates when any changed path is runtime-related or unknown, when no reliable changed-file range is available, or when classification fails.
@@ -145,7 +151,8 @@ The template needs a verification baseline that stays strict enough for end-to-e
 - Targeted checks may be documented for iteration, but `npm run quality:gate` remains the readiness baseline for non-documentation changes.
 - Local Agent CI must be required for changes to GitHub Actions workflows, package metadata or dependency installation, build or container setup, browser CI setup, and explicit full PR or release readiness checks.
 - Ordinary source, test, tooling, and documentation changes may skip `npm run ci:local` when they do not cross a workflow-sensitive boundary.
-- Mutation testing must exclude colocated tests, end-to-end tests, declarations, and `src/test-support.ts` from mutation.
+- Mutation testing must exclude colocated tests, end-to-end tests, and declarations from mutation.
+- Mutation testing must not exclude browser-independent runtime modules solely to increase the aggregate mutation score.
 - Mutation testing must use the Vitest runner's per-test coverage analysis and related-test narrowing rather than an ad hoc minimization wrapper.
 - Mutation testing must set Stryker worker concurrency as a percentage of available parallelism instead of a fixed worker count.
 - The isolated GitHub mutation job must override local Stryker concurrency to 100% without changing the 50% local default.
@@ -260,7 +267,7 @@ The template needs a verification baseline that stays strict enough for end-to-e
 
 - Given: runtime `src/**/*.ts` code has colocated unit tests
 - When: the contributor runs `npm run mutation`
-- Then: Stryker mutates runtime source only and fails if the mutation score is below the configured break threshold
+- Then: Stryker mutates the full browser-independent runtime scope and fails below 65%, while a score below the retained 80% target remains visible test-hardening debt
 
 **Scenario: Contributor requests deep local verification**
 

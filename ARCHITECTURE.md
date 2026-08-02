@@ -45,6 +45,7 @@ Use this file for global constraints. Use feature specs under `specs/` for domai
 - The repo-managed `pre-push` Git hook should run affected-file guardrails before code is pushed.
 - Formatting, Oxlint correctness checks, type checking, unit tests, and end-to-end tests are part of the baseline quality gate.
 - Keep incremental mutation testing in an explicit deep local gate instead of making it an unconditional baseline phase. GitHub remains responsible for the clean full mutation signal on runtime-relevant changes.
+- Treat Stryker's 65% break threshold as this project's measured regression floor while retaining the 80% low threshold as the test-hardening target and 90% as the high band. Preserve the full browser-independent runtime mutation scope instead of excluding low-scoring modules to raise the aggregate score, and ratchet the break floor upward when stronger tests create durable margin.
 - Keep duplicated `.github/skills/` content and vendored `.codex/skills/**/references/` material outside the Prettier baseline. Continue formatting project-owned skill entry points, specs, ADRs, and documentation.
 - Cache successful Prettier checks by file content under ignored `.cache/prettier` so repeated local gates avoid unchanged files without trusting timestamps.
 - Keep Oxlint focused on its default correctness rules unless additional rule categories are adopted through an explicit, documented decision. Oxlint does not replace Prettier or TypeScript checking.

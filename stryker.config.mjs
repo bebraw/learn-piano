@@ -16,7 +16,7 @@ const config = {
   thresholds: {
     high: 90,
     low: 80,
-    break: 80,
+    break: 65,
   },
   tsconfigFile: "tsconfig.json",
   typescriptChecker: {

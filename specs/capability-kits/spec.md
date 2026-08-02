@@ -56,7 +56,7 @@ The template is useful both as a starter repo and as a source of specific practi
 - The Agent CI kit must configure structured lifecycle output alongside quiet rendering so agents can monitor local workflow progress without animated terminal output.
 - The Agent CI kit must rely on current Agent CI warm-cache serialization instead of reintroducing a repo-local install-lock pattern for npm workflows.
 - The quality-gate kit must keep the coverage gate script aligned with `scripts/run-coverage-gate.mjs`.
-- The mutation-testing kit must keep its Stryker config aligned with `stryker.config.mjs`.
+- The mutation-testing kit must keep its Stryker runner, checker, reporting, and workflow shape aligned with `stryker.config.mjs`; target-specific source exclusions, concurrency, and score thresholds remain adaptable rather than inheriting this project's measured debt floor.
 - The pre-push quality-gate kit must keep the hook setup aligned with `.githooks/pre-push` and `scripts/setup-git-hooks.mjs`.
 - The README screenshot kit owns its copyable screenshot script because the template baseline no longer ships that script; the Lighthouse kit must keep its script aligned with `scripts/run-lighthouse.mjs` and audit performance, accessibility, best practices, and SEO.
 - The website baseline kit must separate universal browser requirements from public-site and feature-dependent requirements, and must keep emerging agent-readiness conventions opt-in.
