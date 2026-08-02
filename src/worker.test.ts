@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { defaultExercise, exerciseLibrary } from "./exercises/library";
 import { dMinorFiveNoteAscentRightHandExercise } from "./exercises/library/d-minor-five-note-exercises.js";
 import { fiveFourPulseRightHandExercise } from "./exercises/library/five-four-pulse-exercises.js";
@@ -15,9 +15,19 @@ import { steadyBrokenChordRightHandExercise } from "./exercises/library/steady-b
 import { threeFourBrokenChordRightHandExercise } from "./exercises/library/three-four-broken-chord-exercises.js";
 import { exercisePracticeHref } from "./views/exercise-presentation";
 import worker, { handleRequest } from "./worker";
-import { ensureGeneratedStylesheet } from "./test-support";
 
-ensureGeneratedStylesheet();
+const { stylesheetFixture, readFileMock } = vi.hoisted(() => ({
+  stylesheetFixture: ":root{--test-stylesheet-ready:1;}",
+  readFileMock: vi.fn(async (stylesheetUrl: URL, encoding: string): Promise<string> => {
+    if (!stylesheetUrl.pathname.endsWith("/.generated/browser/styles.css") || encoding !== "utf8") {
+      throw new Error(`Unexpected stylesheet read: ${stylesheetUrl.href} (${encoding})`);
+    }
+
+    return ":root{--test-stylesheet-ready:1;}";
+  }),
+}));
+
+vi.mock("node:fs/promises", () => ({ readFile: readFileMock }));
 
 describe("worker", () => {
   it("renders the piano practice home page", async () => {
@@ -279,8 +289,6 @@ describe("worker", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     const stylesheet = await response.text();
-    expect(stylesheet).toContain("--color-app-canvas:#ebe9e0");
-    expect(stylesheet).toContain(".reading-focus-toggle");
-    expect(stylesheet).toContain(".practice-page[data-cue-mode=reading-focus]");
+    expect(stylesheet).toBe(stylesheetFixture);
   });
 });

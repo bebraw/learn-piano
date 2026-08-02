@@ -134,4 +134,6 @@ test("serves the generated stylesheet", async ({ request }) => {
   const stylesheet = await response.text();
   expect(stylesheet).toContain("--color-app-canvas:#ebe9e0");
   expect(stylesheet).toContain(".piano-key");
+  expect(stylesheet).toContain(".reading-focus-toggle");
+  expect(stylesheet).toContain(".practice-page[data-cue-mode=reading-focus]");
 });

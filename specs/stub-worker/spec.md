@@ -73,9 +73,9 @@ The repository has evolved from a runnable template stub into a personal piano-p
 
 ### Verification
 
-- **Unit and integration tests:** colocated Vitest files under `src/**/*.test.ts` cover routing, response headers, rendered content, and domain-to-view composition.
+- **Unit and integration tests:** colocated Vitest files under `src/**/*.test.ts` cover routing, response headers, stylesheet delivery through a deterministic mocked asset read, rendered content, and domain-to-view composition without depending on ignored generated assets.
 - **Tooling tests:** `scripts/assert-no-worker-client-scripts.test.mjs` exercises accepted and rejected browser-code shapes.
-- **Browser tests:** colocated Playwright files under `src/**/*.e2e.ts` cover the home library and its transient filters, generated assets, health route, default and selected no-JavaScript guided practice documents, transient reading-focus enhancement, immediate repeat presentation and reset, and other enhanced practice flows.
+- **Browser tests:** colocated Playwright files under `src/**/*.e2e.ts` cover the home library and its transient filters, real generated stylesheet tokens and selectors, health route, default and selected no-JavaScript guided practice documents, transient reading-focus enhancement, immediate repeat presentation and reset, and other enhanced practice flows.
 - **Coverage target:** Worker, API, view, and non-DOM browser modules remain above repository coverage thresholds.
 
 ### Scenarios
